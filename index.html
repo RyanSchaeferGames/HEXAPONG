@@ -798,7 +798,7 @@
     <div class="pbar"><button class="backlink" id="bCodexBack">&#10094; Back</button></div>
     <h1 style="font-size:22px">Modifier INDEX</h1>
     <div class="sub">Field guide to arena Modifiers</div>
-    <div class="note" id="codexNote">Modifiers drift in mid-rally &middot; every Modifier affects all living players</div>
+    <div class="note" id="codexNote">Modifiers drift in mid-rally &middot; gold helps the last hitter, red punishes the next, violet changes the arena</div>
     <div id="codexBody"></div>
   </div>
 </div>
@@ -1037,7 +1037,7 @@ const DIFF = [
 let diffIdx = 1;
 let startLives = 3;
 let displayName = 'RHYNOCK';
-const VERSION = '0.6.9';
+const VERSION = '0.6.10';
 /* Online leaderboard (Cloudflare Worker + D1).
    Leave empty to keep the game fully offline.
    After you deploy the Worker, set this to your workers.dev URL, e.g.:
@@ -1048,6 +1048,14 @@ const LEADERBOARD_URL = 'https://hexapong-leaderboard.hexapong.workers.dev';
    Append a new entry and bump the patch digit of VERSION on every change set.
    The in-game Changelog panel reads this array directly. */
 const CHANGELOG = [
+  { v: '0.6.10', date: '2026-08-15', notes: [
+    'Buffs (gold) now apply only to the last player who hit the ball.',
+    'Nerfs (red) now apply only to the next player who hits the ball (pending on the ball).',
+    'Wildcards remain arena-wide.',
+    'Main-menu ENTER ARENA icon fixed to M when Modifiers are on (MODES.modifier.icon).',
+    'Codex note, briefing, and effect descriptions updated to match new targeting.',
+    'Fixed relocateModifiers dropping modifiers mid-loop when the arena shrinks.',
+  ]},
   { v: '0.6.9', date: '2026-08-15', notes: [
     'Complete scoring redesign: survival scales with match duration (100 base → 200 at 3 min), plus earned points for paddle positions, modifier Modifiers, and placement.',
     'Renamed to "Modifier" (was "Modifiers") throughout UI, menu, and leaderboard tags.',
@@ -2070,7 +2078,7 @@ function newBall(x, y, ang, sp) {
   // trail is a fixed ring buffer (trailLen slots) to avoid shift() every frame
   return { x, y, vx: Math.cos(ang) * sp, vy: Math.sin(ang) * sp,
            trail: [], trailHead: 0, trailLen: 0,
-           hitter: null, hot: false, stallX: x, stallY: y, stallT: 0 };
+           hitter: null, pendingNerf: null, hot: false, stallX: x, stallY: y, stallT: 0 };
 }
 
 function serve(fromWall) {
@@ -2197,7 +2205,6 @@ function relocateModifiers() {
   for (const t of Modifiers) {
     t.r = tr;
     if (Math.hypot(t.x - CX, t.y - CY) <= limit) { kept.push(t); continue; }
-    Modifiers = kept;
     const spot = findSpot(t);
     if (spot) { t.x = spot.x; t.y = spot.y; kept.push(t); }
   }
@@ -2217,8 +2224,16 @@ function resolveModifier(t, b, p) {
     if (run.ModifiersThisRally > run.bestModifiersInRally) run.bestModifiersInRally = run.ModifiersThisRally;
   }
 
-  // Simple build: every Modifier category applies to all living players
-  applyEffect(f, players.filter(q => !q.out));
+  // Buffs → last player to hit the ball. Nerfs → next player to hit the ball.
+  // Wildcards stay arena-wide (global effects / all living players).
+  if (f.key === 'b') {
+    const last = b && b.hitter && !b.hitter.out ? b.hitter : null;
+    if (last) applyEffect(f, [last]);
+  } else if (f.key === 'n') {
+    if (b) b.pendingNerf = f;          // applied on the next paddle contact
+  } else {
+    applyEffect(f, players.filter(q => !q.out));
+  }
 
   toast(f.name.toUpperCase(), f.col, 1.25, Modifier_ICON_DATA[f.id]);
 }
@@ -2248,6 +2263,7 @@ function applyEffect(f, targets) {
         const sp = Math.hypot(src.vx, src.vy);
         const nb = newBall(src.x, src.y, a, sp);
         nb.hitter = src.hitter;
+        nb.pendingNerf = src.pendingNerf || null;
         balls.push(nb);
       }
       break;
@@ -3948,10 +3964,10 @@ const BRIEF_ROWS = [
   ['Your wall', 'Your wall has one glowing block per life. Miss the ball and a block burns away.'],
   ['Collapse', 'When a wall runs out of lives it is removed and the arena shrinks. Last one alive wins.'],
   ['Decay', 'The longer you last, the faster the ball and the smaller every paddle.'],
-  ['Modifiers', 'Hit a Modifier and the effect hits <b>every living player</b>. ' +
-    '<b style="color:#ffd97a">Gold</b> buffs, ' +
-    '<b style="color:#ff9a8f">red</b> nerfs, and ' +
-    '<b style="color:#dcaaff">violet</b> wildcards all apply to the whole arena. ' +
+  ['Modifiers', 'Hit a Modifier and the effect depends on colour. ' +
+    '<b style="color:#ffd97a">Gold</b> buffs help the <b>last player</b> who hit the ball. ' +
+    '<b style="color:#ff9a8f">Red</b> nerfs punish the <b>next player</b> to return it. ' +
+    '<b style="color:#dcaaff">Violet</b> wildcards change the whole arena. ' +
     'Full list in the <b>Modifier Index</b>.'],
   ['Score', 'Your score is how long you survived plus a placement bonus. ' +
     'The running total sits under the HUD. Top scores appear on the online leaderboard.'],
@@ -3988,15 +4004,15 @@ const EFFECTS = [
     blurb:'',
     list:[
       { id:'overdrive', name:'Growth', dur:10, durTxt:'10s',
-        desc:'Paddles width grows 60%.' },
+        desc:'Your paddle grows 60% wider (last hitter only).' },
       { id:'repair',    name:'Repair',    dur:0,  durTxt:'Instant',
-        desc:'Players gain one life (up to the starting max).' },
+        desc:'Last hitter gains one life (up to the starting max).' },
     ]},
   { key:'n', title:'Nerfs', col:'#ff9a8f',
     blurb:'',
     list:[
       { id:'choke',  name:'Shrink',      dur:10, durTxt:'10s',
-        desc:'Paddles width shrinks 40%.' },
+        desc:'Next player to hit the ball has their paddle shrink 40%.' },
     ]},
   { key:'w', title:'Wildcards', col:'#dcaaff',
     blurb:'',
@@ -4453,7 +4469,7 @@ const MODES = {
              icon:'<svg viewBox="0 0 24 24"><path d="M12 2.6 20.4 7.3v9.4L12 21.4 3.6 16.7V7.3z"/></svg>',
              chips:['&#9825; 3 Lives', '&#8856; Modifiers Off'] },
   Modifier:   { title:'Modifier MODE', cls:'Modifier', lives:3, Modifiers:true, rate:1,
-             icon:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.2"/><text x="12" y="16.4" text-anchor="middle" font-size="11" font-weight="700" fill="currentColor" stroke="none">T</text></svg>',
+             icon:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.2"/><text x="12" y="16.4" text-anchor="middle" font-size="11" font-weight="700" fill="currentColor" stroke="none">M</text></svg>',
              chips:['&#9825; 3 Lives', '&#9417; Modifiers On', '&#9776; Mid Rate'] },
 };
 let gameMode = 'Modifier';
