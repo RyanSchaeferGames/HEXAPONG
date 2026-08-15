@@ -621,7 +621,7 @@
     <div class="sub">Six Walls | One Survivor</div>
 
     <div class="crow" id="mTokensRow">
-      <span class="clab">Tokens</span>
+      <span class="clab">Modifier</span>
       <span class="row cseg" id="mTokens">
         <button class="opt on" data-t="1" type="button">On</button>
         <button class="opt" data-t="0" type="button">Off</button>
@@ -630,8 +630,8 @@
 
     <div class="modes">
       <button class="mode token playbig" id="mPlay" type="button">
-        <span class="mi" id="mPlayIcon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9.2"/><text x="12" y="16.4" text-anchor="middle" font-size="11" font-weight="700" fill="currentColor" stroke="none">T</text></svg></span>
-        <span class="mt">CLICK TO PLAY</span>
+        <span class="mi" id="mPlayIcon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9.2"/><text x="12" y="16.4" text-anchor="middle" font-size="11" font-weight="700" fill="currentColor" stroke="none">M</text></svg></span>
+        <span class="mt">ENTER ARENA</span>
       </button>
     </div>
 
@@ -736,7 +736,7 @@
         <button class="opt on" data-l="3">3</button>
         <button class="opt" data-l="5">5</button>
       </span></div>
-    <div class="crow"><span class="clab">Tokens</span>
+    <div class="crow"><span class="clab">Modifier</span>
       <span class="row cseg" id="cTokens">
         <button class="opt on" data-t="1">On</button>
         <button class="opt" data-t="0">Off</button>
@@ -1037,7 +1037,7 @@ const DIFF = [
 let diffIdx = 1;
 let startLives = 3;
 let displayName = 'RHYNOCK';
-const VERSION = '0.6.8';
+const VERSION = '0.6.9';
 /* Online leaderboard (Cloudflare Worker + D1).
    Leave empty to keep the game fully offline.
    After you deploy the Worker, set this to your workers.dev URL, e.g.:
@@ -1048,6 +1048,11 @@ const LEADERBOARD_URL = 'https://hexapong-leaderboard.hexapong.workers.dev';
    Append a new entry and bump the patch digit of VERSION on every change set.
    The in-game Changelog panel reads this array directly. */
 const CHANGELOG = [
+  { v: '0.6.9', date: '2026-08-15', notes: [
+    'Complete scoring redesign: survival scales with match duration (100 base → 200 at 3 min), plus earned points for paddle positions, modifier tokens, and placement.',
+    'Renamed to "Modifier" (was "Tokens") throughout UI, menu, and leaderboard tags.',
+    'Play button text changed from CLICK TO PLAY to ENTER ARENA; icon changed from T to M.',
+  ]},
   { v: '0.6.8', date: '2026-08-15', notes: [
     'Ball speed no longer reduced on tip hits; speed is preserved while direction changes based on paddle contact position.',
   ]},
@@ -1218,13 +1223,30 @@ function saveCareer() {
    bulk of it, and difficulty multiplies the whole thing, so third place on
    Expert outscores a win on Easy. Custom matches are deliberately unscored:
    you set your own difficulty there, so a high score would mean nothing. */
-const SCORE_PER_SEC = 10;
-const SCORE_PLACE   = [0, 3000, 1800, 1100, 650, 350, 150];  // index = finishing place
+const SCORE_PER_SEC = 100;
+const SCORE_PLACE   = [0, 3000, 1500, 750, 250, 100, 50];    // index = finishing place (scaled by duration)
 const SCORE_DIFF    = [1, 1.5, 2.25, 3.25];                  // Easy / Normal / Hard / Expert
-function matchScore(place, survivedS, dIdx, liveOnly) {
-  // During play: survival only (starts at 0). At match end: add placement bonus.
+function matchScore(place, survivedS, dIdx, liveOnly, paddleHitsCenter = 0, paddleHitsSide = 0, tokenHits = 0) {
+  // Scaling multiplier based on match duration: 1 + sqrt(seconds / 180)
+  const mult = 1 + Math.sqrt((survivedS || 0) / 180);
+
+  // Survival: base per-second scaled by duration
+  const survivalScore = Math.round((survivedS || 0) * SCORE_PER_SEC * mult);
+
+  // Paddle hits: center=50 base, side=100 base, with combo boost (estimated avg 1.8x)
+  const paddleAvgCombo = 1.8;
+  const paddleScore = Math.round((paddleHitsCenter * 50 + paddleHitsSide * 100) * mult * paddleAvgCombo);
+
+  // Token hits: buff=300, wildcard=250, nerf=200 base, with combo (estimated avg 1.5x)
+  const tokenAvgCombo = 1.5;
+  const tokenScore = Math.round(tokenHits * 250 * mult * tokenAvgCombo);
+
+  // Placement bonus (scaled by duration)
   const pl = liveOnly ? 0 : (SCORE_PLACE[clamp(place | 0, 1, 6)] || SCORE_PLACE[6] || 0);
-  return Math.round(((survivedS || 0) * SCORE_PER_SEC + pl) * (SCORE_DIFF[dIdx] || 1));
+  const placementScore = Math.round(pl * mult);
+
+  const totalScore = survivalScore + paddleScore + tokenScore + placementScore;
+  return Math.round(totalScore * (SCORE_DIFF[dIdx] || 1));
 }
 function scoredMode() { return gameMode === 'vanilla' || gameMode === 'token'; }
 const commas = v => Math.round(v || 0).toLocaleString('en-US');
@@ -1295,7 +1317,8 @@ let run = null;
 function newRun() {
   run = { bestRally: 0, topSpeed: 0, conceded: 0, stage: 6, survived: 0,
     hitTimes: [], tokenUsedByPlayer: false, tokensThisRally: 0, bestTokensInRally: 0,
-    wallsRepairedThisMatch: 0, passedBest: false };
+    wallsRepairedThisMatch: 0, passedBest: false,
+    paddleHitsCenter: 0, paddleHitsSide: 0, tokenHits: 0 };
 }
 // Stagnation tracking: if the player is left out of the rally, bias ramps up so two
 // bots cannot trade forever while the human watches.
@@ -1666,8 +1689,8 @@ function formatLbDate(r) {
 // guess at a mode that was never recorded.
 function lbTokensTag(r) {
   const raw = String(r.mode || r.gameMode || '').toLowerCase();
-  if (raw === 'vanilla') return 'No Tokens';
-  if (raw === 'token') return 'Tokens';
+  if (raw === 'vanilla') return 'Vanilla';
+  if (raw === 'token') return 'Modified';
   return '';
 }
 function lbRowHtml(r) {
@@ -2095,8 +2118,8 @@ function startGame() {
   elapsed = 0; playerHits = 0; knockouts = 0; pressure = 0;
   lastPlayerHitAt = 0; consecutiveAiHits = 0;
   debris = []; collapseFlash = 0; ending = false;
-  layout(); R = Rtarget; buildWalls();
   clearFx();
+  layout(); R = Rtarget; buildWalls();
   balls = [];                         // hold the ball until countdown finishes
   serveTimer = 0;
   countdown = 5.0;
@@ -2788,6 +2811,7 @@ function hitTokens(b) {
     // category (see resolveToken) rather than always hitting the whole arena.
     tokens.splice(i, 1);
     career.tokensHit++;
+    if (run && b.hitter && b.hitter.human) run.tokenHits++;  // Track player's token hits
     resolveToken(t, b, b.hitter || null);
   }
 }
@@ -2931,6 +2955,11 @@ function collide(b) {
         if (rallyHits > run.bestRally) run.bestRally = rallyHits;
         if (sp2 > run.topSpeed) run.topSpeed = sp2;
         if (p.human) playerHits++;
+        // Track paddle hit position for scoring
+        if (p.human && run) {
+          if (aOff < 0.08) run.paddleHitsCenter++;
+          else if (aOff >= 0.45) run.paddleHitsSide++;
+        }
         // Sweet-spot flash: a brighter, longer pulse + soft beep. Center contact is the
         // scored "perfect hit" (Apollo's Mark). The same flash also fires for a clean hit
         // on either angled tip — same aOff threshold the steering boost above uses — so
@@ -3101,7 +3130,7 @@ function endGame(winner, eliminated) {
 
   // Only the two preset modes are scored (see matchScore).
   const scored   = scoredMode();
-  const score    = scored ? matchScore(me.place, run.survived, diffIdx) : 0;
+  const score    = scored ? matchScore(me.place, run.survived, diffIdx, false, run.paddleHitsCenter, run.paddleHitsSide, run.tokenHits) : 0;
   const prevBest = career.bestScore || 0;
   const newHigh  = scored && score > prevBest;
   if (newHigh) {
@@ -3814,7 +3843,7 @@ function renderScoreBar() {
   const me = players[PLAYER];
   const place = me && me.out ? (me.place || 6) : players.filter(q => !q.out).length;
   // liveOnly=true so the bar starts at 0 and only climbs with survival time
-  const live = matchScore(place, me && me.out ? (run.survived || elapsed) : elapsed, diffIdx, true);
+  const live = matchScore(place, me && me.out ? (run.survived || elapsed) : elapsed, diffIdx, true, run.paddleHitsCenter, run.paddleHitsSide, run.tokenHits);
   const best = career.bestScore || 0;
   const ahead = best > 0 && live > best;
   if (ahead && run && !run.passedBest) {
