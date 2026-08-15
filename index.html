@@ -630,7 +630,7 @@
 
     <div class="modes">
       <button class="mode Modifier playbig" id="mPlay" type="button">
-        <span class="mi" id="mPlayIcon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9.2"/><text x="12" y="16.4" text-anchor="middle" font-size="11" font-weight="700" fill="currentColor" stroke="none">M</text></svg></span>
+        <span class="mi" id="mPlayIcon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.6 20.4 7.3v9.4L12 21.4 3.6 16.7V7.3z"/><text x="12" y="16.4" text-anchor="middle" font-size="11" font-weight="700" fill="currentColor" stroke="none">M</text></svg></span>
         <span class="mt">ENTER ARENA</span>
       </button>
     </div>
@@ -667,6 +667,14 @@
       <div id="miniLbBody" class="minilb-body lbstatus">Loading…</div>
     </div>
 
+    <div class="minilb" id="miniRecent">
+      <div class="minilb-head">
+        <span class="mlabel">Recent Matches</span>
+        <span class="mview">Tap for latest 25</span>
+      </div>
+      <div id="miniRecentBody" class="minilb-body lbstatus">No matches yet</div>
+    </div>
+
     <div class="minigrid">
       <button class="go alt" id="bHow">How To Play</button>
       <button class="go alt" id="bStats">Stats</button>
@@ -690,6 +698,15 @@
       <button class="opt" data-period="day">Today</button>
     </div>
     <div id="lbBody" class="lbstatus">Loading…</div>
+  </div>
+</div>
+
+<div class="panel hidden" id="recentPanel">
+  <div class="card wide">
+    <div class="pbar"><button class="backlink" id="bRecentBack">&#10094; Back</button></div>
+    <h1 style="font-size:22px">RECENT MATCHES</h1>
+    <div class="sub">Latest scored games worldwide</div>
+    <div id="recentBody" class="lbstatus">No matches yet</div>
   </div>
 </div>
 
@@ -854,37 +871,14 @@
              spellcheck="false">
     </div>
 
-    <div class="grouplabel">Paddle spin <span class="vnum" id="spinVal">100%</span></div>
-    <div class="row"><input class="vol" id="spinVol" type="range" min="0" max="200" step="5" value="100"
-           aria-label="Paddle spin strength"></div>
     <div class="grouplabel">Sound <span class="vnum" id="sfxVal">80%</span></div>
     <div class="row"><input class="vol" id="sfxVol" type="range" min="0" max="100" step="5" value="80"
            aria-label="Sound effect volume"></div>
-
-    <div class="grouplabel">Haptics</div>
-    <div class="row" id="hapticsOpts">
-      <button class="opt" data-h="0">Off</button>
-      <button class="opt" data-h="1">Light</button>
-      <button class="opt on" data-h="2">Full</button>
-    </div>
-
-    <div class="grouplabel">Screen shake</div>
-    <div class="row" id="shakeOpts">
-      <button class="opt" data-s="0">Off</button>
-      <button class="opt" data-s="1">Low</button>
-      <button class="opt on" data-s="2">Full</button>
-    </div>
 
     <div class="grouplabel">Flicker &amp; scanlines</div>
     <div class="row" id="crtOpts">
       <button class="opt on" data-c="1">On</button>
       <button class="opt" data-c="0">Off</button>
-    </div>
-
-    <div class="grouplabel">Colour-blind shapes</div>
-    <div class="row" id="cbOpts">
-      <button class="opt" data-cb="1">On</button>
-      <button class="opt on" data-cb="0">Off</button>
     </div>
 
     <div class="grouplabel">Quality</div>
@@ -913,15 +907,6 @@
     <div class="pbar"><button class="backlink" id="bStatsBack">&#10094; Back</button></div>
     <h1 style="font-size:22px">STATS</h1>
     <div class="sub">Last run &amp; career</div>
-    <div class="row tabs" id="statTabs">
-      <button class="opt on" data-k="4">All</button>
-      <button class="opt" data-k="0">Easy</button>
-      <button class="opt" data-k="1">Normal</button>
-      <button class="opt" data-k="2">Hard</button>
-      <button class="opt" data-k="3">Expert</button>
-    </div>
-    <h4 class="hshead" id="boardHead">High Scores</h4>
-    <div id="hsBoard"></div>
 
     <div class="statgrid">
       <div>
@@ -933,6 +918,9 @@
         <div id="statCareerMenu"></div>
       </div>
     </div>
+
+    <h4 class="hshead" id="boardHead" style="margin-top:18px">High Scores</h4>
+    <div id="hsBoard"></div>
   </div>
 </div>
 
@@ -1037,7 +1025,7 @@ const DIFF = [
 let diffIdx = 1;
 let startLives = 3;
 let displayName = 'RHYNOCK';
-const VERSION = '0.6.10';
+const VERSION = '0.6.13';
 /* Online leaderboard (Cloudflare Worker + D1).
    Leave empty to keep the game fully offline.
    After you deploy the Worker, set this to your workers.dev URL, e.g.:
@@ -1048,6 +1036,21 @@ const LEADERBOARD_URL = 'https://hexapong-leaderboard.hexapong.workers.dev';
    Append a new entry and bump the patch digit of VERSION on every change set.
    The in-game Changelog panel reads this array directly. */
 const CHANGELOG = [
+  { v: '0.6.13', date: '2026-08-15', notes: [
+    'Leaderboard/Recent timestamps include local military time (machine timezone).',
+    'Modifier play icon is a hexagon with M (matches Vanilla V style).',
+    'Mode labels: Modified vs Vanilla on leaderboard and recent matches.',
+  ]},
+  { v: '0.6.12', date: '2026-08-15', notes: [
+    'Recent Matches now loads from the online leaderboard (/api/recent) — global newest scores.',
+  ]},
+  { v: '0.6.11', date: '2026-08-15', notes: [
+    'Settings: removed Paddle Spin, Haptics, Screen Shake, and Colour-blind shapes.',
+    'Stats page: removed difficulty tabs; High Scores sit below Last Run and Career (top 10).',
+    'Career and Last Run stats retuned (modifiers tracked by buff / nerf / wildcard).',
+    'Vanilla play icon now shows a V inside the hexagon.',
+    'Main menu Recent Matches (top 5); full list of last 25 on tap.',
+  ]},
   { v: '0.6.10', date: '2026-08-15', notes: [
     'Buffs (gold) now apply only to the last player who hit the ball.',
     'Nerfs (red) now apply only to the next player who hits the ball (pending on the ball).',
@@ -1169,6 +1172,7 @@ const defaultCareer = () => ({
   bestRally: 0, bestTime: 0, bestPlace: 7, topSpeed: 0,
   bestScore: 0, bestScoreDiff: '', bestScoreMode: '', bestScorePlace: 0, bestScoreTime: 0,
   flawlessWins: 0, hardcoreWins: 0, ModifiersHit: 0,
+  buffHits: 0, nerfHits: 0, wildHits: 0,
   perfectHits: 0, quickReflexBursts: 0, zeroHitLosses: 0, noModifierWins: 0,
   bestRallyModifiers: 0, backstopSaves: 0, fastWins: 0, bestWallsRepairedInMatch: 0,
   slowEffectsTriggered: 0, paddleDistance: 0, hxStreak: 0, bestHxStreak: 0
@@ -1208,15 +1212,96 @@ try {
   if (sc) { const a = JSON.parse(sc); if (Array.isArray(a)) scoreBoard = a; }
 } catch (e) { /* private mode / blocked storage */ }
 
+/* Recent matches: online feed from GET /api/recent (newest first). */
+function recentRowHtml(r) {
+  const nm = String(r.name || 'PLAYER').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const bits = [];
+  const dateStr = formatLbDate(r);
+  if (dateStr) bits.push(dateStr);
+  if (r.place != null) bits.push(ordinal(r.place) + ' of 6');
+  const dur = formatLbDuration(r.duration);
+  if (dur) bits.push(dur);
+  const tag = lbModifiersTag(r);
+  if (tag) bits.push(tag);
+  return '<div class="lbrow">' +
+    '<span class="lbr">' + (r.rank || '') + '</span>' +
+    '<span class="lbn">' + nm +
+      (bits.length ? '<em>' + bits.join(' · ') + '</em>' : '') +
+    '</span>' +
+    '<span class="lbs">' + commas(r.score) + '</span></div>';
+}
+async function fetchRecentScores(limit) {
+  if (!LEADERBOARD_URL) return null;
+  const url = LEADERBOARD_URL.replace(/\/+$/, '') +
+    '/api/recent?limit=' + encodeURIComponent(limit || 25);
+  const res = await fetch(url, { method: 'GET', cache: 'no-store' });
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  const data = await res.json();
+  return data.scores || [];
+}
+async function loadMiniRecent() {
+  const body = document.getElementById('miniRecentBody');
+  if (!body) return;
+  if (!LEADERBOARD_URL) {
+    body.className = 'minilb-body lbstatus';
+    body.textContent = 'Leaderboard offline';
+    return;
+  }
+  body.className = 'minilb-body lbstatus';
+  body.textContent = 'Loading…';
+  try {
+    const rows = await fetchRecentScores(5);
+    if (!rows || !rows.length) {
+      body.textContent = 'No matches yet';
+      return;
+    }
+    body.className = 'minilb-body';
+    body.innerHTML = rows.map(recentRowHtml).join('');
+  } catch (e) {
+    body.className = 'minilb-body lbstatus';
+    body.textContent = 'Could not reach leaderboard';
+  }
+}
+async function loadRecentPanel() {
+  const body = document.getElementById('recentBody');
+  if (!body) return;
+  if (!LEADERBOARD_URL) {
+    body.className = 'lbstatus';
+    body.textContent = 'Leaderboard offline';
+    return;
+  }
+  body.className = 'lbstatus';
+  body.textContent = 'Loading…';
+  try {
+    const rows = await fetchRecentScores(25);
+    if (!rows || !rows.length) {
+      body.textContent = 'No matches yet';
+      return;
+    }
+    body.className = '';
+    body.innerHTML = rows.map(recentRowHtml).join('');
+  } catch (e) {
+    body.className = 'lbstatus';
+    body.textContent = 'Could not reach the leaderboard. Check your connection.';
+  }
+}
+function showRecentMatches() {
+  ['start', 'over', 'brief', 'pausePanel', 'codex', 'statsPanel', 'setPanel',
+   'achPanel', 'modePanel', 'customPanel', 'logPanel', 'lbPanel'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.classList.add('hidden');
+  });
+  document.getElementById('recentPanel').classList.remove('hidden');
+  loadRecentPanel();
+}
+function hideRecentMatches() {
+  document.getElementById('recentPanel').classList.add('hidden');
+  document.getElementById('start').classList.remove('hidden');
+}
+
 function recordScore(entry) {
   scoreBoard.push(entry);
   scoreBoard.sort((a, b) => (b.score - a.score) || ((a.at || 0) - (b.at || 0)));
-  const kept = [], per = [0, 0, 0, 0];
-  for (const e of scoreBoard) {
-    const d = clamp(e.d | 0, 0, 3);
-    if (per[d] < 5) { per[d]++; kept.push(e); }
-  }
-  scoreBoard = kept;
+  scoreBoard = scoreBoard.slice(0, 10);
   try { localStorage.setItem(SCORES_KEY, JSON.stringify(scoreBoard)); } catch (e) {}
 }
 
@@ -1326,7 +1411,8 @@ function newRun() {
   run = { bestRally: 0, topSpeed: 0, conceded: 0, stage: 6, survived: 0,
     hitTimes: [], ModifierUsedByPlayer: false, ModifiersThisRally: 0, bestModifiersInRally: 0,
     wallsRepairedThisMatch: 0, passedBest: false,
-    paddleHitsCenter: 0, paddleHitsSide: 0, ModifierHits: 0 };
+    paddleHitsCenter: 0, paddleHitsSide: 0, ModifierHits: 0,
+    buffHits: 0, nerfHits: 0, wildHits: 0 };
 }
 // Stagnation tracking: if the player is left out of the rally, bias ramps up so two
 // bots cannot trade forever while the human watches.
@@ -1668,17 +1754,29 @@ function syncLbTabs() {
   mark('lbTabs');
   mark('miniLbTabs');
 }
+function parseLbTimestamp(raw) {
+  if (raw == null || raw === '') return null;
+  if (typeof raw === 'number') return new Date(raw < 1e12 ? raw * 1000 : raw);
+  let s = String(raw).trim();
+  // D1/SQLite datetime('now') is UTC without a zone suffix — force UTC parse
+  if (/^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}/.test(s) && !/[zZ]|[+-]\d{2}:?\d{2}$/.test(s)) {
+    s = s.replace(' ', 'T');
+    if (s.length === 16) s += ':00'; // YYYY-MM-DDTHH:MM
+    s += 'Z';
+  }
+  const d = new Date(s);
+  return isNaN(d.getTime()) ? null : d;
+}
 function formatLbDate(r) {
-  const raw = r.at || r.created || r.ts || r.time || r.date || r.submitted || null;
-  if (raw == null || raw === '') return '';
-  let d;
-  if (typeof raw === 'number') d = new Date(raw < 1e12 ? raw * 1000 : raw);
-  else d = new Date(raw);
-  if (isNaN(d.getTime())) return '';
+  const d = parseLbTimestamp(r.at || r.created || r.ts || r.time || r.date || r.submitted || null);
+  if (!d) return '';
+  // Local machine timezone, military time
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, '0');
   const day = String(d.getDate()).padStart(2, '0');
-  return y + '.' + m + '.' + day;
+  const hh = String(d.getHours()).padStart(2, '0');
+  const mm = String(d.getMinutes()).padStart(2, '0');
+  return y + '.' + m + '.' + day + ' ' + hh + ':' + mm;
 }
 // Every submission already carries mode ('Modifier' or 'vanilla', see submitOnlineScore) —
 // it was just never shown, back when everyone was forced into Modifier mode anyway and the
@@ -1688,7 +1786,7 @@ function formatLbDate(r) {
 function lbModifiersTag(r) {
   const raw = String(r.mode || r.gameMode || '').toLowerCase();
   if (raw === 'vanilla') return 'Vanilla';
-  if (raw === 'Modifier') return 'Modified';
+  if (raw === 'modifier' || raw === 'token') return 'Modified';
   return '';
 }
 function lbRowHtml(r) {
@@ -1772,7 +1870,7 @@ async function loadMiniLeaderboard() {
 }
 function showLeaderboard() {
   ['start', 'over', 'brief', 'pausePanel', 'codex', 'statsPanel', 'setPanel',
-   'achPanel', 'modePanel', 'customPanel', 'logPanel'].forEach(id => {
+   'achPanel', 'modePanel', 'customPanel', 'logPanel', 'recentPanel'].forEach(id => {
     const el = document.getElementById(id); if (el) el.classList.add('hidden');
   });
   document.getElementById('lbPanel').classList.remove('hidden');
@@ -2817,7 +2915,13 @@ function hitModifiers(b) {
     // category (see resolveModifier) rather than always hitting the whole arena.
     Modifiers.splice(i, 1);
     career.ModifiersHit++;
-    if (run && b.hitter && b.hitter.human) run.ModifierHits++;  // Track player's Modifier hits
+    if (run && b.hitter && b.hitter.human) {
+      run.modifierHits++;
+      const k = t.fx && t.fx.key;
+      if (k === 'b') { run.buffHits++; career.buffHits = (career.buffHits || 0) + 1; }
+      else if (k === 'n') { run.nerfHits++; career.nerfHits = (career.nerfHits || 0) + 1; }
+      else if (k === 'w') { run.wildHits++; career.wildHits = (career.wildHits || 0) + 1; }
+    }
     resolveModifier(t, b, b.hitter || null);
   }
 }
@@ -2834,9 +2938,11 @@ function setSpinPct(pct) {
 }
 function setSpinSlider(pct) {
   const el = document.getElementById('spinVol');
+  if (!el) return;
   el.value = pct;
   el.style.setProperty('--f', (pct / 2) + '%');   // track max is 200, so half the pct
-  document.getElementById('spinVal').textContent = pct + '%';
+  const lab = document.getElementById('spinVal');
+  if (lab) lab.textContent = pct + '%';
 }
 
 function collide(b) {
@@ -3265,7 +3371,10 @@ function endGame(winner, eliminated) {
     diff: DIFF[diffIdx].label,
     score: score,
     scored: scored,
-    mode: gameMode
+    mode: gameMode,
+    buffHits: run.buffHits || 0,
+    nerfHits: run.nerfHits || 0,
+    wildHits: run.wildHits || 0
   });
   lastRunByDiff[diffIdx] = {
     place: me.place,
@@ -3284,7 +3393,10 @@ function endGame(winner, eliminated) {
     diff: DIFF[diffIdx].label,
     score: score,
     scored: scored,
-    mode: gameMode
+    mode: gameMode,
+    buffHits: run.buffHits || 0,
+    nerfHits: run.nerfHits || 0,
+    wildHits: run.wildHits || 0
   };
 
   document.getElementById('overPlace').innerHTML =
@@ -4211,7 +4323,7 @@ function showSetup() {
   running = false; over = false; paused = false; ending = false;
   document.getElementById('bPause').textContent = 'PAUSE';
   ['over', 'brief', 'pausePanel', 'codex', 'statsPanel', 'setPanel', 'achPanel',
-   'modePanel', 'customPanel', 'logPanel', 'nameGate', 'lbPanel'].forEach(id => {
+   'modePanel', 'customPanel', 'logPanel', 'nameGate', 'lbPanel', 'recentPanel'].forEach(id => {
     const el = document.getElementById(id); if (el) el.classList.add('hidden');
   });
   refreshHiScore();
@@ -4219,69 +4331,46 @@ function showSetup() {
   refreshMissionsUI();
   refreshAchBand();
   loadMiniLeaderboard();
+  loadMiniRecent();
   document.getElementById('start').classList.remove('hidden');
 }
 function careerHtml() {
   const wr = career.games ? Math.round(career.wins / career.games * 100) : 0;
+  const buff = career.buffHits || 0, nerf = career.nerfHits || 0, wild = career.wildHits || 0;
   return statLine('High score', career.bestScore ? commas(career.bestScore) : '—') +
     statLine('Total play time', fmtTime(career.playTime)) +
-    statLine('Matches', career.games) +
+    statLine('Matches played', career.games) +
     statLine('Wins', career.wins + ' (' + wr + '%)') +
-    statLine('Best finish', career.games ? ordinal(career.bestPlace) : '—') +
-    statLine('Best survival', career.bestTime ? fmtTime(career.bestTime) : '—') +
-    statLine('Best rally', career.bestRally || '—') +
-    statLine('Total returns', career.returns) +
-    statLine('Walls burned', career.kos) +
+    statLine('Longest match', career.bestTime ? fmtTime(career.bestTime) : '—') +
+    statLine('Most rallies', career.bestRally || '—') +
     statLine('Fastest ball', career.topSpeed ? Math.round(career.topSpeed) + ' px/s' : '—') +
-    statLine('Name', displayName || '—');
+    statLine('Modifiers hit', 'B ' + buff + ' · N ' + nerf + ' · W ' + wild);
 }
 function lastRunHtmlFor(snap) {
   if (!snap) return '<div class="sl"><span>No matches yet</span><span>—</span></div>';
   const s = snap;
-  const swings = s.swings || 0;
+  const buff = s.buffHits || 0, nerf = s.nerfHits || 0, wild = s.wildHits || 0;
   return statLine('Score', s.scored === false ? 'Not scored' : commas(s.score || 0)) +
     statLine('Place', ordinal(s.place) + ' of 6') +
-    statLine('Difficulty', titleCase(s.diff) || '—') +
-    statLine('Survived', fmtTime(s.survived)) +
-    statLine('Match length', fmtTime(s.elapsed)) +
-    statLine('Your returns', s.returns) +
-    statLine('Save rate', swings ? Math.round(s.returns / swings * 100) + '%' : '—') +
-    statLine('Longest rally', s.bestRally) +
+    statLine('Survival time', fmtTime(s.survived)) +
+    statLine('Hits', s.returns) +
     statLine('Lives left', s.lives + ' / ' + s.startLives) +
-    statLine('Walls burned', s.kos + ' / 6') +
-    statLine('Deepest arena', STAGE_NAME[s.stage] || s.stage) +
-    statLine('Top ball speed', Math.round(s.topSpeed) + ' px/s');
-}
-let statTab = 4;                       // 4 = all difficulties
-function careerHtmlFor(c, label) {
-  const wr = c.games ? Math.round(c.wins / c.games * 100) : 0;
-  return statLine('High score', c.bestScore ? commas(c.bestScore) : '—') +
-    statLine('Total play time', fmtTime(c.playTime)) +
-    statLine('Matches', c.games) +
-    statLine('Wins', c.wins + ' (' + wr + '%)') +
-    statLine('Best finish', c.games ? ordinal(c.bestPlace) : '—') +
-    statLine('Best survival', c.bestTime ? fmtTime(c.bestTime) : '—') +
-    statLine('Best rally', c.bestRally || '—') +
-    statLine('Total returns', c.returns) +
-    statLine('Walls burned', c.kos) +
-    statLine('Fastest ball', c.topSpeed ? Math.round(c.topSpeed) + ' px/s' : '—') +
-    statLine('Difficulty', label);
+    statLine('Top ball speed', Math.round(s.topSpeed) + ' px/s') +
+    statLine('Modifiers hit', 'B ' + buff + ' · N ' + nerf + ' · W ' + wild);
 }
 const esc = t => String(t == null ? '' : t)
   .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
 function boardHtml() {
-  const all = statTab === 4;
-  const rows = scoreBoard.filter(e => all || clamp(e.d | 0, 0, 3) === statTab).slice(0, 5);
+  const rows = scoreBoard.slice(0, 10);
   if (!rows.length)
     return '<div class="sl"><span>No scores yet</span><span>&mdash;</span></div>';
   return rows.map((e, i) => {
-    const lvl = e.lv ? ('L' + e.lv + prestigeStars(e.pr || 0)) : '';
-    const meta = [lvl,
-                  titleCase(DIFF[clamp(e.d | 0, 0, 3)].label),
-                  e.m === 'Modifier' ? 'Modifier' : 'Vanilla',
-                  ordinal(e.p || 6) + ' of 6',
-                  fmtTime(e.t || 0)].filter(Boolean).join(' \u00b7 ');
+    const meta = [
+      e.m === 'modifier' ? 'Modifier' : 'Vanilla',
+      ordinal(e.p || 6) + ' of 6',
+      fmtTime(e.t || 0)
+    ].filter(Boolean).join(' · ');
     return '<div class="hsrow' + (e.at && e.at === lastScoreStamp ? ' fresh' : '') + '">' +
       '<span class="hsr">' + (i + 1) + '</span>' +
       '<span class="hsn">' + esc(e.n || 'PLAYER') + '<em>' + meta + '</em></span>' +
@@ -4290,21 +4379,14 @@ function boardHtml() {
 }
 
 function paintStats() {
-  const all = statTab === 4;
-  const c = all ? career : tiers[statTab];
-  const lr = all ? lastRunSnap : lastRunByDiff[statTab];
-  const nice = n => n.charAt(0) + n.slice(1).toLowerCase();
-  const label = all ? 'All' : nice(DIFF[statTab].label);
-  document.getElementById('careerHead').textContent = all ? 'Career · All' : 'Career · ' + label;
-  document.getElementById('lastHead').textContent = all ? 'Last Run' : 'Last ' + label + ' Run';
-  document.getElementById('statCareerMenu').innerHTML = careerHtmlFor(c, label);
-  document.getElementById('statLastRun').innerHTML = lastRunHtmlFor(lr);
-  document.getElementById('boardHead').textContent =
-    all ? 'High Scores' : 'High Scores \u00b7 ' + label;
+  document.getElementById('careerHead').textContent = 'Career';
+  document.getElementById('lastHead').textContent = 'Last Run';
+  document.getElementById('statCareerMenu').innerHTML = careerHtml();
+  document.getElementById('statLastRun').innerHTML = lastRunHtmlFor(lastRunSnap);
+  document.getElementById('boardHead').textContent = 'High Scores';
   document.getElementById('hsBoard').innerHTML = boardHtml();
-  [...document.getElementById('statTabs').children]
-    .forEach(b => b.classList.toggle('on', +b.dataset.k === statTab));
 }
+
 function showStats() {
   ['start', 'over', 'brief', 'pausePanel', 'codex', 'setPanel', 'modePanel', 'customPanel'].forEach(id =>
     document.getElementById(id).classList.add('hidden'));
@@ -4466,10 +4548,10 @@ function hideCodex() {
    those toggles came out of the Modifier Index. */
 const MODES = {
   vanilla: { title:'VANILLA MODE', cls:'vanilla', lives:3, Modifiers:false, rate:1,
-             icon:'<svg viewBox="0 0 24 24"><path d="M12 2.6 20.4 7.3v9.4L12 21.4 3.6 16.7V7.3z"/></svg>',
+             icon:'<svg viewBox="0 0 24 24"><path d="M12 2.6 20.4 7.3v9.4L12 21.4 3.6 16.7V7.3z"/><text x="12" y="16.4" text-anchor="middle" font-size="11" font-weight="700" fill="currentColor" stroke="none">V</text></svg>',
              chips:['&#9825; 3 Lives', '&#8856; Modifiers Off'] },
   Modifier:   { title:'Modifier MODE', cls:'Modifier', lives:3, Modifiers:true, rate:1,
-             icon:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.2"/><text x="12" y="16.4" text-anchor="middle" font-size="11" font-weight="700" fill="currentColor" stroke="none">M</text></svg>',
+             icon:'<svg viewBox="0 0 24 24"><path d="M12 2.6 20.4 7.3v9.4L12 21.4 3.6 16.7V7.3z"/><text x="12" y="16.4" text-anchor="middle" font-size="11" font-weight="700" fill="currentColor" stroke="none">M</text></svg>',
              chips:['&#9825; 3 Lives', '&#9417; Modifiers On', '&#9776; Mid Rate'] },
 };
 let gameMode = 'Modifier';
@@ -4640,10 +4722,6 @@ document.getElementById('bHow').addEventListener('click', showBriefing);
 document.getElementById('bStats').addEventListener('click', showStats);
 // tapping the high-score band goes where the detail lives
 document.getElementById('hiBand').addEventListener('click', showStats);
-document.getElementById('statTabs').addEventListener('click', e => {
-  const b = e.target.closest('button'); if (!b) return;
-  statTab = +b.dataset.k; paintStats();
-});
 document.getElementById('bStatsBack').addEventListener('click', showSetup);
 document.getElementById('bBackMenu').addEventListener('click', showSetup);
 document.getElementById('bAgain').addEventListener('click', startGame);
@@ -4681,17 +4759,13 @@ function hideSettings() {
   if (setFrom) document.getElementById(setFrom).classList.remove('hidden');
 }
 function syncSettingsUI() {
-  setSpinSlider(spinPct);
   setSlider('sfxVol', 'sfxVal', Math.round(sfxVol * 100));
   if (setNameEl) setNameEl.value = displayName || '';
   const mark = (id, attr, val) => {
     const el = document.getElementById(id); if (!el) return;
     [...el.children].forEach(b => b.classList.toggle('on', +b.dataset[attr] === val));
   };
-  mark('hapticsOpts', 'h', hapticsLevel);
-  mark('shakeOpts', 's', shakeLevel);
   mark('crtOpts', 'c', crtFx ? 1 : 0);
-  mark('cbOpts', 'cb', colorBlind ? 1 : 0);
   mark('fxOpts', 'fx', fxLevel);
   mark('fpsOpts', 'f', fpsCap ? 1 : 0);
   mark('modeDiff', 'd', diffIdx);
@@ -4705,10 +4779,6 @@ function setSlider(id, label, pct) {
   const lab = document.getElementById(label);
   if (lab) lab.textContent = pct === 0 ? 'OFF' : pct + '%';
 }
-document.getElementById('spinVol').addEventListener('input', e => {
-  setSpinPct(+e.target.value);
-});
-document.getElementById('spinVol').addEventListener('change', saveSettings);
 document.getElementById('sfxVol').addEventListener('input', e => {
   sfxVol = +e.target.value / 100;
   setSlider('sfxVol', 'sfxVal', +e.target.value);
@@ -4725,10 +4795,7 @@ function bindOptRow(id, attr, apply) {
     saveSettings();
   });
 }
-bindOptRow('hapticsOpts', 'h', v => { hapticsLevel = clamp(v, 0, 2); });
-bindOptRow('shakeOpts', 's', v => { shakeLevel = clamp(v, 0, 2); });
 bindOptRow('crtOpts', 'c', v => { crtFx = !!v; applyCrtVisibility(); });
-bindOptRow('cbOpts', 'cb', v => { colorBlind = !!v; document.body.classList.toggle('cb', colorBlind); });
 bindOptRow('fxOpts', 'fx', v => { setFxLevel(v); applyCrtVisibility(); });
 bindOptRow('fpsOpts', 'f', v => { fpsCap = !!v; });
 
@@ -4853,6 +4920,7 @@ refreshLevelBand();
 refreshMissionsUI();
 refreshAchBand();
 loadMiniLeaderboard();
+loadMiniRecent();
 applyCrtVisibility();
 document.body.classList.toggle('cb', colorBlind);
 
@@ -4901,6 +4969,10 @@ document.getElementById('miniLbTabs').addEventListener('click', e => {
   lbPeriod = b.dataset.period;
   loadMiniLeaderboard();
 });
+const miniRecentEl = document.getElementById('miniRecent');
+if (miniRecentEl) miniRecentEl.addEventListener('click', showRecentMatches);
+const bRecentBack = document.getElementById('bRecentBack');
+if (bRecentBack) bRecentBack.addEventListener('click', hideRecentMatches);
 
 // sync option button highlights to restored values
 
