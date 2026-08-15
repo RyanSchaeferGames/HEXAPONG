@@ -145,20 +145,18 @@
   .fxToggle.on{background:rgba(120,220,150,.32);border-color:rgba(140,230,170,.55)}
   .fxToggle.on::after{transform:translateX(16px);background:#8ff0ab}
   /* HUD sits below the corner buttons so the two never overlap */
-  #hud{position:fixed;top:calc(58px + env(safe-area-inset-top,0px));left:0;right:0;z-index:8;
-    text-align:center;pointer-events:none;padding:0 12px;
-    font-size:10.5px;letter-spacing:.26em;color:#4c7794;text-transform:uppercase}
+  #hud{display:none !important}
   /* Prominent chase score: top band under HUD so current vs best is always glanceable */
   #scorebar{position:fixed;left:0;right:0;
-    top:calc(78px + env(safe-area-inset-top,0px));
+    top:calc(52px + env(safe-area-inset-top,0px));
     z-index:8;pointer-events:none;padding:0 12px;
-    display:flex;gap:14px;justify-content:center;align-items:baseline;flex-wrap:wrap}
+    display:flex;gap:16px;justify-content:center;align-items:baseline;flex-wrap:wrap}
   #scorebar.off{display:none}
-  #scorebar .sc{font-size:22px;font-weight:800;letter-spacing:.1em;color:#ffd97a;
-    text-shadow:0 0 14px rgba(255,200,90,.55);font-variant-numeric:tabular-nums}
-  #scorebar .sb{font-size:11px;letter-spacing:.16em;color:#8d7a4f;text-transform:uppercase;
+  #scorebar .sc{font-size:34px;font-weight:800;letter-spacing:.08em;color:#ffd97a;
+    text-shadow:0 0 18px rgba(255,200,90,.65);font-variant-numeric:tabular-nums}
+  #scorebar .sb{font-size:14px;letter-spacing:.14em;color:#8d7a4f;text-transform:uppercase;
     font-variant-numeric:tabular-nums}
-  #scorebar .sd{font-size:11px;letter-spacing:.12em;color:#c99a4a;text-transform:uppercase;
+  #scorebar .sd{font-size:14px;letter-spacing:.1em;color:#c99a4a;text-transform:uppercase;
     font-variant-numeric:tabular-nums}
   #scorebar.ahead .sc{color:#9ff5b0;text-shadow:0 0 16px rgba(120,240,150,.65)}
   #scorebar.ahead .sb,#scorebar.ahead .sd{color:#6d9b7c}
@@ -179,8 +177,8 @@
     text-shadow:0 0 10px rgba(255,200,90,.35)}
   .hsrow:first-child .hsr{color:#ffd97a}
   .hsrow.fresh{background:rgba(255,205,110,.12);box-shadow:inset 2px 0 0 #ffd97a}
-  #toast{position:fixed;left:0;right:0;top:44%;z-index:9;text-align:center;pointer-events:none;
-    padding:0 12px;font-size:26px;letter-spacing:.34em;font-weight:700;opacity:0;
+  #toast{position:fixed;left:0;right:0;top:42%;z-index:9;text-align:center;pointer-events:none;
+    padding:0 12px;font-size:78px;letter-spacing:.2em;font-weight:800;opacity:0;
     transition:opacity .25s;text-transform:uppercase}
   #toastIcon{position:fixed;left:50%;top:31%;z-index:9;pointer-events:none;
     width:64px;height:64px;transform:translate(-50%,-50%) scale(.7);opacity:0;
@@ -221,11 +219,11 @@
   button.mode:hover{background:rgba(20,44,72,.7);transform:translateX(2px)}
   .mode .mt{font-size:15px;letter-spacing:.14em;text-transform:uppercase;font-weight:700}
   /* Primary Play on the Simple menu: twice the footprint, sits above High Score */
-  button.mode.playbig{padding:22px 18px;gap:16px;justify-content:center;
+  button.mode.playbig{padding:26px 20px;gap:16px;justify-content:center;
     border-width:2px;box-shadow:0 0 28px rgba(93,226,168,.28)}
-  button.mode.playbig .mi{flex:0 0 48px;height:48px}
-  button.mode.playbig .mi svg{width:28px;height:28px}
-  button.mode.playbig .mt{font-size:22px;letter-spacing:.14em;font-weight:800}
+  button.mode.playbig .mi{flex:0 0 52px;height:52px}
+  button.mode.playbig .mi svg{width:30px;height:30px}
+  button.mode.playbig .mt{font-size:24px;letter-spacing:.12em;font-weight:800}
   button.mode.playbig:hover{transform:translateY(-1px);box-shadow:0 0 36px rgba(93,226,168,.45)}
   .mi{flex:0 0 32px;height:32px;display:flex;align-items:center;justify-content:center;
     border-radius:50%;border:1px solid currentColor}
@@ -359,6 +357,16 @@
   .cseg .opt{padding:9px 14px;min-height:38px;font-size:11px}
   .cseg .opt.on{background:rgba(150,90,255,.25);border-color:rgba(190,140,255,.9);
     box-shadow:0 0 12px rgba(160,100,255,.4)}
+  /* Tokens on/off toggle above CLICK TO PLAY: same row/label/segment shapes as the
+     Custom panel's own Tokens row, but green so it reads as "this menu's own setting"
+     rather than borrowing Custom's purple. */
+  #mTokensRow{margin:2px 0 12px}
+  /* Colour matches whichever Play-button state each choice leads to: green for the
+     token build, blue for vanilla, so the toggle and the button never disagree. */
+  #mTokens button[data-t="1"].on{background:rgba(93,226,168,.22);border-color:rgba(93,226,168,.9);
+    box-shadow:0 0 12px rgba(93,226,168,.35)}
+  #mTokens button[data-t="0"].on{background:rgba(95,184,238,.22);border-color:rgba(95,184,238,.9);
+    box-shadow:0 0 12px rgba(95,184,238,.35)}
   .grouplabel.tokensel{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:14px}
   .mini2{font:inherit;font-size:9px;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;
     padding:5px 9px;color:#9dc4e0;background:rgba(20,40,64,.5);
@@ -463,12 +471,13 @@
 
   /* active token readout, sits under the score band */
   #fxbar{position:fixed;left:0;right:0;z-index:8;text-align:center;pointer-events:none;
-    top:calc(112px + env(safe-area-inset-top,0px));padding:0 10px;
-    display:flex;gap:6px;justify-content:center;flex-wrap:wrap}
-  .fxpill{font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;padding:3px 8px;
-    border:1px solid currentColor;border-radius:2px;white-space:nowrap;
-    display:inline-flex;align-items:center;gap:6px;background:rgba(0,4,10,.55)}
-  .fxpill b{font-weight:700;opacity:.75;font-variant-numeric:tabular-nums}
+    top:calc(96px + env(safe-area-inset-top,0px));padding:0 10px;
+    display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+  .fxpill{font-size:13px;letter-spacing:.12em;text-transform:uppercase;padding:6px 12px;
+    border:1.5px solid currentColor;border-radius:3px;white-space:nowrap;
+    display:inline-flex;align-items:center;gap:8px;background:rgba(0,4,10,.6);
+    box-shadow:0 0 12px rgba(0,0,0,.35)}
+  .fxpill b{font-weight:700;opacity:.85;font-variant-numeric:tabular-nums;font-size:14px}
 
   #thint{position:fixed;left:0;right:0;z-index:8;text-align:center;pointer-events:none;
     bottom:calc(26px + env(safe-area-inset-bottom,0px));
@@ -518,22 +527,20 @@
     .cxg > p{font-size:12px}
     .cxg > h3{font-size:12px}
     .note{font-size:10.5px;padding:8px 10px;margin-bottom:12px}
-    #hud{top:calc(62px + env(safe-area-inset-top,0px));bottom:auto;
-      font-size:11px;letter-spacing:.12em;padding:0 8px}
-    #scorebar{top:calc(82px + env(safe-area-inset-top,0px));gap:10px}
-    #scorebar .sc{font-size:20px}
-    #scorebar .sb,#scorebar .sd{font-size:10px}
+    #scorebar{top:calc(50px + env(safe-area-inset-top,0px));gap:12px}
+    #scorebar .sc{font-size:28px}
+    #scorebar .sb,#scorebar .sd{font-size:12px}
     #thint{bottom:calc(18px + env(safe-area-inset-bottom,0px));font-size:11px}
-    #fxbar{top:calc(116px + env(safe-area-inset-top,0px));gap:5px}
-    .fxpill{font-size:10px;padding:4px 8px;letter-spacing:.1em}
+    #fxbar{top:calc(92px + env(safe-area-inset-top,0px));gap:6px}
+    .fxpill{font-size:12px;padding:5px 10px;letter-spacing:.08em}
     button.sw{width:44px;height:44px}
     .swatches{gap:10px;max-width:260px;grid-template-columns:repeat(4, 1fr)}
     .mode .mt{font-size:15px;letter-spacing:.1em}
     button.mode{padding:15px 14px;gap:13px}
-    button.mode.playbig{padding:20px 16px;gap:14px}
-    button.mode.playbig .mi{flex:0 0 44px;height:44px}
-    button.mode.playbig .mi svg{width:26px;height:26px}
-    button.mode.playbig .mt{font-size:18px;letter-spacing:.1em}
+    button.mode.playbig{padding:24px 16px;gap:14px}
+    button.mode.playbig .mi{flex:0 0 48px;height:48px}
+    button.mode.playbig .mi svg{width:28px;height:28px}
+    button.mode.playbig .mt{font-size:20px;letter-spacing:.08em}
     .minigrid{gap:8px}
     .minigrid .go{font-size:10px;padding:13px 4px;letter-spacing:.1em}
     h1.ruled{font-size:20px;letter-spacing:.14em}
@@ -543,7 +550,7 @@
     .cseg .opt{padding:9px 10px;font-size:10px}
     .tokrow .tn{font-size:9px}
     .tokgrid{gap:6px}
-    #toast{font-size:18px;letter-spacing:.14em}
+    #toast{font-size:54px;letter-spacing:.12em}
   }
   /* short viewports (landscape phones) are wide enough to miss the width query above,
      but still too short to show a whole panel, so they need the sticky action row too */
@@ -613,9 +620,17 @@
     <h1>HEXAPONG</h1>
     <div class="sub">Six Walls | One Survivor</div>
 
+    <div class="crow" id="mTokensRow">
+      <span class="clab">Tokens</span>
+      <span class="row cseg" id="mTokens">
+        <button class="opt on" data-t="1" type="button">On</button>
+        <button class="opt" data-t="0" type="button">Off</button>
+      </span>
+    </div>
+
     <div class="modes">
       <button class="mode token playbig" id="mPlay" type="button">
-        <span class="mi"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9.2"/><text x="12" y="16.4" text-anchor="middle" font-size="11" font-weight="700" fill="currentColor" stroke="none">T</text></svg></span>
+        <span class="mi" id="mPlayIcon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9.2"/><text x="12" y="16.4" text-anchor="middle" font-size="11" font-weight="700" fill="currentColor" stroke="none">T</text></svg></span>
         <span class="mt">CLICK TO PLAY</span>
       </button>
     </div>
@@ -1022,7 +1037,7 @@ const DIFF = [
 let diffIdx = 1;
 let startLives = 3;
 let displayName = 'RHYNOCK';
-const VERSION = '0.6.5-Simple';
+const VERSION = '0.6.8';
 /* Online leaderboard (Cloudflare Worker + D1).
    Leave empty to keep the game fully offline.
    After you deploy the Worker, set this to your workers.dev URL, e.g.:
@@ -1033,20 +1048,38 @@ const LEADERBOARD_URL = 'https://hexapong-leaderboard.hexapong.workers.dev';
    Append a new entry and bump the patch digit of VERSION on every change set.
    The in-game Changelog panel reads this array directly. */
 const CHANGELOG = [
-  { v: '0.6.5-Simple', date: '2026-08-15', notes: [
+  { v: '0.6.8', date: '2026-08-15', notes: [
+    'Ball speed no longer reduced on tip hits; speed is preserved while direction changes based on paddle contact position.',
+  ]},
+  { v: '0.6.7', date: '2026-08-15', notes: [
+    'Paddle flipped: wide edge now anchors against the wall, tapering to a point toward the ball.',
+    'Tokens on/off toggle on the main menu, above CLICK TO PLAY. Defaults on; your choice is remembered.',
+    'CLICK TO PLAY reflects the toggle: green/circle for Tokens, blue/hexagon for Vanilla.',
+    'The center-hit flash now also fires on clean tip hits, positioned at the actual contact point.',
+    'Leaderboard rows show whether that run had tokens on.',
+  ]},
+  { v: '0.6.6', date: '2026-08-15', notes: [
+    'Dropped the Simple label from the version string.',
+    'Match countdown text is 3× larger.',
+    'In-match HUD line removed; score and active-token pills enlarged for glanceability.',
+    'Touch guide line is 3× wider with Place finger here label.',
+    'CLICK TO PLAY button slightly larger.',
+    'Default paddle is now a trapezoid: flat middle, angled ends steer the ball.',
+  ]},
+  { v: '0.6.5', date: '2026-08-15', notes: [
     'Token spawn rate halved vs previous double rate; max 3 tokens on field; no duplicate tokens at once.',
     'Match start countdown is now 5–4–3–2–1–GO.',
     'Choke renamed Shrink (10s); Overdrive renamed Growth.',
     'Main menu Play button reads CLICK TO PLAY.',
     'Touch guide: dotted line under the arena shows where to drag the paddle.',
   ]},
-  { v: '0.6.4-Simple', date: '2026-08-15', notes: [
+  { v: '0.6.4', date: '2026-08-15', notes: [
     'Removed Reversal and Rotation tokens.',
     'Eclipse Drift reworked: ball freezes while the arena rotates for a random 3–10s, then play resumes from the new orientation.',
     'Play button moved above High Score and enlarged.',
   ]},
-  { v: '0.6.3-Simple', date: '2026-08-14', notes: [
-    'Simple build: one Play button — Token Mode on Normal, double token spawn rate.',
+  { v: '0.6.3', date: '2026-08-14', notes: [
+    'One Play button — Token Mode on Normal, double token spawn rate.',
     'Vanilla and Custom modes removed from the menu. Endless removed.',
     'All tokens (buff, nerf, wildcard) now affect every living player.',
     'Repair will not spawn when everyone already has full lives — another token is chosen instead.',
@@ -1626,12 +1659,25 @@ function formatLbDate(r) {
   const day = String(d.getDate()).padStart(2, '0');
   return y + '.' + m + '.' + day;
 }
+// Every submission already carries mode ('token' or 'vanilla', see submitOnlineScore) —
+// it was just never shown, back when everyone was forced into Token mode anyway and the
+// field would have been redundant. Now that the menu toggle can turn tokens off, it is
+// worth a word. Older rows submitted before this existed simply omit the tag rather than
+// guess at a mode that was never recorded.
+function lbTokensTag(r) {
+  const raw = String(r.mode || r.gameMode || '').toLowerCase();
+  if (raw === 'vanilla') return 'No Tokens';
+  if (raw === 'token') return 'Tokens';
+  return '';
+}
 function lbRowHtml(r) {
   const dateStr = formatLbDate(r);
   const bits = [];
   if (dateStr) bits.push(dateStr);
   const dur = formatLbDuration(r.duration);
   if (dur) bits.push(dur);
+  const tag = lbTokensTag(r);
+  if (tag) bits.push(tag);
   return '<div class="lbrow">' +
     '<span class="lbr">' + (r.rank || '') + '</span>' +
     '<span class="lbn">' + (r.name || 'PLAYER') +
@@ -1997,6 +2043,7 @@ function newPlayers() {
     out: false,
     hitFlash: 0,
     sweetFlash: 0,
+    sweetOff: 0,
     hurtFlash: 0,
     aiTarget: 0.5,
     aiJitter: Math.random() * 100,
@@ -2811,7 +2858,11 @@ function collide(b) {
 
       if (dist < BALL.r + PAD.thick * 0.5 && vn < 0) {
         const off = clamp((tc - c) / hs, -1, 1);
-        const ang = off * 1.05;                       // up to ~60deg of english
+        // Trapezoid ends: mild in the flat middle, stronger on the angled tips so
+        // corner hits deliberately steer left/right.
+        const aOff = Math.abs(off);
+        const tipBoost = aOff < 0.45 ? (aOff / 0.45) * 0.7 : 0.7 + (aOff - 0.45) / 0.55 * 0.55;
+        const ang = Math.sign(off || 1) * tipBoost * 1.22;   // up to ~70deg at the tip
         let sp = Math.min(Math.hypot(b.vx, b.vy) * 1.03,
                           R * d.ballMax * (1 + 0.45 * pressure));
 
@@ -2825,7 +2876,16 @@ function collide(b) {
         tOut += carry;
         const maxT = Math.abs(vOut) * Math.tan(MAX_DEFLECT);
         tOut = clamp(tOut, -maxT, maxT);
+        // Preserve the original speed: the direction changes based on hit position,
+        // but the outgoing speed remains constant. Scale the velocity vector back
+        // to the desired speed after clamping.
         let sp2 = Math.hypot(vOut, tOut);
+        if (sp2 > 0) {
+          const speedScale = sp / sp2;
+          vOut *= speedScale;
+          tOut *= speedScale;
+          sp2 = sp;
+        }
         const cap = R * d.ballMax * (1 + 0.45 * pressure) * 1.18;
         if (sp2 > cap) { const k = cap / sp2; vOut *= k; tOut *= k; sp2 = cap; }
 
@@ -2871,11 +2931,22 @@ function collide(b) {
         if (rallyHits > run.bestRally) run.bestRally = rallyHits;
         if (sp2 > run.topSpeed) run.topSpeed = sp2;
         if (p.human) playerHits++;
-        // Sweet-spot flash: center contact gets a brighter, longer pulse + soft beep.
-        if (p.human && Math.abs(off) < 0.08) {
+        // Sweet-spot flash: a brighter, longer pulse + soft beep. Center contact is the
+        // scored "perfect hit" (Apollo's Mark). The same flash also fires for a clean hit
+        // on either angled tip — same aOff threshold the steering boost above uses — so
+        // deliberately playing the corners feels as rewarding as it is useful. Tip hits are
+        // positioned at the actual contact point (via sweetOff) rather than paddle center,
+        // but do not count toward the center-only achievement counter.
+        if (p.human && aOff < 0.08) {
           career.perfectHits++;
           p.hitFlash = 1.55;
           p.sweetFlash = 1;
+          p.sweetOff = off;
+          beep(920, 0.04, 'sine', 0.035);
+        } else if (p.human && aOff >= 0.45) {
+          p.hitFlash = 1.55;
+          p.sweetFlash = 1;
+          p.sweetOff = off;
           beep(920, 0.04, 'sine', 0.035);
         }
         if (p.human) {
@@ -3299,15 +3370,16 @@ function drawTouchGuide() {
   const screenBottom = H - (inset.b || 0) - 8;
   if (screenBottom <= arenaBottom + 12) return;
   const y = (arenaBottom + screenBottom) * 0.5;
-  const len = Math.max(PAD.len || 40, halfSpan(me) * 2);
+  // 3× the paddle-width guide so the touch target is obvious
+  const len = Math.max(PAD.len || 40, halfSpan(me) * 2) * 3;
   const x0 = CX - len * 0.5, x1 = CX + len * 0.5;
   // Stronger while the text hint is still up; softer after the player has dragged once
-  const a = hintDone ? 0.18 : 0.55;
+  const a = hintDone ? 0.22 : 0.7;
   ctx.save();
   ctx.globalCompositeOperation = 'source-over';
   ctx.strokeStyle = 'rgba(143,188,216,' + a + ')';
-  ctx.lineWidth = 2;
-  ctx.setLineDash([5, 7]);
+  ctx.lineWidth = 3;
+  ctx.setLineDash([8, 10]);
   ctx.lineCap = 'round';
   ctx.beginPath();
   ctx.moveTo(x0, y);
@@ -3315,11 +3387,22 @@ function drawTouchGuide() {
   ctx.stroke();
   // end caps so it reads as a target zone, not a random dash
   ctx.setLineDash([]);
-  ctx.lineWidth = 2;
+  ctx.lineWidth = 3;
   ctx.beginPath();
-  ctx.moveTo(x0, y - 5); ctx.lineTo(x0, y + 5);
-  ctx.moveTo(x1, y - 5); ctx.lineTo(x1, y + 5);
+  ctx.moveTo(x0, y - 8); ctx.lineTo(x0, y + 8);
+  ctx.moveTo(x1, y - 8); ctx.lineTo(x1, y + 8);
   ctx.stroke();
+  // Label above the guide
+  if (!hintDone) {
+    ctx.font = '700 13px ui-monospace,monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
+    ctx.fillStyle = 'rgba(168,207,232,' + a + ')';
+    ctx.shadowColor = 'rgba(90,180,255,0.45)';
+    ctx.shadowBlur = 10;
+    ctx.letterSpacing = '0.18em';
+    ctx.fillText('PLACE FINGER HERE', CX, y - 12);
+  }
   ctx.restore();
 }
 
@@ -3422,33 +3505,51 @@ function drawWall(w) {
 function drawPaddle(w) {
   const p = w.owner;
   const c = p.pos * w.len + p.jit, hs = halfSpan(p);
-  const x1 = w.ax + w.dx * (c - hs), y1 = w.ay + w.dy * (c - hs);
-  const x2 = w.ax + w.dx * (c + hs), y2 = w.ay + w.dy * (c + hs);
-  const ox = w.nx * padCenterS(), oy = w.ny * padCenterS();
+  // Trapezoid, flipped from the original: short tapered face toward the arena,
+  // long full-width face against the wall. Reads like a wedge pointed at the ball.
+  // Outer ends are angled so corner hits are readable and steerable.
+  const tip = hs * 0.28;                         // how much the arena-facing end tucks in
+  const backHs = Math.max(hs * 0.45, hs - tip);  // shorter tapered face
+  const outS = padFaceS() - BALL.r * 0.15;       // contact face (toward center)
+  const inS  = PAD.gap + 1;                     // back face (near wall)
+  const dx = w.dx, dy = w.dy, nx = w.nx, ny = w.ny;
+  // Contact face corners (short, tapered)
+  const c1x = w.ax + dx * (c - backHs) + nx * outS, c1y = w.ay + dy * (c - backHs) + ny * outS;
+  const c2x = w.ax + dx * (c + backHs) + nx * outS, c2y = w.ay + dy * (c + backHs) + ny * outS;
+  // Back face corners (long, full width)
+  const b1x = w.ax + dx * (c - hs) + nx * inS, b1y = w.ay + dy * (c - hs) + ny * inS;
+  const b2x = w.ax + dx * (c + hs) + nx * inS, b2y = w.ay + dy * (c + hs) + ny * inS;
 
   ctx.save();
+  ctx.lineJoin = 'round';
   ctx.lineCap = 'butt';
   if (fxLevel === 0) {
-    // Off: flat solid colour, no glow, no white core
     ctx.shadowBlur = 0;
-    ctx.strokeStyle = p.col;
-    ctx.lineWidth = PAD.thick;
-    ctx.beginPath(); ctx.moveTo(x1 + ox, y1 + oy); ctx.lineTo(x2 + ox, y2 + oy); ctx.stroke();
+    ctx.fillStyle = p.col;
+    ctx.beginPath();
+    ctx.moveTo(c1x, c1y); ctx.lineTo(c2x, c2y); ctx.lineTo(b2x, b2y); ctx.lineTo(b1x, b1y);
+    ctx.closePath(); ctx.fill();
   } else {
-    // Strong coloured body so the chosen neon is obvious even with CRT / lite mode
     ctx.shadowColor = p.col;
     ctx.shadowBlur = lite ? 9 + p.hitFlash * 12 : 22 + p.hitFlash * 36;
+    ctx.fillStyle = hexA(p.col, 0.92);
     ctx.strokeStyle = hexA(p.col, 0.98);
-    ctx.lineWidth = PAD.thick;
-    ctx.beginPath(); ctx.moveTo(x1 + ox, y1 + oy); ctx.lineTo(x2 + ox, y2 + oy); ctx.stroke();
-    // thinner, softer white core — colour stays dominant
+    ctx.lineWidth = Math.max(1.5, PAD.thick * 0.18);
+    ctx.beginPath();
+    ctx.moveTo(c1x, c1y); ctx.lineTo(c2x, c2y); ctx.lineTo(b2x, b2y); ctx.lineTo(b1x, b1y);
+    ctx.closePath(); ctx.fill(); ctx.stroke();
+    // lighter core strip along the contact face
     ctx.shadowBlur = lite ? 4 + p.hitFlash * 8 : 10 + p.hitFlash * 28;
-    ctx.strokeStyle = 'rgba(255,255,255,' + (0.38 + p.hitFlash * 0.35) + ')';
-    ctx.lineWidth = Math.max(1.5, PAD.thick * 0.22);
-    ctx.beginPath(); ctx.moveTo(x1 + ox, y1 + oy); ctx.lineTo(x2 + ox, y2 + oy); ctx.stroke();
-    // Sweet-spot flash: brief gold ring at the contact point on perfect center hits
+    ctx.strokeStyle = 'rgba(255,255,255,' + (0.40 + p.hitFlash * 0.35) + ')';
+    ctx.lineWidth = Math.max(1.4, PAD.thick * 0.2);
+    ctx.beginPath(); ctx.moveTo(c1x, c1y); ctx.lineTo(c2x, c2y); ctx.stroke();
+    // Sweet-spot / tip flash, positioned at the real contact point along the paddle
+    // (sweetOff, from -1 to 1) rather than always the drawn face's midpoint — the
+    // contact face is short after the flip, so a tip hit's flash still needs to land
+    // out at the actual tip rather than being pulled back toward the shape's own center.
     if (p.sweetFlash > 0) {
-      const mx = (x1 + x2) / 2 + ox, my = (y1 + y2) / 2 + oy;
+      const ftc = c + (p.sweetOff || 0) * hs;
+      const mx = w.ax + dx * ftc + nx * outS, my = w.ay + dy * ftc + ny * outS;
       const k = p.sweetFlash;
       ctx.shadowColor = '#ffd97a';
       ctx.shadowBlur = glow(18 * k);
@@ -3814,16 +3915,6 @@ function frame(now) {
   if (dt > 0.05) dt = 0.05;
   if (running && !paused && !over) update(dt);
   if (!window.__HEX_NODRAW) draw();
-  const hud = document.getElementById('hud');
-  if (running && !over) {
-    const alive = players.filter(p => !p.out).length;
-    const spec = players[PLAYER].out ? (compact ? 'SPEC · ' : 'SPECTATING · ') : '';
-    hud.textContent = compact
-      ? spec + alive + ' WALLS · RALLY ' + rallyHits + ' · DECAY ' + Math.round(pressure * 100) +
-        '% · ' + Math.floor(elapsed) + 's'
-      : spec + DIFF[diffIdx].label + ' · ' + alive + ' WALLS LIVE · RALLY ' + rallyHits +
-        ' · DECAY ' + Math.round(pressure * 100) + '% · ' + elapsed.toFixed(1) + 's';
-  } else hud.textContent = '';
   renderScoreBar();
   renderFxBar();
 }
@@ -4422,12 +4513,13 @@ function syncCustomUI() {
   if (cn) cn.disabled = !tokensOn;
 }
 
-// Simple build: single Play button → Token Mode, Normal, double token rate
+// Simple build: single Play button → Normal difficulty, mid token rate. Tokens
+// on/off comes from the menu toggle (tokensOn), not forced here, so a player's
+// choice survives from one match to the next.
 function startSimplePlay() {
-  gameMode = 'token';
+  gameMode = tokensOn ? 'token' : 'vanilla';
   diffIdx = 1;           // Normal
   startLives = 3;
-  tokensOn = true;
   tokenRate = 1;         // Mid = half as often as previous double (Max) rate
   endlessMode = false;
   saveSettings();
@@ -4435,6 +4527,29 @@ function startSimplePlay() {
 }
 const mPlayBtn = document.getElementById('mPlay');
 if (mPlayBtn) mPlayBtn.addEventListener('click', startSimplePlay);
+
+// Tokens on/off toggle: default on, remembered via saveSettings/applySavedSettings
+// (tokensOn already round-trips through both). This just adds the menu control and
+// keeps the Play button's icon/colour in sync with the current choice.
+function syncTokensToggle() {
+  const seg = document.getElementById('mTokens');
+  if (seg) [...seg.children].forEach(b => b.classList.toggle('on', (b.dataset.t === '1') === tokensOn));
+  const play = document.getElementById('mPlay');
+  const icon = document.getElementById('mPlayIcon');
+  if (play && icon) {
+    const m = tokensOn ? MODES.token : MODES.vanilla;
+    play.classList.remove('token', 'vanilla');
+    play.classList.add(m.cls);
+    icon.innerHTML = m.icon;
+  }
+}
+const mTokensSeg = document.getElementById('mTokens');
+if (mTokensSeg) mTokensSeg.addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  tokensOn = b.dataset.t === '1';
+  syncTokensToggle();
+  saveSettings();
+});
 const bModeBack = document.getElementById('bModeBack');
 if (bModeBack) bModeBack.addEventListener('click', showSetup);
 const bCustomBack = document.getElementById('bCustomBack');
@@ -4686,6 +4801,7 @@ newRun();
 
 // restore menu + quality prefs (after tokensOn / sound exist)
 applySavedSettings();
+syncTokensToggle();
 // accessibility: respect reduced-motion unless the player already saved an FX choice
 try {
   if (!savedSettings || (typeof savedSettings.fxLevel !== 'number' && typeof savedSettings.lite !== 'boolean')) {
