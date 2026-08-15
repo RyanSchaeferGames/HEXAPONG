@@ -220,6 +220,13 @@
     border:1px solid rgba(110,180,240,.35);transition:.15s}
   button.mode:hover{background:rgba(20,44,72,.7);transform:translateX(2px)}
   .mode .mt{font-size:15px;letter-spacing:.14em;text-transform:uppercase;font-weight:700}
+  /* Primary Play on the Simple menu: twice the footprint, sits above High Score */
+  button.mode.playbig{padding:22px 18px;gap:16px;justify-content:center;
+    border-width:2px;box-shadow:0 0 28px rgba(93,226,168,.28)}
+  button.mode.playbig .mi{flex:0 0 48px;height:48px}
+  button.mode.playbig .mi svg{width:28px;height:28px}
+  button.mode.playbig .mt{font-size:22px;letter-spacing:.14em;font-weight:800}
+  button.mode.playbig:hover{transform:translateY(-1px);box-shadow:0 0 36px rgba(93,226,168,.45)}
   .mi{flex:0 0 32px;height:32px;display:flex;align-items:center;justify-content:center;
     border-radius:50%;border:1px solid currentColor}
   .mi svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.7;
@@ -523,6 +530,10 @@
     .swatches{gap:10px;max-width:260px;grid-template-columns:repeat(4, 1fr)}
     .mode .mt{font-size:15px;letter-spacing:.1em}
     button.mode{padding:15px 14px;gap:13px}
+    button.mode.playbig{padding:20px 16px;gap:14px}
+    button.mode.playbig .mi{flex:0 0 44px;height:44px}
+    button.mode.playbig .mi svg{width:26px;height:26px}
+    button.mode.playbig .mt{font-size:18px;letter-spacing:.1em}
     .minigrid{gap:8px}
     .minigrid .go{font-size:10px;padding:13px 4px;letter-spacing:.1em}
     h1.ruled{font-size:20px;letter-spacing:.14em}
@@ -602,6 +613,13 @@
     <h1>HEXAPONG</h1>
     <div class="sub">Six Walls | One Survivor</div>
 
+    <div class="modes">
+      <button class="mode token playbig" id="mPlay" type="button">
+        <span class="mi"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9.2"/><text x="12" y="16.4" text-anchor="middle" font-size="11" font-weight="700" fill="currentColor" stroke="none">T</text></svg></span>
+        <span class="mt">CLICK TO PLAY</span>
+      </button>
+    </div>
+
     <button class="hiband off" id="hiBand" type="button">
       <span class="hl">High Score</span>
       <span class="hv" id="hiVal">0</span>
@@ -618,13 +636,6 @@
       <div class="xpbar"><div class="xpbar-fill" id="lvlFill" style="width:0%"></div></div>
       <button type="button" class="go alt" id="bPrestige" style="display:none;margin-top:10px;width:100%">
         Prestige ★
-      </button>
-    </div>
-
-    <div class="modes">
-      <button class="mode token" id="mPlay" type="button">
-        <span class="mi"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9.2"/><text x="12" y="16.4" text-anchor="middle" font-size="11" font-weight="700" fill="currentColor" stroke="none">T</text></svg></span>
-        <span class="mt">Play</span>
       </button>
     </div>
 
@@ -1011,7 +1022,7 @@ const DIFF = [
 let diffIdx = 1;
 let startLives = 3;
 let displayName = 'RHYNOCK';
-const VERSION = '0.6.3-Simple';
+const VERSION = '0.6.5-Simple';
 /* Online leaderboard (Cloudflare Worker + D1).
    Leave empty to keep the game fully offline.
    After you deploy the Worker, set this to your workers.dev URL, e.g.:
@@ -1022,6 +1033,18 @@ const LEADERBOARD_URL = 'https://hexapong-leaderboard.hexapong.workers.dev';
    Append a new entry and bump the patch digit of VERSION on every change set.
    The in-game Changelog panel reads this array directly. */
 const CHANGELOG = [
+  { v: '0.6.5-Simple', date: '2026-08-15', notes: [
+    'Token spawn rate halved vs previous double rate; max 3 tokens on field; no duplicate tokens at once.',
+    'Match start countdown is now 5–4–3–2–1–GO.',
+    'Choke renamed Shrink (10s); Overdrive renamed Growth.',
+    'Main menu Play button reads CLICK TO PLAY.',
+    'Touch guide: dotted line under the arena shows where to drag the paddle.',
+  ]},
+  { v: '0.6.4-Simple', date: '2026-08-15', notes: [
+    'Removed Reversal and Rotation tokens.',
+    'Eclipse Drift reworked: ball freezes while the arena rotates for a random 3–10s, then play resumes from the new orientation.',
+    'Play button moved above High Score and enlarged.',
+  ]},
   { v: '0.6.3-Simple', date: '2026-08-14', notes: [
     'Simple build: one Play button — Token Mode on Normal, double token spawn rate.',
     'Vanilla and Custom modes removed from the menu. Endless removed.',
@@ -1896,7 +1919,7 @@ let players = [];
 let balls = [];                 // more than one once Split is in play
 let running = false, paused = false, over = false;
 let serveTimer = 0, shakeT = 0, shakeMag = 0;
-let countdown = 0;          // 3..1 then GO; blocks play at match start / restart
+let countdown = 0;          // 5..1 then GO at match start; 3..1 on resume
 let rallyHits = 0, elapsed = 0, playerHits = 0, knockouts = 0;
 let pressure = 0;
 let sound = true, lastT = 0;
@@ -1913,18 +1936,18 @@ let tokenTimer = 0;
 let bursts = [];          // pickup flashes
 let gfx = {};             // global (arena-wide) effects: id -> seconds remaining
 let spin = 0, spinRate = 0;   // Rotation: extra angle on every wall, unwinds to 0
-let eclipseSpin = 0, eclipseT = 0;   // Eclipse Drift: slow continuous angle, separate from Rotation
+let eclipseSpin = 0, eclipseT = 0, eclipseRate = 0;   // Eclipse Drift: freeze balls, rotate, then resume
 const PULSE_DUR = 1.6;
 let pulseT = 0, pulseBaseR = 0;   // Pulse Contract: temporary radius squeeze-and-release
 let bountyOn = false;
 
 const TOKEN_FIRST = 10;   // no tokens in the opening seconds; learn the base game first
 const TOKEN_MIN = 10, TOKEN_MAX = 15;   // Mid rate base interval (seconds)
-const MAX_TOKENS = 5;
+const MAX_TOKENS = 3;
 let tokensOn = true;      // toggled from the main menu
 // 0=Min (half rate → 2× interval), 1=Mid (current), 2=Max (double rate → ½ interval)
-// Simple build defaults to Max (double spawn rate)
-let tokenRate = 2;
+// Simple build uses Mid (half of former double rate)
+let tokenRate = 1;
 function tokenInterval() {
   const base = TOKEN_MIN + Math.random() * (TOKEN_MAX - TOKEN_MIN);
   const mul = tokenRate === 0 ? 2 : tokenRate === 2 ? 0.5 : 1;
@@ -1953,7 +1976,7 @@ function fxDur(f) {
 function clearFx() {
   tokens = []; bursts = []; gfx = {}; bountyOn = false;
   spin = 0; spinRate = 0;
-  eclipseSpin = 0; eclipseT = 0; pulseT = 0; pulseBaseR = 0;
+  eclipseSpin = 0; eclipseT = 0; eclipseRate = 0; pulseT = 0; pulseBaseR = 0;
   tokenTimer = TOKEN_FIRST;
   for (const p of players) { p.fx = {}; p.heavy = 0; }
 }
@@ -2029,11 +2052,11 @@ function startGame() {
   clearFx();
   balls = [];                         // hold the ball until countdown finishes
   serveTimer = 0;
-  countdown = 3.0;
+  countdown = 5.0;
   ['start', 'brief', 'over', 'pausePanel', 'codex', 'statsPanel', 'setPanel', 'modePanel', 'customPanel', 'logPanel'].forEach(id =>
     document.getElementById(id).classList.add('hidden'));
   document.getElementById('bPause').textContent = 'PAUSE';
-  toast('3', '#bfe9ff', 0.9);
+  toast('5', '#bfe9ff', 0.9);
   haptic(10);
   drag.active = false;
   showHint();
@@ -2058,15 +2081,18 @@ function pickEffect() {
   const primary = r < 0.40 ? 0 : r < 0.76 ? 1 : 2;
   const order = [primary, ...[0, 1, 2].filter(i => i !== primary)];
   const full = allPlayersFullLives();
+  // No duplicate types while a token of that id is already on the field
+  const active = new Set(tokens.map(t => t.fx && t.fx.id));
   for (const idx of order) {
     const g = EFFECTS[idx];
     // Simple build: always use the full roster (no Custom toggles)
     const pool = g.list.filter(f =>
+      !active.has(f.id) &&
       (f.id !== 'split' || balls.length < 3) &&
       !(full && f.id === 'repair'));
     if (pool.length) return pool[Math.floor(Math.random() * pool.length)];
   }
-  return null;   // every token is toggled off
+  return null;   // every token is toggled off / already active
 }
 
 function tokenR() { return Math.max(12, R * 0.0605); }   // 10% bigger than before
@@ -2140,7 +2166,7 @@ function resolveToken(t, b, p) {
 function applyEffect(f, targets) {
   const dur = fxDur(f);
   switch (f.id) {
-    case 'overdrive': case 'choke': case 'invert':
+    case 'overdrive': case 'choke':
       for (const q of targets) { q.fx[f.id] = dur; q.hurtFlash = f.key === 'n' ? 1 : q.hurtFlash; }
       break;
 
@@ -2166,21 +2192,29 @@ function applyEffect(f, targets) {
       }
       break;
     }
-    case 'rotate':
-      // a full swing: the walls really do move, so returns mid-spin are a lottery
-      spin = 0; spinRate = TAU / 2.0;
-      applyShake(8, 0.4);
-      break;
     case 'pulse':
       // rapid squeeze-and-release of the whole arena; capture the true target once so
       // a second Pulse landing mid-squeeze doesn't ratchet the arena down permanently
       if (pulseT <= 0) pulseBaseR = Rtarget;
       pulseT = PULSE_DUR;
       break;
-    case 'eclipse':
-      // a slow continuous drift, distinct from Rotation's one quick half-swing
-      eclipseT = dur;
+    case 'eclipse': {
+      // Freeze the ball(s), spin the arena for a random 3–10s, then resume from the
+      // new orientation so every player is effectively at a different seat.
+      if (eclipseT > 0) break;   // already drifting — ignore stacked hits
+      const secs = 3 + Math.random() * 7;           // 3..10
+      const turns = 0.35 + Math.random() * 0.55;    // ~126° .. ~198°
+      const dir = Math.random() < 0.5 ? 1 : -1;
+      eclipseRate = dir * (TAU * turns) / secs;
+      eclipseT = secs;
+      // snapshot velocities so balls stay frozen in place during the spin
+      for (const b of balls) {
+        b._fvx = b.vx; b._fvy = b.vy;
+        b.vx = 0; b.vy = 0;
+      }
+      applyShake(5, 0.25);
       break;
+    }
   }
 }
 
@@ -2416,7 +2450,7 @@ function toast(txt, col, dur, icon) {
 
 /* ─────────────────────────── update ─────────────────────────── */
 function update(dt) {
-  // Pre-match countdown: 3 → 2 → 1 → GO, then serve
+  // Pre-match countdown: 5 → 4 → 3 → 2 → 1 → GO, then serve
   if (countdown > 0) {
     const prev = Math.ceil(countdown);
     countdown -= dt;
@@ -2481,13 +2515,21 @@ function update(dt) {
     buildWalls();
   }
 
-  // Eclipse Drift — a slow continuous rotation for the token's duration, separate
-  // from Rotation's one quick half-swing; just fades out rather than snapping back
+  // Eclipse Drift — ball is frozen; arena rotates for a random duration, then
+  // velocity is restored so play continues from the new orientation.
   if (eclipseT > 0) {
     eclipseT -= dt;
-    eclipseSpin += (TAU / 14) * dt;
+    eclipseSpin += eclipseRate * dt;
     buildWalls();
-    if (eclipseT <= 0) eclipseT = 0;
+    if (eclipseT <= 0) {
+      eclipseT = 0;
+      eclipseRate = 0;
+      for (const b of balls) {
+        if (b._fvx !== undefined) { b.vx = b._fvx; b.vy = b._fvy; delete b._fvx; delete b._fvy; }
+      }
+      // Keep eclipseSpin so the seating stays shifted (no snap-back).
+      toast('ECLIPSE ENDS', '#dcaaff', 0.9);
+    }
   }
 
   // Pulse Contract — a rapid squeeze-and-release of the whole arena. Rides the same
@@ -2511,7 +2553,7 @@ function update(dt) {
   // ── tokens ──────────────────────────────────────────
   // nothing spawns during a serve or while the arena is collapsing/spinning: those
   // moments are busy enough already
-  const calm = serveTimer <= 0 && spinRate === 0 && Math.abs(R - Rtarget) <= 0.4;
+  const calm = serveTimer <= 0 && spinRate === 0 && eclipseT <= 0 && Math.abs(R - Rtarget) <= 0.4;
   if (tokensOn && running && !over && calm && tokens.length < MAX_TOKENS) {
     tokenTimer -= dt;
     if (tokenTimer <= 0) {
@@ -2598,6 +2640,8 @@ function update(dt) {
 
   // ── balls ───────────────────────────────────────────
   if (serveTimer > 0) { serveTimer -= dt; return; }
+  // Eclipse: arena is turning; balls stay frozen in place until it stops
+  if (eclipseT > 0) return;
 
   for (const b of balls) {
     gravityPull(b, dt);
@@ -3222,6 +3266,7 @@ function draw() {
   drawTokens();
   for (const b of balls) drawBall(b);
   drawBursts();
+  drawTouchGuide();
 
   if (collapseFlash > 0.01) {
     const g = ctx.createRadialGradient(CX, CY, 0, CX, CY, R * 1.3);
@@ -3236,6 +3281,46 @@ function draw() {
   for (const w of walls) if (w.owner) drawLabel(w);
 
   if (paused) { ctx.fillStyle = 'rgba(0,4,10,.5)'; ctx.fillRect(0, 0, W, H); }
+}
+
+
+/* Dotted drag guide: midway between the bottom of the arena and the screen edge,
+   roughly the width of the player's paddle — shows where to rest a finger on touch. */
+function drawTouchGuide() {
+  if (!TOUCH || !running || over || ending) return;
+  const me = players[PLAYER];
+  if (!me || me.out) return;
+  // Find the outer-most Y of the arena (player sits on the bottom rail)
+  let arenaBottom = CY + R;
+  for (const w of walls) {
+    if (w.ay > arenaBottom) arenaBottom = w.ay;
+    if (w.by > arenaBottom) arenaBottom = w.by;
+  }
+  const screenBottom = H - (inset.b || 0) - 8;
+  if (screenBottom <= arenaBottom + 12) return;
+  const y = (arenaBottom + screenBottom) * 0.5;
+  const len = Math.max(PAD.len || 40, halfSpan(me) * 2);
+  const x0 = CX - len * 0.5, x1 = CX + len * 0.5;
+  // Stronger while the text hint is still up; softer after the player has dragged once
+  const a = hintDone ? 0.18 : 0.55;
+  ctx.save();
+  ctx.globalCompositeOperation = 'source-over';
+  ctx.strokeStyle = 'rgba(143,188,216,' + a + ')';
+  ctx.lineWidth = 2;
+  ctx.setLineDash([5, 7]);
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(x0, y);
+  ctx.lineTo(x1, y);
+  ctx.stroke();
+  // end caps so it reads as a target zone, not a random dash
+  ctx.setLineDash([]);
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(x0, y - 5); ctx.lineTo(x0, y + 5);
+  ctx.moveTo(x1, y - 5); ctx.lineTo(x1, y + 5);
+  ctx.stroke();
+  ctx.restore();
 }
 
 function drawDebris() {
@@ -3790,38 +3875,35 @@ for (const k in TOKEN_ICON_DATA) {
 
 const EFFECTS = [
   { key:'b', title:'Buffs', col:'#ffd97a',
-    blurb:'Gold glow. Affects every living player.',
+    blurb:'',
     list:[
-      { id:'overdrive', name:'Overdrive', dur:10, durTxt:'10s',
-        desc:'Every living paddle grows about 60% wider.' },
+      { id:'overdrive', name:'Growth', dur:10, durTxt:'10s',
+        desc:'Paddles width grows 60%.' },
       { id:'repair',    name:'Repair',    dur:0,  durTxt:'Instant',
-        desc:'Every living player gains one life (up to the starting max).' },
+        desc:'Players gain one life (up to the starting max).' },
     ]},
   { key:'n', title:'Nerfs', col:'#ff9a8f',
-    blurb:'Red glow. Affects every living player.',
+    blurb:'',
     list:[
-      { id:'choke',  name:'Choke',      dur:8, durTxt:'8s',
-        desc:'Every living paddle shrinks by about 40%.' },
-      { id:'invert', name:'Reversal',   dur:7, durTxt:'7s',
-        desc:'Every living player has controls flipped — mouse, touch, and keyboard alike.' },
+      { id:'choke',  name:'Shrink',      dur:10, durTxt:'10s',
+        desc:'Paddles width shrinks 40%.' },
     ]},
   { key:'w', title:'Wildcards', col:'#dcaaff',
-    blurb:'Violet glow. Arena-wide chaos that hits everyone.',
+    blurb:'',
     list:[
       { id:'split',    name:'Split',     dur:0,  durTxt:'Until lost',
         desc:'A second ball enters play. Either one can score on anybody.' },
-      { id:'rotate',   name:'Rotation',  dur:0,  durTxt:'Instant',
-        desc:'The whole arena swings around over two seconds. Paddles ride their walls as it turns.' },
       { id:'bounty',   name:'Bounty',    dur:0,  durTxt:'Until claimed', global:true,
         desc:'The next player to concede loses two wall segments instead of one.' },
       { id:'pulse',    name:'Pulse Contract', dur:0, durTxt:'Instant',
         desc:'The whole arena squeezes inward and snaps back over about two seconds.' },
       { id:'gravity',  name:'Gravity Well', dur:8, durTxt:'8s', global:true,
         desc:'A hard pull toward the centre of the arena bends every ball\u2019s path. Lead your shots.' },
-      { id:'eclipse',  name:'Eclipse Drift', dur:10, durTxt:'10s', global:true,
-        desc:'The arena drifts in one slow continuous spin for the duration — no snap, just drift.' },
+      { id:'eclipse',  name:'Eclipse Drift', dur:0,  durTxt:'3–10s', global:true,
+        desc:'The ball freezes while the arena rotates for a random 3–10 seconds. When it stops, play resumes from a new angle.' },
     ]},
 ];
+
 
 const FX = {};                         // id -> effect definition (+ its category)
 EFFECTS.forEach(g => g.list.forEach(f => { f.key = g.key; f.col = g.col; FX[f.id] = f; }));
@@ -4346,7 +4428,7 @@ function startSimplePlay() {
   diffIdx = 1;           // Normal
   startLives = 3;
   tokensOn = true;
-  tokenRate = 2;         // Max = double spawn rate
+  tokenRate = 1;         // Mid = half as often as previous double (Max) rate
   endlessMode = false;
   saveSettings();
   startGame();
