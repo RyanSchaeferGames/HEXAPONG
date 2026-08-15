@@ -120,7 +120,7 @@
   .fx{display:flex;gap:11px;align-items:flex-start;padding:8px 0;
     border-bottom:1px solid rgba(90,150,200,.09)}
   .fx:last-child{border-bottom:none}
-  /* No shape around the icon any more: the index groups tokens under Buffs / Nerfs /
+  /* No shape around the icon any more: the index groups Modifiers under Buffs / Nerfs /
      Wildcards headings, so the outline was redundant and the glyph can use the space. */
   .tok{flex:0 0 34px;height:34px;display:flex;align-items:center;justify-content:center;
     font-size:13px;font-weight:700;line-height:1}
@@ -253,7 +253,7 @@
   .mi.big{flex:0 0 54px;height:54px}
   .mi.big svg{width:30px;height:30px}
   .mode.vanilla{border-color:rgba(95,184,238,.5)} .mode.vanilla .mi{color:#5fb8ee}
-  .mode.token{border-color:rgba(93,226,168,.5)} .mode.token .mi{color:#5de2a8}
+  .mode.Modifier{border-color:rgba(93,226,168,.5)} .mode.Modifier .mi{color:#5de2a8}
   .mode.custom{border-color:rgba(178,120,255,.5)} .mode.custom .mi{color:#b278ff}
   .minigrid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
   .minigrid .go{margin-top:0;width:100%;font-size:11px;letter-spacing:.16em;padding:12px 8px}
@@ -357,17 +357,17 @@
   .cseg .opt{padding:9px 14px;min-height:38px;font-size:11px}
   .cseg .opt.on{background:rgba(150,90,255,.25);border-color:rgba(190,140,255,.9);
     box-shadow:0 0 12px rgba(160,100,255,.4)}
-  /* Tokens on/off toggle above CLICK TO PLAY: same row/label/segment shapes as the
-     Custom panel's own Tokens row, but green so it reads as "this menu's own setting"
+  /* Modifiers on/off toggle above CLICK TO PLAY: same row/label/segment shapes as the
+     Custom panel's own Modifiers row, but green so it reads as "this menu's own setting"
      rather than borrowing Custom's purple. */
-  #mTokensRow{margin:2px 0 12px}
+  #mModifiersRow{margin:2px 0 12px}
   /* Colour matches whichever Play-button state each choice leads to: green for the
-     token build, blue for vanilla, so the toggle and the button never disagree. */
-  #mTokens button[data-t="1"].on{background:rgba(93,226,168,.22);border-color:rgba(93,226,168,.9);
+     Modifier build, blue for vanilla, so the toggle and the button never disagree. */
+  #mModifiers button[data-t="1"].on{background:rgba(93,226,168,.22);border-color:rgba(93,226,168,.9);
     box-shadow:0 0 12px rgba(93,226,168,.35)}
-  #mTokens button[data-t="0"].on{background:rgba(95,184,238,.22);border-color:rgba(95,184,238,.9);
+  #mModifiers button[data-t="0"].on{background:rgba(95,184,238,.22);border-color:rgba(95,184,238,.9);
     box-shadow:0 0 12px rgba(95,184,238,.35)}
-  .grouplabel.tokensel{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:14px}
+  .grouplabel.Modifiersel{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:14px}
   .mini2{font:inherit;font-size:9px;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;
     padding:5px 9px;color:#9dc4e0;background:rgba(20,40,64,.5);
     border:1px solid rgba(110,180,240,.3)}
@@ -469,7 +469,7 @@
   .achStatus{font-size:9px;letter-spacing:.06em;color:#6d8296;margin-top:5px}
   .achCard.on .achStatus{color:#ffd97a}
 
-  /* active token readout, sits under the score band */
+  /* active Modifier readout, sits under the score band */
   #fxbar{position:fixed;left:0;right:0;z-index:8;text-align:center;pointer-events:none;
     top:calc(96px + env(safe-area-inset-top,0px));padding:0 10px;
     display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
@@ -620,16 +620,16 @@
     <h1>HEXAPONG</h1>
     <div class="sub">Six Walls | One Survivor</div>
 
-    <div class="crow" id="mTokensRow">
-      <span class="clab">Modifier</span>
-      <span class="row cseg" id="mTokens">
+    <div class="crow" id="mModifiersRow">
+      <span class="clab">Modifiers</span>
+      <span class="row cseg" id="mModifiers">
         <button class="opt on" data-t="1" type="button">On</button>
         <button class="opt" data-t="0" type="button">Off</button>
       </span>
     </div>
 
     <div class="modes">
-      <button class="mode token playbig" id="mPlay" type="button">
+      <button class="mode Modifier playbig" id="mPlay" type="button">
         <span class="mi" id="mPlayIcon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9.2"/><text x="12" y="16.4" text-anchor="middle" font-size="11" font-weight="700" fill="currentColor" stroke="none">M</text></svg></span>
         <span class="mt">ENTER ARENA</span>
       </button>
@@ -671,7 +671,7 @@
       <button class="go alt" id="bHow">How To Play</button>
       <button class="go alt" id="bStats">Stats</button>
       <button class="go alt" id="bAch">Achievements</button>
-      <button class="go alt" id="bCodexMenu">Token Index</button>
+      <button class="go alt" id="bCodexMenu">Modifier Index</button>
       <button class="go alt" id="bSettings">Settings</button>
       <button class="go alt" id="bChangelog">Changelog</button>
     </div>
@@ -737,7 +737,7 @@
         <button class="opt" data-l="5">5</button>
       </span></div>
     <div class="crow"><span class="clab">Modifier</span>
-      <span class="row cseg" id="cTokens">
+      <span class="row cseg" id="cModifiers">
         <button class="opt on" data-t="1">On</button>
         <button class="opt" data-t="0">Off</button>
       </span></div>
@@ -748,10 +748,10 @@
         <button class="opt" data-tr="2">Max</button>
       </span></div>
 
-    <div class="grouplabel tokensel">Token selection
+    <div class="grouplabel Modifiersel">Modifier selection
       <button class="mini2" id="cAll">All</button><button class="mini2" id="cNone">None</button>
     </div>
-    <div class="tokgrid" id="cTokenGrid"></div>
+    <div class="tokgrid" id="cModifierGrid"></div>
 
     <div class="crow"><span class="clab">Endless</span>
       <span class="row cseg" id="cEndless">
@@ -787,7 +787,7 @@
     <div class="brief" id="pauseBody"></div>
     <div class="btnrow">
       <button class="go" id="bResume">Resume</button>
-      <button class="go alt" id="bCodex2">Token Index</button>
+      <button class="go alt" id="bCodex2">Modifier Index</button>
       <button class="go alt" id="bQuit">Quit To Menu</button>
     </div>
   </div>
@@ -796,9 +796,9 @@
 <div class="panel hidden" id="codex">
   <div class="card wide">
     <div class="pbar"><button class="backlink" id="bCodexBack">&#10094; Back</button></div>
-    <h1 style="font-size:22px">TOKEN INDEX</h1>
-    <div class="sub">Field guide to arena tokens</div>
-    <div class="note" id="codexNote">Tokens drift in mid-rally &middot; every token affects all living players</div>
+    <h1 style="font-size:22px">Modifier INDEX</h1>
+    <div class="sub">Field guide to arena Modifiers</div>
+    <div class="note" id="codexNote">Modifiers drift in mid-rally &middot; every Modifier affects all living players</div>
     <div id="codexBody"></div>
   </div>
 </div>
@@ -1049,8 +1049,8 @@ const LEADERBOARD_URL = 'https://hexapong-leaderboard.hexapong.workers.dev';
    The in-game Changelog panel reads this array directly. */
 const CHANGELOG = [
   { v: '0.6.9', date: '2026-08-15', notes: [
-    'Complete scoring redesign: survival scales with match duration (100 base → 200 at 3 min), plus earned points for paddle positions, modifier tokens, and placement.',
-    'Renamed to "Modifier" (was "Tokens") throughout UI, menu, and leaderboard tags.',
+    'Complete scoring redesign: survival scales with match duration (100 base → 200 at 3 min), plus earned points for paddle positions, modifier Modifiers, and placement.',
+    'Renamed to "Modifier" (was "Modifiers") throughout UI, menu, and leaderboard tags.',
     'Play button text changed from CLICK TO PLAY to ENTER ARENA; icon changed from T to M.',
   ]},
   { v: '0.6.8', date: '2026-08-15', notes: [
@@ -1058,36 +1058,36 @@ const CHANGELOG = [
   ]},
   { v: '0.6.7', date: '2026-08-15', notes: [
     'Paddle flipped: wide edge now anchors against the wall, tapering to a point toward the ball.',
-    'Tokens on/off toggle on the main menu, above CLICK TO PLAY. Defaults on; your choice is remembered.',
-    'CLICK TO PLAY reflects the toggle: green/circle for Tokens, blue/hexagon for Vanilla.',
+    'Modifiers on/off toggle on the main menu, above CLICK TO PLAY. Defaults on; your choice is remembered.',
+    'CLICK TO PLAY reflects the toggle: green/circle for Modifiers, blue/hexagon for Vanilla.',
     'The center-hit flash now also fires on clean tip hits, positioned at the actual contact point.',
-    'Leaderboard rows show whether that run had tokens on.',
+    'Leaderboard rows show whether that run had Modifiers on.',
   ]},
   { v: '0.6.6', date: '2026-08-15', notes: [
     'Dropped the Simple label from the version string.',
     'Match countdown text is 3× larger.',
-    'In-match HUD line removed; score and active-token pills enlarged for glanceability.',
+    'In-match HUD line removed; score and active-Modifier pills enlarged for glanceability.',
     'Touch guide line is 3× wider with Place finger here label.',
     'CLICK TO PLAY button slightly larger.',
     'Default paddle is now a trapezoid: flat middle, angled ends steer the ball.',
   ]},
   { v: '0.6.5', date: '2026-08-15', notes: [
-    'Token spawn rate halved vs previous double rate; max 3 tokens on field; no duplicate tokens at once.',
+    'Modifier spawn rate halved vs previous double rate; max 3 Modifiers on field; no duplicate Modifiers at once.',
     'Match start countdown is now 5–4–3–2–1–GO.',
     'Choke renamed Shrink (10s); Overdrive renamed Growth.',
     'Main menu Play button reads CLICK TO PLAY.',
     'Touch guide: dotted line under the arena shows where to drag the paddle.',
   ]},
   { v: '0.6.4', date: '2026-08-15', notes: [
-    'Removed Reversal and Rotation tokens.',
+    'Removed Reversal and Rotation Modifiers.',
     'Eclipse Drift reworked: ball freezes while the arena rotates for a random 3–10s, then play resumes from the new orientation.',
     'Play button moved above High Score and enlarged.',
   ]},
   { v: '0.6.3', date: '2026-08-14', notes: [
-    'One Play button — Token Mode on Normal, double token spawn rate.',
+    'One Play button — Modifier Mode on Normal, double Modifier spawn rate.',
     'Vanilla and Custom modes removed from the menu. Endless removed.',
-    'All tokens (buff, nerf, wildcard) now affect every living player.',
-    'Repair will not spawn when everyone already has full lives — another token is chosen instead.',
+    'All Modifiers (buff, nerf, wildcard) now affect every living player.',
+    'Repair will not spawn when everyone already has full lives — another Modifier is chosen instead.',
     'Leaderboard shows top 25 (top 5 on the main menu) with date (YYYY.MM.DD); mode and difficulty hidden.',
   ]},
   { v: '0.6.2', date: '2026-08-14', notes: [
@@ -1101,7 +1101,7 @@ const CHANGELOG = [
     'Removed Achievements Score band from the main menu (Achievements screen still available).',
   ]},
   { v: '0.6.0', date: '2026-08-14', notes: [
-    'Online leaderboard: top scores from all players (Vanilla and Token).',
+    'Online leaderboard: top scores from all players (Vanilla and Modifier).',
     'Leaderboard boards: All Time, Last 7 Days, and Today.',
     'Scores submit automatically when a match ends if you are online.',
   ]},
@@ -1121,15 +1121,15 @@ const CHANGELOG = [
     'Prestige at level 100.',
     'Endless mode toggle.',
     'New settings: screen shake, flicker/scanlines, colour-blind shapes, haptics, battery saver, data resets.',
-    'Colour-blind shape codes on tokens.',
+    'Colour-blind shape codes on Modifiers.',
     'Share card shows level and badges.',
   ]},
   { v: '0.3.0', date: '2026-08-14', notes: [
     'Stagnation ramp + AI-hit breaker: ball is pulled toward the player if left out of rallies too long.',
-    'Player level system (1–100) with XP from Vanilla/Token scores; early levels fast, late game a grind (~100h to 100).',
+    'Player level system (1–100) with XP from Vanilla/Modifier scores; early levels fast, late game a grind (~100h to 100).',
     'Level, total XP, and next-level progress bar on the main menu under the high-score band.',
     'Late-game pressure curve: stronger CRT/audio intensity as decay rises and walls fall.',
-    'Token telegraphing: tokens fade in before becoming fully hittable.',
+    'Modifier telegraphing: Modifiers fade in before becoming fully hittable.',
     'Stronger wall-elimination moment (shake, flash, debris).',
     'Paddle sweet-spot flash on perfect center hits.',
     'Score band shifts color as you near or pass your high score.',
@@ -1160,9 +1160,9 @@ const defaultCareer = () => ({
   games: 0, wins: 0, playTime: 0, returns: 0, kos: 0,
   bestRally: 0, bestTime: 0, bestPlace: 7, topSpeed: 0,
   bestScore: 0, bestScoreDiff: '', bestScoreMode: '', bestScorePlace: 0, bestScoreTime: 0,
-  flawlessWins: 0, hardcoreWins: 0, tokensHit: 0,
-  perfectHits: 0, quickReflexBursts: 0, zeroHitLosses: 0, noTokenWins: 0,
-  bestRallyTokens: 0, backstopSaves: 0, fastWins: 0, bestWallsRepairedInMatch: 0,
+  flawlessWins: 0, hardcoreWins: 0, ModifiersHit: 0,
+  perfectHits: 0, quickReflexBursts: 0, zeroHitLosses: 0, noModifierWins: 0,
+  bestRallyModifiers: 0, backstopSaves: 0, fastWins: 0, bestWallsRepairedInMatch: 0,
   slowEffectsTriggered: 0, paddleDistance: 0, hxStreak: 0, bestHxStreak: 0
 });
 // One record per difficulty plus the combined total, so an Expert survival run is not
@@ -1226,7 +1226,7 @@ function saveCareer() {
 const SCORE_PER_SEC = 100;
 const SCORE_PLACE   = [0, 3000, 1500, 750, 250, 100, 50];    // index = finishing place (scaled by duration)
 const SCORE_DIFF    = [1, 1.5, 2.25, 3.25];                  // Easy / Normal / Hard / Expert
-function matchScore(place, survivedS, dIdx, liveOnly, paddleHitsCenter = 0, paddleHitsSide = 0, tokenHits = 0) {
+function matchScore(place, survivedS, dIdx, liveOnly, paddleHitsCenter = 0, paddleHitsSide = 0, ModifierHits = 0) {
   // Scaling multiplier based on match duration: 1 + sqrt(seconds / 180)
   const mult = 1 + Math.sqrt((survivedS || 0) / 180);
 
@@ -1237,18 +1237,18 @@ function matchScore(place, survivedS, dIdx, liveOnly, paddleHitsCenter = 0, padd
   const paddleAvgCombo = 1.8;
   const paddleScore = Math.round((paddleHitsCenter * 50 + paddleHitsSide * 100) * mult * paddleAvgCombo);
 
-  // Token hits: buff=300, wildcard=250, nerf=200 base, with combo (estimated avg 1.5x)
-  const tokenAvgCombo = 1.5;
-  const tokenScore = Math.round(tokenHits * 250 * mult * tokenAvgCombo);
+  // Modifier hits: buff=300, wildcard=250, nerf=200 base, with combo (estimated avg 1.5x)
+  const ModifierAvgCombo = 1.5;
+  const ModifierScore = Math.round(ModifierHits * 250 * mult * ModifierAvgCombo);
 
   // Placement bonus (scaled by duration)
   const pl = liveOnly ? 0 : (SCORE_PLACE[clamp(place | 0, 1, 6)] || SCORE_PLACE[6] || 0);
   const placementScore = Math.round(pl * mult);
 
-  const totalScore = survivalScore + paddleScore + tokenScore + placementScore;
+  const totalScore = survivalScore + paddleScore + ModifierScore + placementScore;
   return Math.round(totalScore * (SCORE_DIFF[dIdx] || 1));
 }
-function scoredMode() { return gameMode === 'vanilla' || gameMode === 'token'; }
+function scoredMode() { return gameMode === 'vanilla' || gameMode === 'Modifier'; }
 const commas = v => Math.round(v || 0).toLocaleString('en-US');
 const titleCase = t => (t || '').charAt(0) + (t || '').slice(1).toLowerCase();
 
@@ -1275,7 +1275,7 @@ function saveName(n) {
 function saveSettings() {
   try {
     localStorage.setItem(SETTINGS_KEY, JSON.stringify({
-      diffIdx, startLives, tokensOn, tokenRate, fxLevel, lite, playerCol, sfxVol, spinPct,
+      diffIdx, startLives, ModifiersOn, ModifierRate, fxLevel, lite, playerCol, sfxVol, spinPct,
       shakeLevel, crtFx, colorBlind, hapticsLevel, fpsCap, endlessMode
     }));
   } catch (e) {}
@@ -1286,8 +1286,8 @@ function applySavedSettings() {
     diffIdx = clamp(savedSettings.diffIdx | 0, 0, DIFF.length - 1);
   if (typeof savedSettings.startLives === 'number')
     startLives = [1, 3, 5].includes(savedSettings.startLives) ? savedSettings.startLives : 3;
-  if (typeof savedSettings.tokensOn === 'boolean') tokensOn = savedSettings.tokensOn;
-  if (typeof savedSettings.tokenRate === 'number') tokenRate = clamp(savedSettings.tokenRate | 0, 0, 2);
+  if (typeof savedSettings.ModifiersOn === 'boolean') ModifiersOn = savedSettings.ModifiersOn;
+  if (typeof savedSettings.ModifierRate === 'number') ModifierRate = clamp(savedSettings.ModifierRate | 0, 0, 2);
   if (typeof savedSettings.sfxVol === 'number') sfxVol = clamp(savedSettings.sfxVol, 0, 1);
   if (typeof savedSettings.sound === 'boolean' && savedSettings.sfxVol === undefined)
     sfxVol = savedSettings.sound ? 0.8 : 0;
@@ -1316,9 +1316,9 @@ function applySavedSettings() {
 let run = null;
 function newRun() {
   run = { bestRally: 0, topSpeed: 0, conceded: 0, stage: 6, survived: 0,
-    hitTimes: [], tokenUsedByPlayer: false, tokensThisRally: 0, bestTokensInRally: 0,
+    hitTimes: [], ModifierUsedByPlayer: false, ModifiersThisRally: 0, bestModifiersInRally: 0,
     wallsRepairedThisMatch: 0, passedBest: false,
-    paddleHitsCenter: 0, paddleHitsSide: 0, tokenHits: 0 };
+    paddleHitsCenter: 0, paddleHitsSide: 0, ModifierHits: 0 };
 }
 // Stagnation tracking: if the player is left out of the rally, bias ramps up so two
 // bots cannot trade forever while the human watches.
@@ -1432,7 +1432,7 @@ const MISSION_POOL = [
   { id: 'ret80', label: 'Return 80 balls', key: 'returns', target: 80, xp: 1000 },
   { id: 'sur60', label: 'Survive 60s', key: 'survived', target: 60, xp: 500 },
   { id: 'sur90', label: 'Survive 90s on Hard+', key: 'survivedHard', target: 90, xp: 900 },
-  { id: 'tok5', label: 'Trigger 5 tokens', key: 'tokens', target: 5, xp: 700 },
+  { id: 'tok5', label: 'Trigger 5 Modifiers', key: 'Modifiers', target: 5, xp: 700 },
   { id: 'win1', label: 'Win a match', key: 'wins', target: 1, xp: 800 },
   { id: 'rally20', label: 'Hit a 20-rally', key: 'rally', target: 20, xp: 750 },
 ];
@@ -1469,7 +1469,7 @@ function tickMissions(snap) {
     if (m.key === 'returns') add = snap.returns || 0;
     else if (m.key === 'survived') add = Math.floor(snap.survived || 0);
     else if (m.key === 'survivedHard') add = (snap.diffIdx >= 2) ? Math.floor(snap.survived || 0) : 0;
-    else if (m.key === 'tokens') add = snap.tokens || 0;
+    else if (m.key === 'Modifiers') add = snap.Modifiers || 0;
     else if (m.key === 'wins') add = snap.won ? 1 : 0;
     else if (m.key === 'rally') add = snap.rally || 0;
     // missions track best single-match progress for the day (not cumulative across matches)
@@ -1540,9 +1540,9 @@ const ACH_LADDERS = [
     cur: () => career.perfectHits || 0 },
   { id: 'amphoraOfFate', name: 'Amphora of Fate', cat: 'A',
     icon: { author: 'delapouite', id: 'amphora' },
-    unit: 'tokens',
+    unit: 'Modifiers',
     thresholds: [10, 50, 250, 1250, 5000],
-    cur: () => career.tokensHit || 0 },
+    cur: () => career.ModifiersHit || 0 },
   { id: 'olympicLaurel', name: 'Olympic Laurel', cat: 'A',
     icon: { author: 'lorc', id: 'laurels' },
     unit: 'rally',
@@ -1554,11 +1554,6 @@ const ACH_LADDERS = [
     unit: 'flawless wins',
     thresholds: [1, 5, 15, 30, 50],
     cur: () => career.flawlessWins || 0 },
-  { id: 'aquila', name: 'Aquila', cat: 'B',
-    icon: { author: 'lorc', id: 'eagle-emblem' },
-    unit: 'Expert wins',
-    thresholds: [1, 5, 25, 50, 125],
-    cur: () => (tiers[3] && tiers[3].wins) || 0 },
   { id: 'triumphator', name: 'Triumphator', cat: 'B',
     icon: { author: 'skoll', id: 'gladius' },
     unit: 'wins',
@@ -1569,11 +1564,6 @@ const ACH_LADDERS = [
     unit: '1st-place finishes',
     thresholds: [2, 10, 35, 100, 250],
     cur: () => career.wins || 0 },
-  { id: 'phalanx', name: 'Phalanx', cat: 'B',
-    icon: { author: 'lorc', id: 'spears' },
-    unit: 'Hard+ streak',
-    thresholds: [2, 3, 5, 8, 12],
-    cur: () => career.bestHxStreak || 0 },
   { id: 'atlasBurden', name: "Atlas' Burden", cat: 'B',
     icon: { author: 'delapouite', id: 'atlas' },
     unit: 's survived',
@@ -1682,15 +1672,15 @@ function formatLbDate(r) {
   const day = String(d.getDate()).padStart(2, '0');
   return y + '.' + m + '.' + day;
 }
-// Every submission already carries mode ('token' or 'vanilla', see submitOnlineScore) —
-// it was just never shown, back when everyone was forced into Token mode anyway and the
-// field would have been redundant. Now that the menu toggle can turn tokens off, it is
+// Every submission already carries mode ('Modifier' or 'vanilla', see submitOnlineScore) —
+// it was just never shown, back when everyone was forced into Modifier mode anyway and the
+// field would have been redundant. Now that the menu toggle can turn Modifiers off, it is
 // worth a word. Older rows submitted before this existed simply omit the tag rather than
 // guess at a mode that was never recorded.
-function lbTokensTag(r) {
+function lbModifiersTag(r) {
   const raw = String(r.mode || r.gameMode || '').toLowerCase();
   if (raw === 'vanilla') return 'Vanilla';
-  if (raw === 'token') return 'Modified';
+  if (raw === 'Modifier') return 'Modified';
   return '';
 }
 function lbRowHtml(r) {
@@ -1699,7 +1689,7 @@ function lbRowHtml(r) {
   if (dateStr) bits.push(dateStr);
   const dur = formatLbDuration(r.duration);
   if (dur) bits.push(dur);
-  const tag = lbTokensTag(r);
+  const tag = lbModifiersTag(r);
   if (tag) bits.push(tag);
   return '<div class="lbrow">' +
     '<span class="lbr">' + (r.rank || '') + '</span>' +
@@ -1973,11 +1963,11 @@ function resize() {
   R = Rtarget;
   buildWalls();
   buildBloom();
-  // The arena just changed size, so any token still sitting at its old pixel position
+  // The arena just changed size, so any Modifier still sitting at its old pixel position
   // may now be outside the walls where no ball can reach it. Left alone, five stranded
-  // tokens also hold the spawner at its cap and silently kill the token system for the
+  // Modifiers also hold the spawner at its cap and silently kill the Modifier system for the
   // rest of the match. Rotating a phone is enough to trigger it.
-  relocateTokens();
+  relocateModifiers();
 }
 window.addEventListener('resize', resize);
 window.addEventListener('orientationchange', () => setTimeout(resize, 120));
@@ -1996,12 +1986,12 @@ let debris = [];          // fading ghosts of burned-out walls
 let ending = false;       // player is out: freeze play, let the shatter land, then stats
 let collapseFlash = 0;
 
-/* ── buff / nerf token system ─────────────────────────────────────────────
-   A token drifts into the arena mid-rally. When any ball touches it, the effect
+/* ── buff / nerf Modifier system ─────────────────────────────────────────────
+   A Modifier drifts into the arena mid-rally. When any ball touches it, the effect
    applies to every living player. Category is readable before you commit from
    shape and colour, which is the whole point. */
-let tokens = [];          // {x,y,fx,born,life,spin,pulse}
-let tokenTimer = 0;
+let Modifiers = [];          // {x,y,fx,born,life,spin,pulse}
+let ModifierTimer = 0;
 let bursts = [];          // pickup flashes
 let gfx = {};             // global (arena-wide) effects: id -> seconds remaining
 let spin = 0, spinRate = 0;   // Rotation: extra angle on every wall, unwinds to 0
@@ -2010,16 +2000,16 @@ const PULSE_DUR = 1.6;
 let pulseT = 0, pulseBaseR = 0;   // Pulse Contract: temporary radius squeeze-and-release
 let bountyOn = false;
 
-const TOKEN_FIRST = 10;   // no tokens in the opening seconds; learn the base game first
-const TOKEN_MIN = 10, TOKEN_MAX = 15;   // Mid rate base interval (seconds)
-const MAX_TOKENS = 3;
-let tokensOn = true;      // toggled from the main menu
+const Modifier_FIRST = 10;   // no Modifiers in the opening seconds; learn the base game first
+const Modifier_MIN = 10, Modifier_MAX = 15;   // Mid rate base interval (seconds)
+const MAX_ModifierS = 3;
+let ModifiersOn = true;      // toggled from the main menu
 // 0=Min (half rate → 2× interval), 1=Mid (current), 2=Max (double rate → ½ interval)
 // Simple build uses Mid (half of former double rate)
-let tokenRate = 1;
-function tokenInterval() {
-  const base = TOKEN_MIN + Math.random() * (TOKEN_MAX - TOKEN_MIN);
-  const mul = tokenRate === 0 ? 2 : tokenRate === 2 ? 0.5 : 1;
+let ModifierRate = 1;
+function ModifierInterval() {
+  const base = Modifier_MIN + Math.random() * (Modifier_MAX - Modifier_MIN);
+  const mul = ModifierRate === 0 ? 2 : ModifierRate === 2 ? 0.5 : 1;
   return base * mul;
 }
 
@@ -2043,10 +2033,10 @@ function fxDur(f) {
 }
 
 function clearFx() {
-  tokens = []; bursts = []; gfx = {}; bountyOn = false;
+  Modifiers = []; bursts = []; gfx = {}; bountyOn = false;
   spin = 0; spinRate = 0;
   eclipseSpin = 0; eclipseT = 0; eclipseRate = 0; pulseT = 0; pulseBaseR = 0;
-  tokenTimer = TOKEN_FIRST;
+  ModifierTimer = Modifier_FIRST;
   for (const p of players) { p.fx = {}; p.heavy = 0; }
 }
 
@@ -2107,7 +2097,7 @@ function serve(fromWall) {
   serveTimer = 1.05;
   rallyHits = 0;
   consecutiveAiHits = 0;
-  if (run) run.tokensThisRally = 0;
+  if (run) run.ModifiersThisRally = 0;
 }
 
 function startGame() {
@@ -2140,19 +2130,19 @@ function restartMatch() {
   startGame();
 }
 
-/* ── spawning and resolving tokens ───────────────────────────────────────── */
+/* ── spawning and resolving Modifiers ───────────────────────────────────────── */
 function allPlayersFullLives() {
   return players.every(p => p.out || p.lives >= startLives);
 }
 function pickEffect() {
   // buffs a little likelier than nerfs, wildcards rarest — but skip a category
-  // entirely if every token in it has been toggled off, trying the others instead
+  // entirely if every Modifier in it has been toggled off, trying the others instead
   const r = Math.random();
   const primary = r < 0.40 ? 0 : r < 0.76 ? 1 : 2;
   const order = [primary, ...[0, 1, 2].filter(i => i !== primary)];
   const full = allPlayersFullLives();
-  // No duplicate types while a token of that id is already on the field
-  const active = new Set(tokens.map(t => t.fx && t.fx.id));
+  // No duplicate types while a Modifier of that id is already on the field
+  const active = new Set(Modifiers.map(t => t.fx && t.fx.id));
   for (const idx of order) {
     const g = EFFECTS[idx];
     // Simple build: always use the full roster (no Custom toggles)
@@ -2162,15 +2152,15 @@ function pickEffect() {
       !(full && f.id === 'repair'));
     if (pool.length) return pool[Math.floor(Math.random() * pool.length)];
   }
-  return null;   // every token is toggled off / already active
+  return null;   // every Modifier is toggled off / already active
 }
 
-function tokenR() { return Math.max(12, R * 0.0605); }   // 10% bigger than before
+function ModifierR() { return Math.max(12, R * 0.0605); }   // 10% bigger than before
 
 // Find a free spot inside the arena: clear of the walls, clear of the serve point, and
-// far enough from every other token that none of them ever overlap.
+// far enough from every other Modifier that none of them ever overlap.
 function findSpot(ignore) {
-  const tr = tokenR();
+  const tr = ModifierR();
   const inner = apothem() - PAD.gap - PAD.thick - BALL.r * 3 - tr;
   if (inner < tr) return null;
   for (let tries = 0; tries < 90; tries++) {
@@ -2178,7 +2168,7 @@ function findSpot(ignore) {
     const rr = (0.18 + Math.random() * 0.7) * inner;
     const x = CX + Math.cos(a) * rr, y = CY + Math.sin(a) * rr;
     let clash = false;
-    for (const t of tokens) {
+    for (const t of Modifiers) {
       if (t === ignore) continue;
       if (Math.hypot(t.x - x, t.y - y) < tr * 2.5) { clash = true; break; }
     }
@@ -2189,32 +2179,32 @@ function findSpot(ignore) {
   return null;
 }
 
-function spawnToken(force) {
+function spawnModifier(force) {
   const eff = force || pickEffect();
-  if (!eff) return;   // every token toggled off — nothing to spawn
+  if (!eff) return;   // every Modifier toggled off — nothing to spawn
   const spot = findSpot(null);
   if (!spot) return;
-  tokens.push({ x: spot.x, y: spot.y, fx: eff, born: 0, r: tokenR() });
+  Modifiers.push({ x: spot.x, y: spot.y, fx: eff, born: 0, r: ModifierR() });
   beep(880, 0.05, 'sine', 0.03);
 }
 
-// Tokens now persist until they are struck, so a collapsing arena must not strand them
+// Modifiers now persist until they are struck, so a collapsing arena must not strand them
 // outside the new, smaller shape — move any that no longer fit, and resize them all.
-function relocateTokens() {
-  const tr = tokenR();
+function relocateModifiers() {
+  const tr = ModifierR();
   const limit = apothem() - PAD.gap - PAD.thick - BALL.r * 3 - tr;
   const kept = [];
-  for (const t of tokens) {
+  for (const t of Modifiers) {
     t.r = tr;
     if (Math.hypot(t.x - CX, t.y - CY) <= limit) { kept.push(t); continue; }
-    tokens = kept;
+    Modifiers = kept;
     const spot = findSpot(t);
     if (spot) { t.x = spot.x; t.y = spot.y; kept.push(t); }
   }
-  tokens = kept;
+  Modifiers = kept;
 }
 
-function resolveToken(t, b, p) {
+function resolveModifier(t, b, p) {
   const f = t.fx;
   bursts.push({ x: t.x, y: t.y, col: f.col, t: 1 });
   beep(f.key === 'n' ? 240 : 720, 0.10, f.key === 'w' ? 'triangle' : 'square', 0.06);
@@ -2222,15 +2212,15 @@ function resolveToken(t, b, p) {
   const me = players[PLAYER];
   if (me && !me.out) haptic(f.key === 'n' ? [30, 40, 30] : 25);
   if (p && p.human && run) {
-    run.tokenUsedByPlayer = true;
-    run.tokensThisRally++;
-    if (run.tokensThisRally > run.bestTokensInRally) run.bestTokensInRally = run.tokensThisRally;
+    run.ModifierUsedByPlayer = true;
+    run.ModifiersThisRally++;
+    if (run.ModifiersThisRally > run.bestModifiersInRally) run.bestModifiersInRally = run.ModifiersThisRally;
   }
 
-  // Simple build: every token category applies to all living players
+  // Simple build: every Modifier category applies to all living players
   applyEffect(f, players.filter(q => !q.out));
 
-  toast(f.name.toUpperCase(), f.col, 1.25, TOKEN_ICON_DATA[f.id]);
+  toast(f.name.toUpperCase(), f.col, 1.25, Modifier_ICON_DATA[f.id]);
 }
 
 function applyEffect(f, targets) {
@@ -2305,7 +2295,7 @@ addEventListener('touchstart', () => { unlockAudio(); }, { once: true, passive: 
 let sfxVol = 0.8;
 let shakeLevel = 2;          // 0=off, 1=low, 2=full
 let crtFx = true;            // flicker + scanlines independent of quality preset
-let colorBlind = false;      // shape codes on tokens
+let colorBlind = false;      // shape codes on Modifiers
 let hapticsLevel = 2;        // 0=off, 1=light, 2=full
 let fpsCap = false;          // 30fps battery saver
 let endlessMode = false;     // opponents respawn, decay never stops
@@ -2534,7 +2524,7 @@ function update(dt) {
       toast(String(cur), '#bfe9ff', 0.85);
       haptic(8);
     }
-    return;   // freeze physics / AI / tokens until GO
+    return;   // freeze physics / AI / Modifiers until GO
   }
 
   elapsed += dt;
@@ -2620,18 +2610,18 @@ function update(dt) {
 
   if (ending) return;      // your wall just went: hold everything but the animation
 
-  // ── tokens ──────────────────────────────────────────
+  // ── Modifiers ──────────────────────────────────────────
   // nothing spawns during a serve or while the arena is collapsing/spinning: those
   // moments are busy enough already
   const calm = serveTimer <= 0 && spinRate === 0 && eclipseT <= 0 && Math.abs(R - Rtarget) <= 0.4;
-  if (tokensOn && running && !over && calm && tokens.length < MAX_TOKENS) {
-    tokenTimer -= dt;
-    if (tokenTimer <= 0) {
-      spawnToken();
-      tokenTimer = tokenInterval();
+  if (ModifiersOn && running && !over && calm && Modifiers.length < MAX_ModifierS) {
+    ModifierTimer -= dt;
+    if (ModifierTimer <= 0) {
+      spawnModifier();
+      ModifierTimer = ModifierInterval();
     }
   }
-  for (const t of tokens) t.born += dt;   // tokens now sit there until something hits them
+  for (const t of Modifiers) t.born += dt;   // Modifiers now sit there until something hits them
 
   // ── paddles ─────────────────────────────────────────
   for (const w of walls) {
@@ -2734,7 +2724,7 @@ function update(dt) {
     if (gone) continue;
     if (serveTimer > 0) break;     // fresh serve: this frame is done
 
-    hitTokens(b);
+    hitModifiers(b);
 
     if (fxLevel === 0) {
       // Off: no motion trails
@@ -2784,7 +2774,7 @@ function threat(w) {
 // Magnet: a weak steer toward the paddle centre. Deliberately gentle — it should turn
 // near-misses into saves, not make the wall impassable.
 // Gravity Well: a steady pull toward the true centre of the arena for as long as
-// the token is active.
+// the Modifier is active.
 function gravityPull(b, dt) {
   if (!gHas('gravity')) return;
   const dx = CX - b.x, dy = CY - b.y;
@@ -2800,19 +2790,19 @@ function gravityPull(b, dt) {
   b.vy += (dy / dist) * pull * dt;
 }
 
-const TOKEN_ARM = 0.75; // seconds of telegraph before a token becomes hittable
-function hitTokens(b) {
-  for (let i = tokens.length - 1; i >= 0; i--) {
-    const t = tokens[i];
-    // Telegraph: tokens fade in and are not collectible until armed
-    if (t.born < TOKEN_ARM) continue;
+const Modifier_ARM = 0.75; // seconds of telegraph before a Modifier becomes hittable
+function hitModifiers(b) {
+  for (let i = Modifiers.length - 1; i >= 0; i--) {
+    const t = Modifiers[i];
+    // Telegraph: Modifiers fade in and are not collectible until armed
+    if (t.born < Modifier_ARM) continue;
     if (Math.hypot(b.x - t.x, b.y - t.y) > t.r + BALL.r) continue;
-    // Any ball contact triggers the token; who it actually affects now depends on
-    // category (see resolveToken) rather than always hitting the whole arena.
-    tokens.splice(i, 1);
-    career.tokensHit++;
-    if (run && b.hitter && b.hitter.human) run.tokenHits++;  // Track player's token hits
-    resolveToken(t, b, b.hitter || null);
+    // Any ball contact triggers the Modifier; who it actually affects now depends on
+    // category (see resolveModifier) rather than always hitting the whole arena.
+    Modifiers.splice(i, 1);
+    career.ModifiersHit++;
+    if (run && b.hitter && b.hitter.human) run.ModifierHits++;  // Track player's Modifier hits
+    resolveModifier(t, b, b.hitter || null);
   }
 }
 
@@ -2949,7 +2939,7 @@ function collide(b) {
         b.x = w.ax + w.dx * tc + w.nx * (padFaceS() + 1.2);
         b.y = w.ay + w.dy * tc + w.ny * (padFaceS() + 1.2);
         b.hitter = p;
-        // a nerf token this ball picked up earlier lands on whoever just returned it
+        // a nerf Modifier this ball picked up earlier lands on whoever just returned it
         if (b.pendingNerf) { applyEffect(b.pendingNerf, [p]); b.pendingNerf = null; }
         p.hitFlash = 1; rallyHits++;
         if (rallyHits > run.bestRally) run.bestRally = rallyHits;
@@ -3062,7 +3052,7 @@ function concede(p, b, w) {
     // Nobody wants to watch the bots finish without them: the moment the player is out,
     // stop play, let the wall shatter land, then go straight to the stats.
     if (p.human) {
-      balls = []; tokens = [];
+      balls = []; Modifiers = [];
       layout(); buildWalls();
       ending = true;
       setTimeout(() => { if (ending && !over) endGame(null, true); }, 1150);
@@ -3073,7 +3063,7 @@ function concede(p, b, w) {
 
     layout();          // fewer sides, tighter arena (R animates down)
     buildWalls();
-    relocateTokens();  // keep them, but pull any that fall outside the new shape
+    relocateModifiers();  // keep them, but pull any that fall outside the new shape
     spin = 0; spinRate = 0;
     serve(null);
     serveTimer = 1.7;
@@ -3130,7 +3120,7 @@ function endGame(winner, eliminated) {
 
   // Only the two preset modes are scored (see matchScore).
   const scored   = scoredMode();
-  const score    = scored ? matchScore(me.place, run.survived, diffIdx, false, run.paddleHitsCenter, run.paddleHitsSide, run.tokenHits) : 0;
+  const score    = scored ? matchScore(me.place, run.survived, diffIdx, false, run.paddleHitsCenter, run.paddleHitsSide, run.ModifierHits) : 0;
   const prevBest = career.bestScore || 0;
   const newHigh  = scored && score > prevBest;
   if (newHigh) {
@@ -3145,11 +3135,11 @@ function endGame(winner, eliminated) {
   if (won && me.lives === startLives) career.flawlessWins++;
   if (won && startLives === 1 && diffIdx >= 2) career.hardcoreWins++;
   if (!won && playerHits === 0) career.zeroHitLosses++;
-  if (won && !run.tokenUsedByPlayer) career.noTokenWins++;
+  if (won && !run.ModifierUsedByPlayer) career.noModifierWins++;
   if (won && elapsed <= 45) career.fastWins++;
   if (run.wallsRepairedThisMatch > career.bestWallsRepairedInMatch)
     career.bestWallsRepairedInMatch = run.wallsRepairedThisMatch;
-  if (run.bestTokensInRally > career.bestRallyTokens) career.bestRallyTokens = run.bestTokensInRally;
+  if (run.bestModifiersInRally > career.bestRallyModifiers) career.bestRallyModifiers = run.bestModifiersInRally;
   if (diffIdx >= 2) {
     career.hxStreak = won ? career.hxStreak + 1 : 0;
     if (career.hxStreak > career.bestHxStreak) career.bestHxStreak = career.hxStreak;
@@ -3190,7 +3180,7 @@ function endGame(winner, eliminated) {
   }
   saveProgress();
 
-  // XP breakdown (Vanilla/Token, or any Endless run)
+  // XP breakdown (Vanilla/Modifier, or any Endless run)
   let xpGain = null;
   let xpBreakHtml = '';
   const giveXp = scored || endlessMode;
@@ -3207,7 +3197,7 @@ function endGame(winner, eliminated) {
     let missionBonus = 0;
     try {
       missionBonus = tickMissions({
-        returns: playerHits, survived: run.survived, tokens: career.tokensHit ? run.tokensThisRally || 0 : (run.bestTokensInRally || 0),
+        returns: playerHits, survived: run.survived, Modifiers: career.ModifiersHit ? run.ModifiersThisRally || 0 : (run.bestModifiersInRally || 0),
         diffIdx, won, rally: run.bestRally || 0
       });
     } catch (e) {}
@@ -3363,7 +3353,7 @@ function draw() {
   drawDebris();
   for (const w of walls) drawWall(w);
   for (const w of walls) if (w.owner) { drawPaddle(w); drawPaddleFx(w); }
-  drawTokens();
+  drawModifiers();
   for (const b of balls) drawBall(b);
   drawBursts();
   drawTouchGuide();
@@ -3462,7 +3452,7 @@ function drawWall(w) {
   if (p && fxHas(p, 'phase')) ctx.globalAlpha = 0.30;   // Phase Rail: the wall is barely there
 
   if (!p) {                                   // inert bumper
-    const bd = 0.16;   // rails sit dim by default now (previously the Blackout token look)
+    const bd = 0.16;   // rails sit dim by default now (previously the Blackout Modifier look)
     ctx.shadowColor = WALL_COL; ctx.shadowBlur = glow((4 + w.flash * 18) * bd);
     ctx.strokeStyle = hexA(WALL_COL, (0.09 + w.flash * 0.26) * bd);
     ctx.lineWidth = 3;
@@ -3476,7 +3466,7 @@ function drawWall(w) {
   }
 
   const hurt = p.hurtFlash;
-  const dim = 0.13;      // rails sit dim by default now (previously the Blackout token look)
+  const dim = 0.13;      // rails sit dim by default now (previously the Blackout Modifier look)
   const L = Math.max(1, startLives);
   const order = removalOrder(L);
   const lost = clamp(L - p.lives, 0, L);
@@ -3633,20 +3623,20 @@ function drawBall(ball) {
   ctx.beginPath(); ctx.arc(ball.x, ball.y, BALL.r * (fxLevel === 0 ? 1 : 0.72), 0, TAU); ctx.fill();
 }
 
-/* ── tokens ──────────────────────────────────────────────────────────────
+/* ── Modifiers ──────────────────────────────────────────────────────────────
    Shape and colour carry the category (redundant coding, so it survives a colour
    deficiency and reads at a glance in a busy arena). The glyph identifies the specific
    effect, but the name is printed underneath too, brightening as a ball closes in —
    nineteen icons is not a language anyone learns in three matches. */
-function drawTokens() {
-  for (const t of tokens) {
+function drawModifiers() {
+  for (const t of Modifiers) {
     const f = t.fx;
-    const armed = t.born >= TOKEN_ARM;
+    const armed = t.born >= Modifier_ARM;
     const pulse = 0.72 + 0.28 * Math.sin(t.born * 3.4);
-    // Telegraph: fade in over TOKEN_ARM, then full brightness once hittable
-    const a = armed ? 1 : clamp(t.born / TOKEN_ARM, 0.15, 0.85);
+    // Telegraph: fade in over Modifier_ARM, then full brightness once hittable
+    const a = armed ? 1 : clamp(t.born / Modifier_ARM, 0.15, 0.85);
 
-    // No frame around the icon now — a soft coloured bloom behind it keeps the token
+    // No frame around the icon now — a soft coloured bloom behind it keeps the Modifier
     // readable against the arena without boxing the glyph in.
     ctx.save();
     const halo = ctx.createRadialGradient(t.x, t.y, 0, t.x, t.y, t.r * 1.9);
@@ -3658,7 +3648,7 @@ function drawTokens() {
     ctx.restore();
 
     // icon, now filling the space the shape used to occupy
-    const img = TOKEN_ICON_IMG[f.id];
+    const img = Modifier_ICON_IMG[f.id];
     if (img && img.complete && img.naturalWidth > 0) {
       ctx.save();
       ctx.globalCompositeOperation = 'source-over';
@@ -3843,7 +3833,7 @@ function renderScoreBar() {
   const me = players[PLAYER];
   const place = me && me.out ? (me.place || 6) : players.filter(q => !q.out).length;
   // liveOnly=true so the bar starts at 0 and only climbs with survival time
-  const live = matchScore(place, me && me.out ? (run.survived || elapsed) : elapsed, diffIdx, true, run.paddleHitsCenter, run.paddleHitsSide, run.tokenHits);
+  const live = matchScore(place, me && me.out ? (run.survived || elapsed) : elapsed, diffIdx, true, run.paddleHitsCenter, run.paddleHitsSide, run.ModifierHits);
   const best = career.bestScore || 0;
   const ahead = best > 0 && live > best;
   if (ahead && run && !run.passedBest) {
@@ -3876,7 +3866,7 @@ function renderScoreBar() {
     gap;
 }
 
-/* Active tokens get their own row under the stats, colour-coded by category, with a
+/* Active Modifiers get their own row under the stats, colour-coded by category, with a
    live countdown so you can see exactly how long a nerf has left to survive. */
 function renderFxBar() {
   const bar = document.getElementById('fxbar');
@@ -3958,11 +3948,11 @@ const BRIEF_ROWS = [
   ['Your wall', 'Your wall has one glowing block per life. Miss the ball and a block burns away.'],
   ['Collapse', 'When a wall runs out of lives it is removed and the arena shrinks. Last one alive wins.'],
   ['Decay', 'The longer you last, the faster the ball and the smaller every paddle.'],
-  ['Tokens', 'Hit a token and the effect hits <b>every living player</b>. ' +
+  ['Modifiers', 'Hit a Modifier and the effect hits <b>every living player</b>. ' +
     '<b style="color:#ffd97a">Gold</b> buffs, ' +
     '<b style="color:#ff9a8f">red</b> nerfs, and ' +
     '<b style="color:#dcaaff">violet</b> wildcards all apply to the whole arena. ' +
-    'Full list in the <b>Token Index</b>.'],
+    'Full list in the <b>Modifier Index</b>.'],
   ['Score', 'Your score is how long you survived plus a placement bonus. ' +
     'The running total sits under the HUD. Top scores appear on the online leaderboard.'],
 ];
@@ -3971,9 +3961,9 @@ const BRIEF_HTML = BRIEF_ROWS.map(r =>
 document.getElementById('briefBody').innerHTML = BRIEF_HTML;
 document.getElementById('pauseBody').innerHTML = BRIEF_HTML;
 
-// Token badge artwork, embedded locally (downloaded from game-icons.net, CC BY 3.0,
+// Modifier badge artwork, embedded locally (downloaded from game-icons.net, CC BY 3.0,
 // abstract tag set) and recoloured per category so it renders offline.
-const TOKEN_ICON_DATA = {
+const Modifier_ICON_DATA = {
   'overdrive': 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48cGF0aCBmaWxsPSIjZmZkOTdhIiBkPSJNNjQgNjR2MTI4bDQ4LTQ4IDQ4IDQ4IDMyLTMyLTQ4LTQ4IDQ4LTQ4SDY0em0yNTYgMCA0OCA0OC00OCA0OCAzMiAzMiA0OC00OCA0OCA0OFY2NEgzMjB6TTY0IDMyMHYxMjhoMTI4bC00OC00OCA0OC00OC0zMi0zMi00OCA0OC00OC00OHptMjg4IDAtMzIgMzIgNDggNDgtNDggNDhoMTI4VjMyMGwtNDggNDgtNDgtNDh6Ii8+PC9zdmc+',
   'repair': 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48cGF0aCBmaWxsPSIjZmZkOTdhIiBkPSJNNDMuMDMyIDQ5MWMtNC40MTYgMC04LjQ1NS0xLjQ5NC0xMS44OTctMy44MTktMS4wMjMtLjY5LTIuMDQxLTEuMzUtMi45MzgtMi4yMDMtLjIwNS0uMTg3LS4zODgtLjM5My0uNTg3LS41ODgtLjE5My0uMTk4LS40LS4zODItLjU4OC0uNTg3LS44NTctLjg5My0xLjUxMy0xLjkxNS0yLjIwMy0yLjkzOC0yLjMyNC0zLjQ0Mi0zLjgxOS03LjQ4LTMuODE5LTExLjg5N1YzMzIuMDgxYzAtMTAuODEzIDguMDUyLTE5LjgyIDE4LjgtMjEuNzM4djEzOC45NDRjMCAxMi42NjYgMTAuMjQ2IDIyLjkxMiAyMi45MTIgMjIuOTEyaDEzOC45NDRjLTEuOTE5IDEwLjc0OC0xMC45MjUgMTguOC0yMS43MzggMTguOEg0My4wMzF6TTI1NiA0OTFjLTE0Ljk5NSAwLTI3LjE3Mi0xMi4xNzgtMjcuMTcyLTI3LjE3MnMxMi4xNzgtMjcuMTcyIDI3LjE3Mi0yNy4xNzIgMjcuMTcyIDEyLjE3OCAyNy4xNzIgMjcuMTcyUzI3MC45OTQgNDkxIDI1NiA0OTF6bTc1LjkzNCAwYy0xMC44MTIgMC0xOS42OTgtOC4wNTItMjEuNTktMTguOGgxMzguOTQzYzEyLjY2NiAwIDIyLjkxMi0xMC4yNDcgMjIuOTEyLTIyLjkxM1YzMTAuMzQzYzEwLjc0OCAxLjkxOSAxOC44IDEwLjkyNSAxOC44IDIxLjczOHYxMzYuODg3YzAgNC40MTYtMS40OTQgOC40NTUtMy44MTkgMTEuODk3LS42OSAxLjAyMy0xLjM1IDIuMDQxLTIuMjAzIDIuOTM4LS4xNDUuMTUxLS4yOTIuMjkyLS40NC40NC0uNDM1LjQ0NC0xLjAwNC43NjYtMS40NyAxLjE3NS0uNjQ1LjU0MS0xLjIwNSAxLjE0Mi0xLjkwOSAxLjYxNS0uMDkuMDY1LS4yMDEuMDg2LS4yOTQuMTQ3YTIxLjYyNyAyMS42MjcgMCAwIDEtOC4yMjUgMy4zNzhjLTEuMjYyLjIzMy0yLjQ5NC40NC0zLjgxOC40NEgzMzEuOTMzem0tMjU4Ljk0LTMwLjI1NmMtMTEuOTk2IDAtMjEuNzM3LTkuNzQyLTIxLjczNy0yMS43MzhWMzA5LjkwM2g0Ny4xNDdjMTIuNzk2IDAgMjMuMDU5IDkuOTgzIDIzLjA2IDIyLjE3OGwtLjAwMSA1OC40NTZoNTguNDU2YzEyLjE5NSAwIDIyLjE3OCAxMC40MSAyMi4xNzggMjMuMjA2djQ3SDcyLjk5NHptMjM2LjkwOSAwdi00N2MwLTEyLjc5NyA5LjgzNi0yMy4yMDcgMjIuMDMxLTIzLjIwN2g1OC42MDNWMzMyLjA4YzAtMTIuMTk2IDEwLjQxLTIyLjE3OSAyMy4yMDYtMjIuMTc5aDQ3djEyOS4xMDRjMCAxMS45OTYtOS43NDEgMjEuNzM3LTIxLjczOCAyMS43MzdIMzA5LjkwNHpNMjU2IDQyNC42MTFjLTcuMTAzIDAtMTIuOTI1LTUuODIyLTEyLjkyNS0xMi45MjVTMjQ4Ljg5NyAzOTguOTEgMjU2IDM5OC45MXMxMi45MjUgNS42NzYgMTIuOTI1IDEyLjc3OC01LjgyMyAxMi45MjUtMTIuOTI1IDEyLjkyNXptMC00MC4wOTdjLTkuMjk4IDAtMTguNTc5LTMuNTk3LTI1LjcwMy0xMC43MjFsLTkyLjA5LTkyLjA5MWEzNi4yNTMgMzYuMjUzIDAgMCAxIDAtNTEuNDA2bDkyLjA5LTkyLjA5MWEzNi4yNTMgMzYuMjUzIDAgMCAxIDUxLjQwNiAwbDkyLjA5IDkyLjA5YTM2LjI1MyAzNi4yNTMgMCAwIDEgMCA1MS40MDdsLTkyLjA5IDkyLjA5Yy03LjEyNSA3LjEyNS0xNi40MDUgMTAuNzIyLTI1LjcwMyAxMC43MjJ6bS0yMy42NDctODIuODM3aDQ3LjI5NGEyMS45NDUgMjEuOTQ1IDAgMCAwIDIyLjAzMS0yMi4wMzF2LTQ3LjI5NGEyMS45NDUgMjEuOTQ1IDAgMCAwLTIyLjAzMS0yMi4wMzJoLTQ3LjI5NGEyMS45NDUgMjEuOTQ1IDAgMCAwLTIyLjAzIDIyLjAzMmwtLjAwMSA0Ny4yOTNhMjEuOTQ1IDIxLjk0NSAwIDAgMCAyMi4wMzEgMjIuMDMyem0tMTg0LjE4LTE4LjUwNkMzMy4xNzcgMjgzLjE3MiAyMSAyNzAuOTk0IDIxIDI1NnMxMi4xNzctMjcuMTcyIDI3LjE3Mi0yNy4xNzJTNzUuMzQ0IDI0MS4wMDYgNzUuMzQ0IDI1NnMtMTIuMTc3IDI3LjE3Mi0yNy4xNzIgMjcuMTcyem0yMDcuODI3IDBjLTE0Ljk5NCAwLTI3LjE3Mi0xMi4xNzgtMjcuMTcyLTI3LjE3MnMxMi4xNzgtMjcuMTcyIDI3LjE3Mi0yNy4xNzIgMjcuMTcyIDEyLjE3NyAyNy4xNzIgMjcuMTcyLTEyLjE3OCAyNy4xNzItMjcuMTcyIDI3LjE3MnptMjA3LjgyNyAwYy0xNC45OTQgMC0yNy4xNzEtMTIuMTc4LTI3LjE3MS0yNy4xNzJzMTIuMTc3LTI3LjE3MiAyNy4xNzItMjcuMTcyIDI3LjE3MSAxMi4xNzcgMjcuMTcxIDI3LjE3MS0xMi4xNzcgMjcuMTcyLTI3LjE3MiAyNy4xNzJ6bS0zNjMuNjYtMTQuMjQ3Yy03LjEwMyAwLTEyLjc3OS01LjgyMi0xMi43NzktMTIuOTI1czUuNjc2LTEyLjkyNSAxMi43NzgtMTIuOTI1IDEyLjkyNSA1LjgyMiAxMi45MjUgMTIuOTI1LTUuODIyIDEyLjkyNS0xMi45MjUgMTIuOTI1em0zMTEuNTIgMGMtNy4xMDIgMC0xMi43NzgtNS44MjMtMTIuNzc4LTEyLjkyNnM1LjY3Ni0xMi45MjUgMTIuNzc4LTEyLjkyNSAxMi45MjUgNS44MjMgMTIuOTI1IDEyLjkyNS01LjgyMiAxMi45MjUtMTIuOTI1IDEyLjkyNXptLTM2MC40My02Ni44MjhWNzIuOTk0YzAtMTEuOTk3IDkuNzQyLTIxLjczOCAyMS43MzgtMjEuNzM4aDEyOS4xMDJ2NDcuMTQ3YzAgMTIuNzk3LTkuOTgzIDIzLjA2LTIyLjE3OCAyMy4wNmgtNTguNDU2djU4LjYwM2MwIDEyLjE5NS0xMC4yNjIgMjIuMDMtMjMuMDYgMjIuMDNsLTQ3LjE0Ni4wMDF6bTM2Mi40ODYgMGMtMTIuNzk2IDAtMjMuMjA2LTkuODM3LTIzLjIwNi0yMi4wMzJ2LTU4LjYwM2gtNTguNjAzYy0xMi4xOTUgMC0yMi4wMy0xMC4yNjMtMjIuMDMtMjMuMDZWNTEuMjU3aDEyOS4xMDJjMTEuOTk2IDAgMjEuNzM4IDkuNzQgMjEuNzM4IDIxLjczN3YxMjkuMTAzaC00N3ptLTM3NC4zODMtLjQ0QzI4LjgyMyAxOTkuNjA2IDIxIDE5MC43MzYgMjEgMTgwLjA2NVY5OC40MDNsLjAwMS01NC4zNDN2LS44ODJjMC0xLjMyNS4yMS0yLjU1Ni40NC0zLjgxOWEyMS42MjMgMjEuNjIzIDAgMCAxIDMuMzc5LTguMjI1Yy41MjMtLjc3MiAxLjE0NS0xLjUgMS43NjItMi4yMDMuMzY0LS40MjguNjM1LS45MTggMS4wMjgtMS4zMjIuMTk4LS4xOTUuMzgzLS40LjU4OC0uNTg3Ljg5My0uODU3IDEuOTE1LTEuNTEgMi45MzgtMi4yMDNDMzQuNTc4IDIyLjQ5NyAzOC42MTcgMjEgNDMuMDMzIDIxSDE3OS45MmMxMC44MTIgMCAxOS44MTkgOC4wNTIgMjEuNzM3IDE4LjhINjIuNzE0QzUwLjA0OCAzOS44IDM5LjggNTAuMDQ2IDM5LjggNjIuNzEzdjEzOC45NDNjLS4xNC0uMDIzLS4zLjAyNC0uNDQgMHptNDMyLjg0LS4wMDFWNjIuNzEyYzAtMTIuNjY3LTEwLjI0Ny0yMi45MTItMjIuOTEzLTIyLjkxMkgzMTAuMzQ0YzEuODkyLTEwLjc0OCAxMC43NzgtMTguOCAyMS41OS0xOC44aDEzNi44ODhjMS4zMjUgMCAyLjU1Ni4yMDggMy44MTkuNDQgMi45ODUuNTUgNS43NzQgMS43MiA4LjIyNSAzLjM3OC4wOS4wNjQuMjAxLjA4Ny4yOTQuMTQ3IDEuMTI1Ljc4NyAyLjI2NSAxLjY2IDMuMjMgMi42NDNsLjE0OC4xNDdjMS4wMDYgMS4wNDMgMS44NDQgMi4xNTIgMi42NDQgMy4zNzlhMjEuNjI4IDIxLjYyOCAwIDAgMSAzLjM3OCA4LjIyNWMuMjMyIDEuMjYyLjQ0IDIuNDk0LjQ0IDMuODE4djEzNi44ODhjMCAxMC44MTMtOC4wNTIgMTkuNjk5LTE4LjggMjEuNTl6TTI1NiAxMTMuMDljLTcuMTAyIDAtMTIuOTI1LTUuODIzLTEyLjkyNS0xMi45MjZTMjQ4Ljg5OCA4Ny4zODggMjU2IDg3LjM4OHMxMi45MjUgNS42NzUgMTIuOTI1IDEyLjc3Ny01LjgyMiAxMi45MjYtMTIuOTI1IDEyLjkyNnptMC0zNy43NDhjLTE0Ljk5NCAwLTI3LjE3MS0xMi4xNzctMjcuMTcxLTI3LjE3MVMyNDEuMDA2IDIxIDI1NiAyMXMyNy4xNzIgMTIuMTc3IDI3LjE3MiAyNy4xNzJTMjcwLjk5NSA3NS4zNDMgMjU2IDc1LjM0M3oiLz48L3N2Zz4=',
   'choke': 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48cGF0aCBmaWxsPSIjZmY5YThmIiBkPSJNOTYgNjQgNjQgOTZsNDggNDgtNDggNDhoMTI4VjY0bC00OCA0OC00OC00OHptMjI0IDB2MTI4aDEyOGwtNDgtNDggNDgtNDgtMzItMzItNDggNDgtNDgtNDh6TTY0IDMyMGw0OCA0OC00OCA0OCAzMiAzMiA0OC00OCA0OCA0OFYzMjBINjR6bTI1NiAwdjEyOGw0OC00OCA0OCA0OCAzMi0zMi00OC00OCA0OC00OEgzMjB6Ii8+PC9zdmc+',
@@ -3985,12 +3975,12 @@ const TOKEN_ICON_DATA = {
   'gravity': 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48cGF0aCBmaWxsPSIjZGNhYWZmIiBkPSJNMjEgMjEuMDAyYTExNTAuMTE5IDExNTAuMTE5IDAgMCAxIDcuMzQ2IDU1LjY4M2MxMS43OC00LjE1MyAyNC40LTYuNDY1IDM3LjYxMi02LjQ2NSA2Mi4zNjQgMCAxMTIuODM1IDUwLjQ3IDExMi44MzUgMTEyLjgzNXMtNTAuNDcxIDExMi45OC0xMTIuODM1IDExMi45OGMtMTAuMDQgMC0xOS44My0xLjIzLTI5LjA5LTMuNjczLS41MDkgMjYuNjE0LTEuNTMzIDUyLjI3Mi0zLjA4NiA3Ni45ODYgMjEuOTAyLTQuNDk2IDQ0LjU0My02Ljg4NCA2Ni45OTYtNi45MDUgMjIuODk0IDAgNDUuNjYgMi4zMjggNjcuNDM2IDcuMDUyIDIzLjczNyA1LjIxNyA0NS4zMzcgMTIuNzQyIDY2LjcwMyAxOS42ODggMjEuMjcyIDYuODUyIDQyLjQ5NSAxMy4zNTEgNjQuNzkxIDE2LjE2IDM0LjkzIDQuNDY1IDcyLjU3OC0uMDUgMTA0Ljc1NC0xMy4wNzUtMzAuMzEgMTUuMjczLTY4LjEwMyAyMi45MTYtMTA1LjkzIDIwLjg2Mi0yNC4wNzgtMS4zNDQtNDcuNDEzLTYuMzAyLTY5Ljc4Ny0xMS43NTMtMjIuNTItNS40MjYtNDQuNTI0LTExLjM0OS02Ni40MDgtMTQuMzk4LTQ0LjM1My02LjMtOTAuODMxLTEuMjczLTEzMC42MTIgMTIuNDg4LS4zNTcgNC4zNi0uNzg2IDguNzk4LTEuMTc1IDEzLjA3NiAzMC42MS05LjQ2NSA2My4zNzItMTQuMzY4IDk1LjkzOS0xNC4zOTggMjIuODk0IDAgNDUuNTEzIDIuMzI4IDY3LjI5IDcuMDUyIDIzLjczNiA1LjIxNyA0NS40ODMgMTIuODg4IDY2Ljg0OCAxOS44MzQgMjEuMjcyIDYuODUyIDQyLjQ5NiAxMy4yMDUgNjQuNzkyIDE2LjAxNCAzNC45MyA0LjQ2NSA3Mi41NzgtLjA1IDEwNC43NTQtMTMuMDc2LTMwLjMxIDE1LjI3My02OC4xMDQgMjIuOTE2LTEwNS45MyAyMC44NjMtMjQuMDc4LTEuMzQ1LTQ3LjQxMy02LjMwMy02OS43ODYtMTEuNzU0LTIyLjUyMi01LjQyNS00NC41MjUtMTEuMjAyLTY2LjQwOC0xNC4yNTEtNTYuNDA4LTguMDEyLTExNi4yMTUgMi4zNjItMTYxLjMxOSAyNS43MTEtMS43NDIgMTQuNzQ5LTMuNjIxIDI5LjA0Ny01LjczIDQyLjQ2IDY0Ljg0Ny0xMC4xNzQgMTQ2LjI4Ni0xNi4zMDggMjM1LjA3My0xNi4zMDggODguNzIyIDAgMTcwLjEgNi4xNDcgMjM0LjkyNSAxNi4zMDgtNi44My00My41NzItMTEuNjk2LTk0LjcxMi0xNC4yNS0xNTAuNDQ2LTIwLjc3NiA3LjUxNC00My4xODMgMTEuNjA3LTY2LjU1NiAxMS42MDctMTA4LjE1IDAtMTk1Ljg0NS04Ny42OTUtMTk1Ljg0NS0xOTUuODQ0IDAtNDQuODI0IDE1LjE4My04Ni4wMiA0MC41NS0xMTkuMDA1QzE2Ni41NzIgMzcuMjUzIDg1LjU1OCAzMS4xNiAyMSAyMS4wMDJ6bTQ2OS45OTggMGMtNTQuNTM4IDguNTc0LTEyMC44NTkgMTQuMTMtMTkzLjM0NyAxNS43Mi0zMS44NjQgMjkuOTU3LTUxLjg2MyA3Mi40MDgtNTEuODYzIDExOS41OTMgMCA5MC43ODIgNzMuNjIxIDE2NC40MDMgMTY0LjQwNSAxNjQuNDAzIDIzLjIxOSAwIDQ1LjIxNS00LjgzMiA2NS4yMzItMTMuNTE3LS40MTQtMTUuMTYyLS42OTUtMzAuNTkyLS43MzUtNDYuMjc5LTMuNCAyLjEwNC02LjgxIDQuMTAzLTEwLjQzIDUuODc3LS4yNC4xMTctLjQ5Ny4xNzktLjczNS4yOTYtMS40MDIuNjc1LTIuODMgMS40MzQtNC4yNjEgMi4wNTctLjM4Ni4xNjQtLjc5MS4yNzctMS4xNzYuNDQyLTEuMjk4LjU1LTIuNjQ2IDEuMTEtMy45NjcgMS42MTUtLjMzMy4xMjctLjY5NS4xNy0xLjAyOC4yOTdhMTIwLjgwNSAxMjAuODA1IDAgMCAxLTkuNDAzIDMuMDg1Yy0xLjYwOC40NTYtMy4yMTUuOTMyLTQuODQ4IDEuMzIyLS4xNTUuMDQzLS4yODcuMTEzLS40NDIuMTQ2LS41OTguMTQxLTEuMTYyLjMxLTEuNzYzLjQ0Mi0xLjI0LjI3Mi0yLjU2Ny41LTMuODIuNzM0LTEuMjkuMjQtMi42NjMuMzktMy45NjcuNTg4LS41MDUuMDc1LS45NjIuMjItMS40Ny4yOTctLjU5Mi4wODQtMS4xNjcuMDcyLTEuNzYyLjE0NS0zLjAwNS4zNzYtNi4wNDIuNzI2LTkuMTEuODgxaC0uNTg3Yy0xLjkwMy4wOS0zLjgwNS4xNDYtNS43My4xNDYtNjcuODkgMC0xMjIuODI1LTU1LjA4Mi0xMjIuODI1LTEyMi45NzEgMC0yLjEyMi4wNDMtNC4yMjMuMTQ2LTYuMzE4IDEuMTY2LTIzLjA0NSA4LjcyOC00NC40NzMgMjAuODYyLTYyLjQ0IDEuMTAzLTEuNjM0IDIuMi0zLjEyNiAzLjM4LTQuNzAyIDIyLjM4OC0yOS45NDcgNTguMTI3LTQ5LjM2NSA5OC40MzYtNDkuMzY1IDIuMTM1IDAgNC4yMDkuMDUgNi4zMTguMTQ1IDMuMDY4LjE1NSA2LjEwNC41MDYgOS4xMDkuODgyLjU3NS4wNzIgMS4xOS4wNjUgMS43NjMuMTQ1LjUwMi4wNzMuOTcuMjE3IDEuNDcuMjk3IDEuMzUyLjIwNiAyLjYyNy4zMzggMy45NjYuNTg3LjUyOS4wOTkgMS4wOS4xODggMS42MTYuMjk2IDEuMzAzLjI1OSAyLjY3OS41OCAzLjk2Ny44ODIuMTUuMDUuMjkxLjExMi40NDIuMTQ1IDEuNjM0LjM5IDMuMjQuODcgNC44NDggMS4zMjMgMy41NTQgMS4wMDUgNy4wMTcgMi4wNyAxMC40MzIgMy4zNzkgMS4zMzQuNTEgMi42NTQgMS4wNjIgMy45NjYgMS42MTYuMzguMTYuNzk3LjI3NyAxLjE3Ni40NDIuNjA3LjI2MyAxLjE2LjYwOCAxLjc2My44ODEgNi4wMzIgMi43NDQgMTEuODczIDUuOTA3IDE3LjMzNiA5LjU1LjIwMi4xMzYuMzg2LjMwNi41ODguNDQyIDEuMjkuODcxIDIuNTY2IDEuNzI2IDMuODIgMi42NDQuMDkuMDY1LjIwNy4wODUuMjk2LjE0Ni45MDguNjY4IDEuNzcyIDEuMzY2IDIuNjQ1IDIuMDU3IDEuNjEtMTMuMjY1IDMuMzgyLTI2LjE4NyA1LjI5LTM4LjM0NnptLTgwLjgwNSA2OS42NGMtMzYuMzE0IDAtNjUuNjc0IDI5LjM2LTY1LjY3NCA2NS42NzNzMjkuMzYgNjUuODIgNjUuNjc0IDY1LjgyIDY1LjgyLTI5LjUwNyA2NS44Mi02NS44Mi0yOS41MDctNjUuNjczLTY1LjgyLTY1LjY3M3pNNjUuOTU4IDEwMy4xM2E3OS40OTYgNzkuNDk2IDAgMCAwLTM0LjM4IDcuNzg3YzMuNzE4IDQ0Ljc1OSA1LjczIDkzLjY0NiA1LjczIDE0NS4xNTZ2MS45MWE3OS45ODcgNzkuOTg3IDAgMCAwIDI4LjY1IDUuMjljNDQuMjA3IDAgNzkuOTI0LTM1Ljg2NSA3OS45MjQtODAuMDcycy0zNS43MTctODAuMDctNzkuOTI0LTgwLjA3eiIvPjwvc3ZnPg==',
   'eclipse': 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48cGF0aCBmaWxsPSIjZGNhYWZmIiBkPSJNMjg1LjM3NSAyMWMyMS4xODMgMi43NDEgNDEuNiA4LjEyIDYwLjY2IDE2LjAxbC0zNi44NjYgOTcuNjcxYTEzNS4zMSAxMzUuMzEgMCAwIDEgMjMuNzkzIDEzLjY2bDY2LjUzNS04MC42MzVjMTYuNyAxMi43MzEgMzEuNTU3IDI3LjYgNDQuMzU2IDQ0LjIxbC04MC45MjggNjYuMjRhMTMyLjY0IDEzMi42NCAwIDAgMSAxMy42NiAyMy41bDk4LjExMi0zNi41NzFjNy45NzggMTkuMDQ3IDEzLjU2IDM5LjE4OCAxNi4zMDMgNjAuMzY1bC0xMDMuNCAxNi44OWMuNDcgNC41MTguNTg3IDkuMDIuNTg3IDEzLjY2IDAgNC41OS0uMTI3IDkuMTkyLS41ODcgMTMuNjZMNDkxIDI4Ni42OTdjLTIuNzQzIDIxLjE3OC04LjMyNSA0MS4zMi0xNi4zMDMgNjAuMzY2bC05OC4xMTItMzYuNzJjLTMuNzY4IDguMzctOC4zMTIgMTYuMy0xMy42NiAyMy42NDhsODAuOTI4IDY2LjI0Yy0xMi44MDUgMTYuNjA1LTI3LjY1NiAzMS40NzgtNDQuMzU2IDQ0LjIxbC02Ni41MzUtODAuNjM1YTEzNS40NTggMTM1LjQ1OCAwIDAgMS0yMy43OTMgMTMuNjZsMzYuODY2IDk3LjY3MmMtMTkuMDYgNy44ODktMzkuNDc3IDEzLjEyMS02MC42NiAxNS44NjJsLTE3LjAzOC0xMDIuNTE5Yy00LjA2Mi40MTQtOC4xODguNTYyLTEyLjMzNy41ODgtNC4xNDgtLjA1LTguMjc1LS4xNzQtMTIuMzM4LS41ODhsLTE3LjAzNyAxMDIuNTJjLTIxLjE4My0yLjc0Mi00MS42LTcuOTc0LTYwLjY2LTE1Ljg2M2wzNi44NjYtOTcuNjcyYTEzNS40NzYgMTM1LjQ3NiAwIDAgMS0yMy43OTQtMTMuNjZsLTY2LjUzNCA4MC42MzVjLTE2LjcwMS0xMi43MzItMzEuNTUyLTI3LjYwNS00NC4zNTYtNDQuMjFsODAuOTI4LTY2LjI0Yy01LjM0OC03LjM0Ny05Ljg5My0xNS4yNzktMTMuNjYtMjMuNjQ3bC05OC4xMTIgMzYuNzE5Yy03Ljk3OC0xOS4wNDctMTMuNTYtMzkuMTg4LTE2LjMwMy02MC4zNjZsMTAzLjQtMTcuMDM3Yy0uNDYtNC40NjgtLjU4Ny05LjA3MS0uNTg3LTEzLjY2IDAtNC42NC4xMTctOS4xNDIuNTg3LTEzLjY2TDIxIDIyNS40NWMyLjc0Mi0yMS4xNzcgOC4zMjUtNDEuMzE4IDE2LjMwMy02MC4zNjVsOTguMTEyIDM2LjU3MWExMzIuNjQgMTMyLjY0IDAgMCAxIDEzLjY2LTIzLjVsLTgwLjkyOC02Ni4yNGMxMi43OTgtMTYuNjEgMjcuNjU1LTMxLjQ3OSA0NC4zNTYtNDQuMjFsNjYuNTM0IDgwLjYzNWExMzUuMzM5IDEzNS4zMzkgMCAwIDEgMjMuNzk0LTEzLjY2TDE2NS45NjUgMzcuMDFjMTkuMDYtNy44OSAzOS40NzctMTMuMjY4IDYwLjY2LTE2LjAxbDE3LjAzNyAxMDIuNjY3YzQuMDYyLS40MTggOC4xODktLjU2NSAxMi4zMzgtLjU4OCA0LjE1LjA0MyA4LjI3NS4xNyAxMi4zMzcuNTg4TDI4NS4zNzUgMjF6TTI1NiAxNDAuMTE2Yy02My43MjcuNzgyLTExNS4wMDQgNTIuMzQ3LTExNS4wMDMgMTE1Ljg4NGwzMy45MjgtMi40OTdjMCA0NC44NTggMzYuMTQ5IDc3LjU1OCA4MS4wNzUgNzguNDMxIDQ0LjkyNy0uODczIDgxLjA3NS0zMy41NzQgODEuMDc1LTc4LjQzTDM3MS4wMDMgMjU2YzAtNjMuNTM3LTUxLjI3NS0xMTUuMTAyLTExNS4wMDMtMTE1Ljg4NHptMjIuOTEzIDE4LjA2NWMzNS4zMTYgMCA0Ni41NiA2NS43MTkgNDYuNTYgOTcuNTI1IDAgNDAuMjMtMzAuODk0IDYxLjUzNS02OS40NzMgNjIuNDIyLTM4LjU3OC0uODg3LTY5LjQ3Mi0yMi4xOTMtNjkuNDcyLTYyLjQyMiAwLTMxLjgwNiAxMS4yNDMtOTcuNTI1IDQ2LjU2LTk3LjUyNXY1My42MWMwIDEzLjU0NCAxMC4wNzIgMjQuNTM2IDIyLjkxMiAyNS40MDkgMTIuODQtLjg3MyAyMi45MTItMTEuODY1IDIyLjkxMi0yNS40MXYtNTMuNjA5eiIvPjwvc3ZnPg=='
 };
-// preload as actual Image objects so drawTokens() can drawImage() them on canvas
-const TOKEN_ICON_IMG = {};
-for (const k in TOKEN_ICON_DATA) {
+// preload as actual Image objects so drawModifiers() can drawImage() them on canvas
+const Modifier_ICON_IMG = {};
+for (const k in Modifier_ICON_DATA) {
   const im = new Image();
-  im.src = TOKEN_ICON_DATA[k];
-  TOKEN_ICON_IMG[k] = im;
+  im.src = Modifier_ICON_DATA[k];
+  Modifier_ICON_IMG[k] = im;
 }
 
 const EFFECTS = [
@@ -4028,27 +4018,27 @@ const EFFECTS = [
 const FX = {};                         // id -> effect definition (+ its category)
 EFFECTS.forEach(g => g.list.forEach(f => { f.key = g.key; f.col = g.col; FX[f.id] = f; }));
 
-/* per-token on/off, so a player can prune the pool down to whichever effects they like */
-const TOKEN_TOGGLES_KEY = 'hexapong_tokentoggles_v1';
-function defaultTokenToggles() {
+/* per-Modifier on/off, so a player can prune the pool down to whichever effects they like */
+const Modifier_TOGGLES_KEY = 'hexapong_Modifiertoggles_v1';
+function defaultModifierToggles() {
   const o = {};
   EFFECTS.forEach(g => g.list.forEach(f => { o[f.id] = true; }));
   return o;
 }
-let tokenToggles = defaultTokenToggles();
+let ModifierToggles = defaultModifierToggles();
 try {
-  const raw = localStorage.getItem(TOKEN_TOGGLES_KEY);
-  if (raw) tokenToggles = Object.assign(defaultTokenToggles(), JSON.parse(raw));
+  const raw = localStorage.getItem(Modifier_TOGGLES_KEY);
+  if (raw) ModifierToggles = Object.assign(defaultModifierToggles(), JSON.parse(raw));
 } catch (e) {}
-function saveTokenToggles() {
-  try { localStorage.setItem(TOKEN_TOGGLES_KEY, JSON.stringify(tokenToggles)); } catch (e) {}
+function saveModifierToggles() {
+  try { localStorage.setItem(Modifier_TOGGLES_KEY, JSON.stringify(ModifierToggles)); } catch (e) {}
 }
 
 function buildCodex() {
   document.getElementById('codexBody').innerHTML = EFFECTS.map(g =>
     '<div class="cxg"><h3 style="color:' + g.col + '">' + g.title + '</h3><p>' + g.blurb + '</p>' +
     g.list.map(f =>
-      '<div class="fx"><div class="tok ' + g.key + '"><img src="' + (TOKEN_ICON_DATA[f.id] || '') +
+      '<div class="fx"><div class="tok ' + g.key + '"><img src="' + (Modifier_ICON_DATA[f.id] || '') +
       '" alt=""></div>' +
       '<div class="fxb"><div class="fxn">' + f.name + '</div><div class="fxd">' + f.desc + '</div></div>' +
       '<div class="fxt">' + f.durTxt + '</div></div>').join('') +
@@ -4149,7 +4139,7 @@ function showQuickTips() {
   const tips = [
     '1/3 MOVE — Drag or use arrow keys / A D to slide your paddle along the bottom wall.',
     '2/3 SWEET SPOT — Catch the ball near the center of your paddle for a brighter flash and cleaner return.',
-    '3/3 TOKENS — Gold helps you, red punishes the next hitter, violet changes the whole arena. Let them arm before striking.',
+    '3/3 ModifierS — Gold helps you, red punishes the next hitter, violet changes the whole arena. Let them arm before striking.',
   ];
   let i = 0;
   const step = () => {
@@ -4174,7 +4164,7 @@ function refreshHiScore() {
   document.getElementById('hiVal').textContent = commas(best);
   const bits = [];
   if (career.bestScoreDiff)  bits.push(titleCase(career.bestScoreDiff));
-  if (career.bestScoreMode)  bits.push(career.bestScoreMode === 'token' ? 'Token' : 'Vanilla');
+  if (career.bestScoreMode)  bits.push(career.bestScoreMode === 'Modifier' ? 'Modifier' : 'Vanilla');
   if (career.bestScorePlace) bits.push(ordinal(career.bestScorePlace) + ' of 6');
   document.getElementById('hiMeta').textContent = bits.join(' \u00b7 ');
 }
@@ -4273,7 +4263,7 @@ function boardHtml() {
     const lvl = e.lv ? ('L' + e.lv + prestigeStars(e.pr || 0)) : '';
     const meta = [lvl,
                   titleCase(DIFF[clamp(e.d | 0, 0, 3)].label),
-                  e.m === 'token' ? 'Token' : 'Vanilla',
+                  e.m === 'Modifier' ? 'Modifier' : 'Vanilla',
                   ordinal(e.p || 6) + ' of 6',
                   fmtTime(e.t || 0)].filter(Boolean).join(' \u00b7 ');
     return '<div class="hsrow' + (e.at && e.at === lastScoreStamp ? ' fresh' : '') + '">' +
@@ -4455,18 +4445,18 @@ function hideCodex() {
 }
 
 /* ── game modes ────────────────────────────────────────────────────────────
-   Vanilla and Token are fixed presets: pick a difficulty and you are playing.
-   Custom owns lives, tokens, spawn rate and the per-token switches, which is why
-   those toggles came out of the Token Index. */
+   Vanilla and Modifier are fixed presets: pick a difficulty and you are playing.
+   Custom owns lives, Modifiers, spawn rate and the per-Modifier switches, which is why
+   those toggles came out of the Modifier Index. */
 const MODES = {
-  vanilla: { title:'VANILLA MODE', cls:'vanilla', lives:3, tokens:false, rate:1,
+  vanilla: { title:'VANILLA MODE', cls:'vanilla', lives:3, Modifiers:false, rate:1,
              icon:'<svg viewBox="0 0 24 24"><path d="M12 2.6 20.4 7.3v9.4L12 21.4 3.6 16.7V7.3z"/></svg>',
-             chips:['&#9825; 3 Lives', '&#8856; Tokens Off'] },
-  token:   { title:'TOKEN MODE', cls:'token', lives:3, tokens:true, rate:1,
+             chips:['&#9825; 3 Lives', '&#8856; Modifiers Off'] },
+  Modifier:   { title:'Modifier MODE', cls:'Modifier', lives:3, Modifiers:true, rate:1,
              icon:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.2"/><text x="12" y="16.4" text-anchor="middle" font-size="11" font-weight="700" fill="currentColor" stroke="none">T</text></svg>',
-             chips:['&#9825; 3 Lives', '&#9417; Tokens On', '&#9776; Mid Rate'] },
+             chips:['&#9825; 3 Lives', '&#9417; Modifiers On', '&#9776; Mid Rate'] },
 };
-let gameMode = 'token';
+let gameMode = 'Modifier';
 
 function showMode(key) {
   gameMode = key;
@@ -4474,7 +4464,7 @@ function showMode(key) {
   const icon = document.getElementById('modeIcon');
   icon.innerHTML = m.icon;
   icon.className = 'mi big ' + m.cls;
-  icon.style.color = key === 'token' ? '#5de2a8' : '#5fb8ee';
+  icon.style.color = key === 'Modifier' ? '#5de2a8' : '#5fb8ee';
   const h = document.getElementById('modeTitle');
   h.textContent = m.title;
   h.className = 'ruled';
@@ -4492,32 +4482,32 @@ function showCustom() {
   gameMode = 'custom';
   document.getElementById('customIcon').innerHTML =
     '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.4"/><path d="M12 1.8v3.4M12 18.8v3.4M1.8 12h3.4M18.8 12h3.4M4.8 4.8l2.4 2.4M16.8 16.8l2.4 2.4M19.2 4.8l-2.4 2.4M7.2 16.8l-2.4 2.4"/></svg>';
-  buildTokenGrid();
+  buildModifierGrid();
   syncCustomUI();
   ['start', 'over', 'pausePanel', 'codex', 'statsPanel', 'setPanel', 'achPanel', 'modePanel']
     .forEach(id => document.getElementById(id).classList.add('hidden'));
   document.getElementById('customPanel').classList.remove('hidden');
 }
 
-// Vanilla and Token run the full token roster; the per-token switches are Custom's alone,
+// Vanilla and Modifier run the full Modifier roster; the per-Modifier switches are Custom's alone,
 // so a preset match always behaves the same way for everyone.
 function applyMode(key) {
   gameMode = key;
   if (key === 'custom') return;                 // custom already holds its own state
   const m = MODES[key];
-  startLives = m.lives; tokensOn = m.tokens; tokenRate = m.rate;
+  startLives = m.lives; ModifiersOn = m.Modifiers; ModifierRate = m.rate;
 }
 
-// the token grid reuses the exact icons from the Token Index
-function buildTokenGrid() {
+// the Modifier grid reuses the exact icons from the Modifier Index
+function buildModifierGrid() {
   const rows = [];
   for (const g of EFFECTS) for (const f of g.list) {
-    rows.push('<button class="tokrow' + (tokenToggles[f.id] !== false ? ' on' : '') +
+    rows.push('<button class="tokrow' + (ModifierToggles[f.id] !== false ? ' on' : '') +
       '" data-id="' + f.id + '"><span class="tok ' + g.key + '"><img src="' +
-      (TOKEN_ICON_DATA[f.id] || '') + '" alt=""></span><span class="tn">' + f.name +
+      (Modifier_ICON_DATA[f.id] || '') + '" alt=""></span><span class="tn">' + f.name +
       '</span><span class="sw2"></span></button>');
   }
-  document.getElementById('cTokenGrid').innerHTML = rows.join('');
+  document.getElementById('cModifierGrid').innerHTML = rows.join('');
 }
 
 function syncCustomUI() {
@@ -4527,29 +4517,29 @@ function syncCustomUI() {
     [...el.children].forEach(b => b.classList.toggle('on', +b.dataset[attr] === val));
   };
   mark('cLives', 'l', startLives);
-  mark('cTokens', 't', tokensOn ? 1 : 0);
-  mark('cRate', 'tr', tokenRate);
+  mark('cModifiers', 't', ModifiersOn ? 1 : 0);
+  mark('cRate', 'tr', ModifierRate);
   mark('cDiff', 'd', diffIdx);
   mark('cEndless', 'e', endlessMode ? 1 : 0);
   mark('modeEndless', 'e', endlessMode ? 1 : 0);
-  const grid = document.getElementById('cTokenGrid');
+  const grid = document.getElementById('cModifierGrid');
   if (grid) {
-    grid.style.opacity = tokensOn ? '1' : '.35';
-    grid.style.pointerEvents = tokensOn ? '' : 'none';
+    grid.style.opacity = ModifiersOn ? '1' : '.35';
+    grid.style.pointerEvents = ModifiersOn ? '' : 'none';
   }
   const ca = document.getElementById('cAll'), cn = document.getElementById('cNone');
-  if (ca) ca.disabled = !tokensOn;
-  if (cn) cn.disabled = !tokensOn;
+  if (ca) ca.disabled = !ModifiersOn;
+  if (cn) cn.disabled = !ModifiersOn;
 }
 
-// Simple build: single Play button → Normal difficulty, mid token rate. Tokens
-// on/off comes from the menu toggle (tokensOn), not forced here, so a player's
+// Simple build: single Play button → Normal difficulty, mid Modifier rate. Modifiers
+// on/off comes from the menu toggle (ModifiersOn), not forced here, so a player's
 // choice survives from one match to the next.
 function startSimplePlay() {
-  gameMode = tokensOn ? 'token' : 'vanilla';
+  gameMode = ModifiersOn ? 'Modifier' : 'vanilla';
   diffIdx = 1;           // Normal
   startLives = 3;
-  tokenRate = 1;         // Mid = half as often as previous double (Max) rate
+  ModifierRate = 1;         // Mid = half as often as previous double (Max) rate
   endlessMode = false;
   saveSettings();
   startGame();
@@ -4557,26 +4547,26 @@ function startSimplePlay() {
 const mPlayBtn = document.getElementById('mPlay');
 if (mPlayBtn) mPlayBtn.addEventListener('click', startSimplePlay);
 
-// Tokens on/off toggle: default on, remembered via saveSettings/applySavedSettings
-// (tokensOn already round-trips through both). This just adds the menu control and
+// Modifiers on/off toggle: default on, remembered via saveSettings/applySavedSettings
+// (ModifiersOn already round-trips through both). This just adds the menu control and
 // keeps the Play button's icon/colour in sync with the current choice.
-function syncTokensToggle() {
-  const seg = document.getElementById('mTokens');
-  if (seg) [...seg.children].forEach(b => b.classList.toggle('on', (b.dataset.t === '1') === tokensOn));
+function syncModifiersToggle() {
+  const seg = document.getElementById('mModifiers');
+  if (seg) [...seg.children].forEach(b => b.classList.toggle('on', (b.dataset.t === '1') === ModifiersOn));
   const play = document.getElementById('mPlay');
   const icon = document.getElementById('mPlayIcon');
   if (play && icon) {
-    const m = tokensOn ? MODES.token : MODES.vanilla;
-    play.classList.remove('token', 'vanilla');
+    const m = ModifiersOn ? MODES.Modifier : MODES.vanilla;
+    play.classList.remove('Modifier', 'vanilla');
     play.classList.add(m.cls);
     icon.innerHTML = m.icon;
   }
 }
-const mTokensSeg = document.getElementById('mTokens');
-if (mTokensSeg) mTokensSeg.addEventListener('click', e => {
+const mModifiersSeg = document.getElementById('mModifiers');
+if (mModifiersSeg) mModifiersSeg.addEventListener('click', e => {
   const b = e.target.closest('button'); if (!b) return;
-  tokensOn = b.dataset.t === '1';
-  syncTokensToggle();
+  ModifiersOn = b.dataset.t === '1';
+  syncModifiersToggle();
   saveSettings();
 });
 const bModeBack = document.getElementById('bModeBack');
@@ -4601,31 +4591,31 @@ document.getElementById('cLives').addEventListener('click', e => {
   const b = e.target.closest('button'); if (!b) return;
   startLives = +b.dataset.l; syncCustomUI(); saveSettings();
 });
-document.getElementById('cTokens').addEventListener('click', e => {
+document.getElementById('cModifiers').addEventListener('click', e => {
   const b = e.target.closest('button'); if (!b) return;
-  tokensOn = b.dataset.t === '1'; syncCustomUI(); saveSettings();
+  ModifiersOn = b.dataset.t === '1'; syncCustomUI(); saveSettings();
 });
 document.getElementById('cRate').addEventListener('click', e => {
   const b = e.target.closest('button'); if (!b) return;
-  tokenRate = clamp(+b.dataset.tr, 0, 2); syncCustomUI(); saveSettings();
+  ModifierRate = clamp(+b.dataset.tr, 0, 2); syncCustomUI(); saveSettings();
 });
 document.getElementById('cDiff').addEventListener('click', e => {
   const b = e.target.closest('button'); if (!b) return;
   diffIdx = clamp(+b.dataset.d, 0, DIFF.length - 1); syncCustomUI(); saveSettings();
 });
-document.getElementById('cTokenGrid').addEventListener('click', e => {
+document.getElementById('cModifierGrid').addEventListener('click', e => {
   const b = e.target.closest('.tokrow'); if (!b) return;
   const id = b.dataset.id;
-  tokenToggles[id] = tokenToggles[id] === false;
-  b.classList.toggle('on', tokenToggles[id] !== false);
-  saveTokenToggles();
+  ModifierToggles[id] = ModifierToggles[id] === false;
+  b.classList.toggle('on', ModifierToggles[id] !== false);
+  saveModifierToggles();
 });
-const setAllTokens = on => {
-  for (const g of EFFECTS) for (const f of g.list) tokenToggles[f.id] = on;
-  saveTokenToggles(); buildTokenGrid();
+const setAllModifiers = on => {
+  for (const g of EFFECTS) for (const f of g.list) ModifierToggles[f.id] = on;
+  saveModifierToggles(); buildModifierGrid();
 };
-document.getElementById('cAll').addEventListener('click', () => setAllTokens(true));
-document.getElementById('cNone').addEventListener('click', () => setAllTokens(false));
+document.getElementById('cAll').addEventListener('click', () => setAllModifiers(true));
+document.getElementById('cNone').addEventListener('click', () => setAllModifiers(false));
 document.getElementById('bCustomStart').addEventListener('click', () => {
   applyMode('custom'); saveSettings(); startGame();
 });
@@ -4774,9 +4764,9 @@ window.__hex = {
     running, over, serveTimer,
     ball: balls[0] ? { x: balls[0].x, y: balls[0].y, sp: Math.hypot(balls[0].vx, balls[0].vy) } : null,
     balls: balls.length,
-    tokens: tokens.map(t => t.fx.id), tokensOn, tokenRate, mode: gameMode,
-    tokenPos: tokens.map(t => ({ x: +t.x.toFixed(1), y: +t.y.toFixed(1), r: +t.r.toFixed(1) })),
-    tokenTimer: +tokenTimer.toFixed(2), spinRate, dR: +(R - Rtarget).toFixed(2), serveTimer: +serveTimer.toFixed(2),
+    Modifiers: Modifiers.map(t => t.fx.id), ModifiersOn, ModifierRate, mode: gameMode,
+    ModifierPos: Modifiers.map(t => ({ x: +t.x.toFixed(1), y: +t.y.toFixed(1), r: +t.r.toFixed(1) })),
+    ModifierTimer: +ModifierTimer.toFixed(2), spinRate, dR: +(R - Rtarget).toFixed(2), serveTimer: +serveTimer.toFixed(2),
     fx: players.map(p => Object.keys(p.fx || {})),
     gfx: Object.keys(gfx),
     vel: players.map(p => Math.round(p.vel || 0)),
@@ -4796,9 +4786,9 @@ window.__hex = {
                    concede(p, balls[0] || newBall(CX, CY, 0, 0), null); } },
   hit:  (i) => { const p = players[i]; if (p && !p.out) concede(p, balls[0] || newBall(CX, CY, 0, 0), null); },
   give: (i, id) => { const p = players[i]; if (p && FX[id]) { applyEffect(FX[id], [p]); return true; } return false; },
-  spawn: (id) => { const f = FX[id]; if (!f) return false; spawnToken(f); return true; },
-  drop: () => { tokens.length = 0; },
-  tokensOn: (v) => { tokensOn = v; },
+  spawn: (id) => { const f = FX[id]; if (!f) return false; spawnModifier(f); return true; },
+  drop: () => { Modifiers.length = 0; },
+  ModifiersOn: (v) => { ModifiersOn = v; },
   hitter: (i) => { if (balls[0]) balls[0].hitter = players[i]; },
   fxList: () => Object.keys(FX),
   shareCard: () => buildShareCard().toDataURL('image/png'),
@@ -4828,9 +4818,9 @@ window.__hex = {
 newPlayers();
 newRun();
 
-// restore menu + quality prefs (after tokensOn / sound exist)
+// restore menu + quality prefs (after ModifiersOn / sound exist)
 applySavedSettings();
-syncTokensToggle();
+syncModifiersToggle();
 // accessibility: respect reduced-motion unless the player already saved an FX choice
 try {
   if (!savedSettings || (typeof savedSettings.fxLevel !== 'number' && typeof savedSettings.lite !== 'boolean')) {
