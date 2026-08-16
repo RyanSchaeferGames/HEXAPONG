@@ -721,16 +721,16 @@
   </div>
 </div>
 
-<div class="panel hidden" 
 <div class="panel hidden" id="brPanel">
   <div class="card">
-    <div class="pbar"><button class="backlink" id="bBrBack">← Back</button></div>
+    <div class="pbar"><button class="backlink" id="bBrBack">&#10094; Back</button></div>
     <h1 class="ruled" style="font-size:20px;letter-spacing:.14em" id="brTitle">SCORE</h1>
     <div class="scoreband" id="brScoreBand"></div>
     <div id="brBody" class="scorebreak"></div>
   </div>
 </div>
-id="logPanel">
+
+<div class="panel hidden" id="logPanel">
   <div class="card wide">
     <div class="pbar"><button class="backlink" id="bLogBack">&#10094; Back</button></div>
     <h1 style="font-size:22px">CHANGELOG</h1>
@@ -1042,7 +1042,7 @@ const DIFF = [
 let diffIdx = 1;
 let startLives = 3;
 let displayName = 'RHYNOCK';
-const VERSION = '0.7.7';
+const VERSION = '0.7.8';
 /* Online leaderboard (Cloudflare Worker + D1).
    Leave empty to keep the game fully offline.
    After you deploy the Worker, set this to your workers.dev URL, e.g.:
@@ -1061,6 +1061,11 @@ Optional online leaderboard (Cloudflare Worker + D1) via LEADERBOARD_URL — lea
 - Constant: const VERSION = 'x.y.z';
 - Always increment the PATCH (last) digit for any non-trivial change set.
 - Array: const CHANGELOG = [
+  { v: '0.7.8', date: '2026-08-16', notes: [
+    'Fixed Changelog panel HTML (broken opening tag) so it no longer overlays the arena during play.',
+    'In-game PAUSE / RESTART / SETTINGS correctly hide whenever any menu panel is open.',
+    'startGame now hides every overlay panel (leaderboard, recent, breakdown, context, achievements, etc.).',
+  ]},
   { v: '0.7.7', date: '2026-08-16', notes: [
     'No duplicate modifiers: the same modifier cannot appear on the arena twice, and cannot re-spawn while still active (player FX, global FX, or Eclipse cycle).',
     'Life-loss and elimination toasts suppressed; modifier-hit toasts kept at ~1/3 size so they no longer block the arena.',
@@ -2331,8 +2336,9 @@ function startGame() {
   balls = [];                         // hold the ball until countdown finishes
   serveTimer = 0;
   countdown = 5.0;
-  ['start', 'brief', 'over', 'pausePanel', 'codex', 'statsPanel', 'setPanel', 'modePanel', 'customPanel', 'logPanel'].forEach(id =>
-    document.getElementById(id).classList.add('hidden'));
+  ['start', 'brief', 'over', 'pausePanel', 'codex', 'statsPanel', 'setPanel', 'modePanel', 'customPanel', 'logPanel', 'lbPanel', 'recentPanel', 'ctxPanel', 'achPanel', 'scoreHelpPanel', 'brPanel', 'nameGate'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.classList.add('hidden');
+  });
   document.getElementById('bPause').textContent = 'PAUSE';
   toast('5', '#bfe9ff', 0.9);
   haptic(10);
