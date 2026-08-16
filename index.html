@@ -1042,7 +1042,7 @@ const DIFF = [
 let diffIdx = 1;
 let startLives = 3;
 let displayName = 'RHYNOCK';
-const VERSION = '0.7.8';
+const VERSION = '0.8.0';
 /* Online leaderboard (Cloudflare Worker + D1).
    Leave empty to keep the game fully offline.
    After you deploy the Worker, set this to your workers.dev URL, e.g.:
@@ -1060,22 +1060,7 @@ Optional online leaderboard (Cloudflare Worker + D1) via LEADERBOARD_URL — lea
 === VERSION & CHANGELOG (MANDATORY ON EVERY CHANGE SET) ===
 - Constant: const VERSION = 'x.y.z';
 - Always increment the PATCH (last) digit for any non-trivial change set.
-- Array: const CHANGELOG = [
-  { v: '0.7.8', date: '2026-08-16', notes: [
-    'Fixed Changelog panel HTML (broken opening tag) so it no longer overlays the arena during play.',
-    'In-game PAUSE / RESTART / SETTINGS correctly hide whenever any menu panel is open.',
-    'startGame now hides every overlay panel (leaderboard, recent, breakdown, context, achievements, etc.).',
-  ]},
-  { v: '0.7.7', date: '2026-08-16', notes: [
-    'No duplicate modifiers: the same modifier cannot appear on the arena twice, and cannot re-spawn while still active (player FX, global FX, or Eclipse cycle).',
-    'Life-loss and elimination toasts suppressed; modifier-hit toasts kept at ~1/3 size so they no longer block the arena.',
-    'Score breakdown stored with each scored match and viewable by tapping a name on the full leaderboard and Recent Matches panels.',
-    'Leaderboard / Recent rows show place only (e.g. 6th) and no longer show Modified/Vanilla mode tags.',
-    'Gravity Well restored to the wildcard pool.',
-    'Ball-stuck watchdog: if every ball is motionless while no freeze (serve/Eclipse) is active, velocities are restored or gently re-launched.',
-    'Worker: /api/recent endpoint, optional breakdown JSON column on score submit, mode accepts modifier|token|vanilla.',
-  ]},
- { v, date, notes: [...] }, ... ] (newest first).
+- Array: const CHANGELOG = [ { v, date, notes: [...] }, ... ] (newest first).
 - Prepend a new entry describing what you changed.
 - Version string appears as plain text on the main menu (#verTag). Looks like normal credit text — not a button.
 - Triple-click #verTag (3 clicks within ~900ms) opens #ctxPanel with this PROJECT_CONTEXT text.
@@ -1135,6 +1120,29 @@ ${VERSION} — Triple-click main-menu version opens this project context panel f
    Append a new entry and bump the patch digit of VERSION on every change set.
    The in-game Changelog panel reads this array directly. */
 const CHANGELOG = [
+  { v: '0.8.0', date: '2026-08-16', notes: [
+    'Toast notifications cleaned up: removed Eclipse status, respawn, arena collapse, image save, sharing, and prestige messages.',
+    'Kept only: Match Start (5–4–3–2–1–GO), Unpause Resume (3–2–1–GO), and New High Score.',
+  ]},
+  { v: '0.7.9', date: '2026-08-16', notes: [
+    'Modifier collect feedback is the active-modifier timer bar only — no center-arena toast on hit.',
+    'Floating modifier tokens still show their name under the icon while on the arena.',
+    'Pause/resume: the ball stays where it was; unpause runs a 3–2–1–GO countdown, then continues without re-serving to the center.',
+  ]},
+  { v: '0.7.8', date: '2026-08-16', notes: [
+    'Fixed Changelog panel HTML (broken opening tag) so it no longer overlays the arena during play.',
+    'In-game PAUSE / RESTART / SETTINGS correctly hide whenever any menu panel is open.',
+    'startGame now hides every overlay panel (leaderboard, recent, breakdown, context, achievements, etc.).',
+  ]},
+  { v: '0.7.7', date: '2026-08-16', notes: [
+    'No duplicate modifiers: the same modifier cannot appear on the arena twice, and cannot re-spawn while still active (player FX, global FX, or Eclipse cycle).',
+    'Life-loss and elimination toasts suppressed; modifier-hit toasts reduced in size (later replaced by timer-only feedback in 0.7.9).',
+    'Score breakdown stored with each scored match; tap a name on the full leaderboard or Recent Matches to view it when data is present.',
+    'Leaderboard / Recent rows show place only (e.g. 6th) and no longer show Modified/Vanilla mode tags.',
+    'Gravity Well restored to the wildcard pool.',
+    'Ball-stuck watchdog: if every ball is motionless while no serve/Eclipse freeze is active, velocities are restored or gently re-launched.',
+    'Worker: GET /api/recent, optional breakdown JSON on score submit, mode accepts modifier|token|vanilla.',
+  ]},
   { v: '0.7.6', date: '2026-08-16', notes: [
     'Disabled Gravity Well wildcard — removed from the modifier pool so it no longer spawns.',
   ]},
@@ -2186,6 +2194,7 @@ let serveTimer = 0, shakeT = 0, shakeMag = 0;
 const SERVE_DELAY_LIFE_LOST = 1.0;   // someone conceded but is still in the match
 const SERVE_DELAY_KNOCKOUT  = 2.0;   // a wall was eliminated and the arena collapsed
 let countdown = 0;          // 5..1 then GO at match start; 3..1 on resume
+let resumeCountdown = false; // true = unpause freeze; do not re-serve the ball
 let rallyHits = 0, elapsed = 0, playerHits = 0, knockouts = 0;
 let pressure = 0;
 let sound = true, lastT = 0;
@@ -2336,6 +2345,7 @@ function startGame() {
   balls = [];                         // hold the ball until countdown finishes
   serveTimer = 0;
   countdown = 5.0;
+  resumeCountdown = false;
   ['start', 'brief', 'over', 'pausePanel', 'codex', 'statsPanel', 'setPanel', 'modePanel', 'customPanel', 'logPanel', 'lbPanel', 'recentPanel', 'ctxPanel', 'achPanel', 'scoreHelpPanel', 'brPanel', 'nameGate'].forEach(id => {
     const el = document.getElementById(id); if (el) el.classList.add('hidden');
   });
@@ -2467,7 +2477,7 @@ function resolveModifier(t, b, p) {
     applyEffect(f, players.filter(q => !q.out));
   }
 
-  toast(f.name.toUpperCase(), f.col, 1.0, Modifier_ICON_DATA[f.id], true);
+  // Hit feedback is the #fxbar timer pill only (no center-arena toast).
 }
 
 function applyEffect(f, targets) {
@@ -2721,6 +2731,7 @@ function togglePause(force) {
     // Resume freeze: 3-2-1 before play continues (skip if we were force-paused into a non-running state)
     if (wasPaused && running && !over && !ending) {
       countdown = 3.0;
+      resumeCountdown = true;   // keep ball(s) where they were; no center re-serve
       toast('3', '#bfe9ff', 0.85);
       haptic(8);
     }
@@ -2775,7 +2786,8 @@ function toast(txt, col, dur, icon, small) {
 
 /* ─────────────────────────── update ─────────────────────────── */
 function update(dt) {
-  // Pre-match countdown: 5 → 4 → 3 → 2 → 1 → GO, then serve
+  // Match-start countdown: 5 → 4 → 3 → 2 → 1 → GO, then serve.
+  // Resume countdown: 3 → 2 → 1 → GO, then continue with existing ball(s) in place.
   if (countdown > 0) {
     const prev = Math.ceil(countdown);
     countdown -= dt;
@@ -2784,7 +2796,12 @@ function update(dt) {
       countdown = 0;
       toast('GO', '#bfe9ff', 0.85);
       haptic(14);
-      serve(null);
+      if (resumeCountdown) {
+        resumeCountdown = false;
+        // Balls already sit where they were when paused — do not re-serve to center.
+      } else {
+        serve(null);
+      }
     } else if (cur < prev && cur >= 1) {
       toast(String(cur), '#bfe9ff', 0.85);
       haptic(8);
@@ -2863,11 +2880,11 @@ function update(dt) {
         // Return trip complete: snap fully back to the original orientation and stop.
         eclipseReturning = false;
         eclipseSpin = 0;
-        toast('ECLIPSE REALIGNED', '#dcaaff', 0.9);
+        // Removed toast: ECLIPSE REALIGNED
       } else {
         // Outbound trip complete: hold here, then start the mirrored return spin.
         eclipseHoldT = ECLIPSE_HOLD_DUR;
-        toast('ECLIPSE ENDS', '#dcaaff', 0.9);
+        // Removed toast: ECLIPSE ENDS
       }
     }
   } else if (eclipseHoldT > 0) {
@@ -2883,7 +2900,7 @@ function update(dt) {
         b.vx = 0; b.vy = 0;
       }
       applyShake(5, 0.25);
-      toast('ECLIPSE REALIGNING', '#dcaaff', 0.9);
+      // Removed toast: ECLIPSE REALIGNING
     }
   }
 
@@ -3340,7 +3357,7 @@ function concede(p, b, w) {
       p.hurtFlash = 1;
       knockouts++;
       applyShake(12, 0.4); collapseFlash = 0.6;
-      toast(p.name + ' RESPAWNED', p.col, 1.0);
+      // Removed toast: player respawned
       beep(140, 0.12, 'sawtooth', 0.05);
       if (balls.length === 0) {
         serve(p.wall >= 0 ? p.wall : null);
@@ -3387,9 +3404,9 @@ function concede(p, b, w) {
     relocateModifiers();  // keep them, but pull any that fall outside the new shape
     serve(null);
     serveTimer = 1.7 + SERVE_DELAY_KNOCKOUT;
+    // Removed toast: arena collapse / duel message
     const msg = alive.length === 2 ? 'DUEL // SQUARE ARENA'
                                    : 'ARENA COLLAPSE // ' + alive.length + ' WALLS';
-    setTimeout(() => { if (running && !over) toast(msg, '#bfe9ff', 1.2); }, 1250);
     return true;
   }
 
@@ -4090,7 +4107,7 @@ function drawModifiers() {
       ctx.restore();
     }
 
-    // name, brightening as the nearest ball closes in
+    // name under the token, brightening as the nearest ball closes in
     let near = 1e9;
     for (const b of balls) near = Math.min(near, Math.hypot(b.x - t.x, b.y - t.y));
     const prox = clamp(1 - (near - t.r) / (R * 0.85), 0.22, 1);
@@ -4766,9 +4783,9 @@ async function shareResults() {
     a.href = url; a.download = name;
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 4000);
-    toast('IMAGE SAVED', '#bfe9ff', 1.3);
+    // Removed toast: IMAGE SAVED
   } catch (e) {
-    toast('SHARING UNAVAILABLE', '#ff9a8f', 1.4);
+    // Removed toast: SHARING UNAVAILABLE
   }
 }
 
@@ -5109,9 +5126,9 @@ document.getElementById('cEndless').addEventListener('click', e => {
   const b = e.target.closest('button'); if (!b) return; setEndless(+b.dataset.e === 1);
 });
 document.getElementById('bPrestige').addEventListener('click', () => {
-  if (!doPrestige()) { toast('REACH LEVEL 100 FIRST', '#ff9a8f', 1.2); return; }
+  if (!doPrestige()) { /* Removed toast: REACH LEVEL 100 FIRST */ return; }
   refreshLevelBand();
-  toast('PRESTIGE ★' + progress.prestige, '#ffd97a', 1.5);
+  // Removed toast: PRESTIGE
   beep(880, 0.12, 'square', 0.06);
 });
 
