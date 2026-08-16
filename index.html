@@ -444,6 +444,17 @@
   .xpbreak b{color:#dff1ff;font-weight:700}
   .xpbreak .xptotal{color:#ffd97a;font-weight:800;font-size:13px;letter-spacing:.08em;
     border-top:1px solid rgba(255,205,110,.25);margin-top:4px;padding-top:6px}
+  /* Post-match score breakdown under the score band */
+  .scorebreak{text-align:left;font-size:11px;letter-spacing:.04em;color:#7ba3c0;margin:10px 0 2px;
+    font-variant-numeric:tabular-nums;line-height:1.75;
+    border:1px solid rgba(255,205,110,.22);background:rgba(38,28,8,.35);padding:10px 12px}
+  .scorebreak .srow{display:flex;justify-content:space-between;gap:12px;padding:1px 0}
+  .scorebreak .srow span:last-child{color:#dff1ff;font-weight:700;white-space:nowrap}
+  .scorebreak .srow.muted span:last-child{color:#6d94b0;font-weight:600}
+  .scorebreak .stotal{color:#ffd97a;font-weight:800;font-size:12.5px;letter-spacing:.06em;
+    border-top:1px solid rgba(255,205,110,.28);margin-top:6px;padding-top:7px;
+    display:flex;justify-content:space-between;gap:12px}
+  .scorebreak .stotal span:last-child{color:#ffd97a}
   body.cb .tok.b, body.cb .tok.n, body.cb .tok.w{position:relative}
   .cb-shape{display:none;width:10px;height:10px;margin:0 auto 2px;border:1.5px solid currentColor}
   body.cb .cb-shape{display:block}
@@ -677,13 +688,23 @@
 
     <div class="minigrid">
       <button class="go alt" id="bHow">How To Play</button>
-      <button class="go alt" id="bStats">Stats</button>
+      <button class="go alt" id="bScoreHelp">Scoring</button>
       <button class="go alt" id="bAch">Achievements</button>
       <button class="go alt" id="bCodexMenu">Modifier Index</button>
       <button class="go alt" id="bSettings">Settings</button>
       <button class="go alt" id="bChangelog">Changelog</button>
     </div>
     <div class="keys">Created by Ryan Schaefer<br><span id="verTag" class="ver"></span></div>
+  </div>
+</div>
+
+<div class="panel hidden" id="ctxPanel">
+  <div class="card wide">
+    <div class="pbar"><button class="backlink" id="bCtxBack">&#10094; Back</button></div>
+    <h1 style="font-size:22px">PROJECT CONTEXT</h1>
+    <div class="sub">For AI agents &amp; maintainers</div>
+    <div class="note">Triple-click the version number on the main menu to open this panel. When you change architecture, modes, scoring, or UI wiring, update the PROJECT_CONTEXT constant (and this panel) so future agents stay accurate.</div>
+    <pre id="ctxBody" style="text-align:left;white-space:pre-wrap;word-break:break-word;font-size:11px;line-height:1.55;color:#7ba3c0;letter-spacing:.02em;margin:0;font-family:inherit;max-height:none"></pre>
   </div>
 </div>
 
@@ -837,6 +858,7 @@
     <div class="win" id="overTitle">&nbsp;</div>
     <div class="stats" id="overPlace"></div>
     <div class="scoreband" id="overScore"></div>
+    <div id="overBreak" class="scorebreak" style="display:none"></div>
     <div class="wallet" id="overRewards"></div>
     <div class="statgrid">
       <div>
@@ -885,6 +907,16 @@
     <div class="btnrow" style="margin-top:6px">
       <button class="go alt" id="bResetCareer">Reset Career</button>
     </div>
+  </div>
+</div>
+
+<div class="panel hidden" id="scoreHelpPanel">
+  <div class="card wide">
+    <div class="pbar"><button class="backlink" id="bScoreHelpBack">&#10094; Back</button></div>
+    <h1 style="font-size:22px">SCORING</h1>
+    <div class="sub">How your score is calculated</div>
+    <div class="note">Only Modified and Vanilla runs are scored. Custom is practice only.</div>
+    <div class="brief" id="scoreHelpBody"></div>
   </div>
 </div>
 
@@ -999,9 +1031,9 @@ const WALL_COL = '#6d8296';        // inert bumper walls (square duel)
 
 // ball speeds: fraction of arena radius per second. paddle speeds: edge fraction per second.
 const DIFF = [
-  // AI skill is consistent for the whole match (`crack: 0` disables pressure-based
-  // aim decay). Arena pressure still speeds the ball and shrinks paddles — that is
-  // separate from bot competence. Tiers: Easy/Normal/Hard beatable; Expert near-impossible.
+  // Base AI skill is per-tier. Late-game pressure² softly raises blunder chance and
+  // aim error (proportional to the tier’s base rates). Arena pressure also speeds the
+  // ball and shrinks paddles. Tiers: Easy/Normal/Hard beatable; Expert near-impossible.
   { label:'EASY',   err:0.14,  blunder:0.07,  react:0.16,  pad:1.35, look:0.78, ballBase:0.58, ballMax:1.15, crack:0 },
   { label:'NORMAL', err:0.07,  blunder:0.03,  react:0.08,  pad:2.10, look:0.92, ballBase:0.82, ballMax:1.65, crack:0 },
   { label:'HARD',   err:0.028, blunder:0.01,  react:0.04,  pad:2.90, look:0.98, ballBase:1.05, ballMax:2.15, crack:0 },
@@ -1011,17 +1043,98 @@ const DIFF = [
 let diffIdx = 1;
 let startLives = 3;
 let displayName = 'RHYNOCK';
-const VERSION = '0.6.13';
+const VERSION = '0.6.19';
 /* Online leaderboard (Cloudflare Worker + D1).
    Leave empty to keep the game fully offline.
    After you deploy the Worker, set this to your workers.dev URL, e.g.:
    'https://hexapong-leaderboard.YOUR_SUBDOMAIN.workers.dev' */
 const LEADERBOARD_URL = 'https://hexapong-leaderboard.hexapong.workers.dev';
 
+/* ── project context (AI agents / maintainers) ────────────────────────────
+   Shown in #ctxPanel after triple-clicking #verTag on the main menu.
+   Keep this in sync when architecture, modes, scoring, or UI wiring changes. */
+const PROJECT_CONTEXT = `PROJECT: HEXAPONG
+Single self-contained file: index.html (no build step, no external assets beyond embedded SVG data-URIs).
+Open in a browser; fully offline-capable.
+Optional online leaderboard (Cloudflare Worker + D1) via LEADERBOARD_URL — leave empty or unreachable for offline-only play. Scores submit automatically on match end when online. Recent matches load from /api/recent.
+
+=== VERSION & CHANGELOG (MANDATORY ON EVERY CHANGE SET) ===
+- Constant: const VERSION = 'x.y.z';
+- Always increment the PATCH (last) digit for any non-trivial change set.
+- Array: const CHANGELOG = [ { v, date, notes: [...] }, ... ] (newest first).
+- Prepend a new entry describing what you changed.
+- Version string appears as plain text on the main menu (#verTag). Looks like normal credit text — not a button.
+- Triple-click #verTag (3 clicks within ~900ms) opens #ctxPanel with this PROJECT_CONTEXT text.
+- A dedicated Changelog button (#bChangelog) opens #logPanel and renders CHANGELOG.
+- Do not break that wiring.
+- When you change architecture, modes, scoring, panels, or UI conventions, update PROJECT_CONTEXT (and the note in #ctxPanel) so future agents stay accurate.
+
+=== CORE ARCHITECTURE ===
+- Canvas game, 6-sided arena that collapses as players are eliminated.
+- PLAYER index is always 1 (bottom wall after seating rotation).
+- Key globals: players[], walls[], balls[], Modifiers[], DIFF[], FX{}, run, career, tiers, scoreBoard.
+- Physics / loop: collide(), serve(), threat(), update(), layout(), buildWalls(), resize(), frame().
+- Difficulty table DIFF[0..3] controls AI error, reaction, paddle speed, ball base/max speed. AI blunder/aim soft-scale with pressure² (late-game fray).
+- Modifiers (buffs / nerfs / wildcards):
+  - Gold (buff) → last hitter only
+  - Red (nerf) → next player to hit (pending on the ball)
+  - Violet (wildcard) → arena-wide
+- Main menu has a Modifiers On/Off toggle (ModifiersOn, remembered). Play button (#mPlay / startSimplePlay()) starts Normal difficulty, 3 lives, mid spawn rate, endless off; mode is modifier or vanilla based on the toggle.
+- Custom mode still exists in code (#customPanel) with lives, spawn rate, per-modifier toggles (ModifierToggles), endless, difficulty — but is not exposed on the simplified main menu.
+- Scoring only for vanilla + modifier (scoredMode()). Custom is deliberately unscored.
+- Score formula: survival = seconds × 100 × (1 + √(seconds/150)); paddle hits escalate 500, 600, 700…; modifiers buff +5000 / nerf −5000 / wild +2500; then × SCORE_PLACE_MUL[place]. No difficulty/mode multiplier on score.
+- Persistence: localStorage keys (career, scores, settings, modifier toggles, progress, name, etc.). Never remove keys without a migration.
+- Progression systems (level/XP, prestige, achievements, missions) exist in code; Level/XP band on main menu is currently hidden (#lvlBand display:none).
+
+=== UI / PANELS ===
+- Panels: nameGate, start, modePanel, customPanel, brief, pausePanel, codex, achPanel, over, setPanel, statsPanel, scoreHelpPanel, logPanel, lbPanel, recentPanel, ctxPanel.
+- showSetup() is the common "back to menu" entry; keep logPanel, lbPanel, recentPanel, ctxPanel, scoreHelpPanel (and any new panels) in its hide list.
+- Main menu High Score band opens Stats; bottom "Scoring" button opens scoreHelpPanel (formula explanation).
+- Compact mini-leaderboard (top 5 + All Time / 7 Days / Today tabs) on main menu under High Score; tap opens full top-25 #lbPanel.
+- Mini Recent Matches (top 5) under that; tap opens full list #recentPanel.
+- Safe-area insets via #safe + env(). Touch vs mouse via TOUCH flag.
+- Quality: fxLevel 0/1/2 (Off / Low / High). glow() zeros expensive shadowBlur on lower settings. Battery saver = 30 fps (fpsCap).
+
+=== CONVENTIONS ===
+- Prefer editing the existing single HTML file. Keep styles in the <style> block and logic in the main IIFE.
+- Preserve CRT overlays, score bar (#scorebar), active-modifier pills (#fxbar), and toast system unless intentionally changing UX.
+- When changing scoring, modifiers, or AI, update both the runtime behavior and the Codex / briefing copy so they stay consistent.
+- Client-side name filter exists; real enforcement belongs on the server.
+
+=== CURRENT VERSION ===
+${VERSION} — Triple-click main-menu version opens this project context panel for agents/maintainers.`;
+
 /* ── changelog (reverse chronological) ───────────────────────────────────
    Append a new entry and bump the patch digit of VERSION on every change set.
    The in-game Changelog panel reads this array directly. */
 const CHANGELOG = [
+  { v: '0.6.19', date: '2026-08-16', notes: [
+    'Survival duration scale uses √(time/150) instead of /180.',
+    'Paddle hits escalate: first return +500, each later return +100 more (600, 700, …).',
+    'Removed difficulty/mode multiplier from score (always was ×1.5 on main-menu runs).',
+    'Scoring help panel updated to match.',
+  ]},
+  { v: '0.6.18', date: '2026-08-16', notes: [
+    'Main menu: replaced bottom Stats button with Scoring (how score is calculated). High Score band still opens Stats.',
+  ]},
+  { v: '0.6.17', date: '2026-08-16', notes: [
+    'Scoring: placement is a multiplier (6th 1× → 1st 3×) applied to earned total before difficulty.',
+    'Scoring: every paddle hit is +500; buff +5000, nerf −5000, wildcard +2500 (flat, then × placement × difficulty).',
+    'Results breakdown shows Modified / Vanilla instead of difficulty name; leaderboard rows show place (e.g. 5th of 6).',
+    'AI: blunder chance and aim error soft-scale with pressure² (natural late-game fray; Expert barely moves).',
+  ]},
+  { v: '0.6.16', date: '2026-08-16', notes: [
+    'Main-menu version text: silent triple-click opens a Project Context panel (for AI agents / maintainers). Appearance unchanged.',
+    'PROJECT_CONTEXT constant holds the living architecture brief; update it when modes, scoring, or UI wiring change.',
+  ]},
+  { v: '0.6.15', date: '2026-08-16', notes: [
+    'Results screen: score breakdown under the final score (survival, paddle hits, modifiers, placement, difficulty).',
+  ]},
+  { v: '0.6.14', date: '2026-08-15', notes: [
+    'AI only: Pulse Contract and Gravity Well raise blunder chance by +25% while active.',
+    'AI only: after Eclipse Drift ends, blunder chance is raised by +20% for 2.5s (orientation shock).',
+    'Boost is additive on the difficulty’s base blunder rate; human aim is unchanged.',
+  ]},
   { v: '0.6.13', date: '2026-08-15', notes: [
     'Leaderboard/Recent timestamps include local military time (machine timezone).',
     'Modifier play icon is a hexagon with M (matches Vanilla V style).',
@@ -1298,34 +1411,51 @@ function saveCareer() {
 }
 
 /* ── score ────────────────────────────────────────────────────────────────
-   One number to chase. Time survived is the floor, finishing position is the
-   bulk of it, and difficulty multiplies the whole thing, so third place on
-   Expert outscores a win on Easy. Custom matches are deliberately unscored:
-   you set your own difficulty there, so a high score would mean nothing. */
+   Earned points (survival + paddles + modifiers) form a subtotal. Placement
+   multiplies that subtotal (6th=1× … 1st=3×). No difficulty/mode multiplier.
+   Custom matches are deliberately unscored. */
 const SCORE_PER_SEC = 100;
-const SCORE_PLACE   = [0, 3000, 1500, 750, 250, 100, 50];    // index = finishing place (scaled by duration)
-const SCORE_DIFF    = [1, 1.5, 2.25, 3.25];                  // Easy / Normal / Hard / Expert
-function matchScore(place, survivedS, dIdx, liveOnly, paddleHitsCenter = 0, paddleHitsSide = 0, ModifierHits = 0) {
-  // Scaling multiplier based on match duration: 1 + sqrt(seconds / 180)
-  const mult = 1 + Math.sqrt((survivedS || 0) / 180);
+const SCORE_PADDLE_BASE = 500;                               // first human return
+const SCORE_PADDLE_STEP = 100;                               // each later return adds this much more
+const SCORE_BUFF    = 5000;
+const SCORE_NERF    = -5000;
+const SCORE_WILD    = 2500;
+const SCORE_PLACE_MUL = [0, 3, 2.5, 2, 1.5, 1.25, 1];         // index = finishing place 1..6
+const SCORE_PLACE   = [0, 3000, 1500, 750, 250, 100, 50];    // legacy flat place XP (progress system)
+const SCORE_DIFF    = [1, 1.5, 2.25, 3.25];                  // Easy / Normal / Hard / Expert (XP only)
+/** Sum of escalating paddle points: 500 + 600 + 700 + … for n hits */
+function paddlePoints(n) {
+  n = n | 0;
+  if (n <= 0) return 0;
+  // n/2 * (2*base + (n-1)*step)
+  return Math.round(n * (2 * SCORE_PADDLE_BASE + (n - 1) * SCORE_PADDLE_STEP) / 2);
+}
+function scoreParts(place, survivedS, dIdx, liveOnly, paddleHits = 0, buffHits = 0, nerfHits = 0, wildHits = 0) {
+  // Survival: duration scale 1 + sqrt(seconds / 150)
+  const mult = 1 + Math.sqrt((survivedS || 0) / 150);
+  const survival = Math.round((survivedS || 0) * SCORE_PER_SEC * mult);
 
-  // Survival: base per-second scaled by duration
-  const survivalScore = Math.round((survivedS || 0) * SCORE_PER_SEC * mult);
+  // Paddle: escalating series; modifiers flat (then × placement)
+  const paddle = paddlePoints(paddleHits);
+  const modifier = (buffHits | 0) * SCORE_BUFF + (nerfHits | 0) * SCORE_NERF + (wildHits | 0) * SCORE_WILD;
 
-  // Paddle hits: center=50 base, side=100 base, with combo boost (estimated avg 1.8x)
-  const paddleAvgCombo = 1.8;
-  const paddleScore = Math.round((paddleHitsCenter * 50 + paddleHitsSide * 100) * mult * paddleAvgCombo);
-
-  // Modifier hits: buff=300, wildcard=250, nerf=200 base, with combo (estimated avg 1.5x)
-  const ModifierAvgCombo = 1.5;
-  const ModifierScore = Math.round(ModifierHits * 250 * mult * ModifierAvgCombo);
-
-  // Placement bonus (scaled by duration)
-  const pl = liveOnly ? 0 : (SCORE_PLACE[clamp(place | 0, 1, 6)] || SCORE_PLACE[6] || 0);
-  const placementScore = Math.round(pl * mult);
-
-  const totalScore = survivalScore + paddleScore + ModifierScore + placementScore;
-  return Math.round(totalScore * (SCORE_DIFF[dIdx] || 1));
+  const subtotal = survival + paddle + modifier;
+  // Placement multiplies the earned total; live score uses current place so the bar jumps when walls fall
+  const placeMul = SCORE_PLACE_MUL[clamp(place | 0, 1, 6)] || 1;
+  const total = Math.round(subtotal * placeMul);
+  return {
+    survival, paddle, modifier, subtotal, total,
+    mult, placeMul,
+    paddleHits: paddleHits | 0,
+    buffHits: buffHits | 0,
+    nerfHits: nerfHits | 0,
+    wildHits: wildHits | 0,
+    place: place | 0,
+    survivedS: survivedS || 0,
+  };
+}
+function matchScore(place, survivedS, dIdx, liveOnly, paddleHits = 0, buffHits = 0, nerfHits = 0, wildHits = 0) {
+  return scoreParts(place, survivedS, dIdx, liveOnly, paddleHits, buffHits, nerfHits, wildHits).total;
 }
 function scoredMode() { return gameMode === 'vanilla' || gameMode === 'Modifier'; }
 const commas = v => Math.round(v || 0).toLocaleString('en-US');
@@ -1397,7 +1527,7 @@ function newRun() {
   run = { bestRally: 0, topSpeed: 0, conceded: 0, stage: 6, survived: 0,
     hitTimes: [], ModifierUsedByPlayer: false, ModifiersThisRally: 0, bestModifiersInRally: 0,
     wallsRepairedThisMatch: 0, passedBest: false,
-    paddleHitsCenter: 0, paddleHitsSide: 0, ModifierHits: 0,
+    paddleHitsCenter: 0, paddleHitsSide: 0, modifierHits: 0,
     buffHits: 0, nerfHits: 0, wildHits: 0 };
 }
 // Stagnation tracking: if the player is left out of the rally, bias ramps up so two
@@ -1779,6 +1909,7 @@ function lbRowHtml(r) {
   const dateStr = formatLbDate(r);
   const bits = [];
   if (dateStr) bits.push(dateStr);
+  if (r.place != null) bits.push(ordinal(r.place) + ' of 6');
   const dur = formatLbDuration(r.duration);
   if (dur) bits.push(dur);
   const tag = lbModifiersTag(r);
@@ -2090,6 +2221,12 @@ let spin = 0, spinRate = 0;   // Rotation: extra angle on every wall, unwinds to
 let eclipseSpin = 0, eclipseT = 0, eclipseRate = 0;   // Eclipse Drift: freeze balls, rotate, then resume
 const PULSE_DUR = 1.6;
 let pulseT = 0, pulseBaseR = 0;   // Pulse Contract: temporary radius squeeze-and-release
+// After Eclipse ends, AI aim is briefly unreliable (orientation shock). Pulse/Gravity also
+// raise AI blunder chance while active. Human player is never affected.
+let postEclipseMissT = 0;
+const POST_ECLIPSE_MISS_DUR = 2.5;
+const AI_WILD_MISS_PULSE_GRAV = 0.25;   // extra blunder probability while Pulse or Gravity active
+const AI_WILD_MISS_POST_ECLIPSE = 0.20; // extra blunder probability after Eclipse ends
 let bountyOn = false;
 
 const Modifier_FIRST = 10;   // no Modifiers in the opening seconds; learn the base game first
@@ -2128,6 +2265,7 @@ function clearFx() {
   Modifiers = []; bursts = []; gfx = {}; bountyOn = false;
   spin = 0; spinRate = 0;
   eclipseSpin = 0; eclipseT = 0; eclipseRate = 0; pulseT = 0; pulseBaseR = 0;
+  postEclipseMissT = 0;
   ModifierTimer = Modifier_FIRST;
   for (const p of players) { p.fx = {}; p.heavy = 0; }
 }
@@ -2688,9 +2826,13 @@ function update(dt) {
         if (b._fvx !== undefined) { b.vx = b._fvx; b.vy = b._fvy; delete b._fvx; delete b._fvy; }
       }
       // Keep eclipseSpin so the seating stays shifted (no snap-back).
+      // Orientation shock: AI aim is briefly less reliable after the spin ends.
+      postEclipseMissT = POST_ECLIPSE_MISS_DUR;
       toast('ECLIPSE ENDS', '#dcaaff', 0.9);
     }
   }
+
+  if (postEclipseMissT > 0) postEclipseMissT = Math.max(0, postEclipseMissT - dt);
 
   // Pulse Contract — a rapid squeeze-and-release of the whole arena. Rides the same
   // Rtarget the collapse animation already chases, so R eases toward it naturally.
@@ -2755,11 +2897,17 @@ function update(dt) {
       const approaching = th !== null;
 
       if (approaching && !p.wasApproaching) {
-        // Aim error is tier-based and consistent for the whole match (crack is 0).
-        // Pressure still speeds the ball and shrinks paddles; it no longer softens AI aim.
-        const ck = d.crack === undefined ? 0 : d.crack;
-        const blunder = Math.random() < d.blunder + pressure * pressure * 0.12 * ck;
-        const mag = Math.min(0.45, (blunder ? d.err + 0.30 : d.err) * (1 + pressure * 2.60 * ck));
+        // Soft pressure curve: late-game fray scales with base blunder/err so Easy wobbles
+        // more than Expert. pressure² keeps the early match clean.
+        // Wildcard disorientation (AI only): Pulse/Gravity raise blunder while active;
+        // a short window after Eclipse ends does the same (orientation shock).
+        let wildMiss = 0;
+        if (gHas('gravity') || pulseT > 0) wildMiss = AI_WILD_MISS_PULSE_GRAV;
+        else if (postEclipseMissT > 0) wildMiss = AI_WILD_MISS_POST_ECLIPSE;
+        const p2 = pressure * pressure;
+        const pressureMiss = d.blunder * p2 * 1.6;           // proportional to tier skill
+        const blunder = Math.random() < d.blunder + wildMiss + pressureMiss;
+        const mag = Math.min(0.45, (blunder ? d.err + 0.30 : d.err) * (1 + p2 * 0.40));
         p.errNow = (Math.random() * 2 - 1) * mag;
         p.reactT = d.react * (0.55 + Math.random() * 0.9);
       }
@@ -3147,7 +3295,7 @@ function concede(p, b, w) {
     knockouts++;
     // Stronger elimination beat: bigger shake, longer flash, layered tone
     applyShake(22, 0.72); collapseFlash = 1.35;
-    toast(p.human ? 'YOU BURNED OUT // SPECTATING' : p.name + ' BURNED OUT', p.col, 1.7);
+    toast(p.human ? '' : p.name + '', p.col, 1.7);
     beep(90, 0.18, 'sawtooth', 0.09);
     setTimeout(() => beep(55, 0.55, 'sawtooth', 0.09), 100);
     setTimeout(() => beep(40, 0.35, 'triangle', 0.05), 220);
@@ -3228,7 +3376,10 @@ function endGame(winner, eliminated) {
 
   // Only the two preset modes are scored (see matchScore).
   const scored   = scoredMode();
-  const score    = scored ? matchScore(me.place, run.survived, diffIdx, false, run.paddleHitsCenter, run.paddleHitsSide, run.ModifierHits) : 0;
+  const parts    = scored
+    ? scoreParts(me.place, run.survived, diffIdx, false, playerHits, run.buffHits || 0, run.nerfHits || 0, run.wildHits || 0)
+    : null;
+  const score    = parts ? parts.total : 0;
   const prevBest = career.bestScore || 0;
   const newHigh  = scored && score > prevBest;
   if (newHigh) {
@@ -3389,15 +3540,32 @@ function endGame(winner, eliminated) {
     'YOU PLACED &nbsp;<b style="color:#d8ecff">' + ordinal(me.place) + '</b>&nbsp; OF 6';
 
   const sb = document.getElementById('overScore');
-  if (scored) {
+  const br = document.getElementById('overBreak');
+  if (scored && parts) {
     sb.className = 'scoreband' + (newHigh ? ' best' : '');
     sb.innerHTML = '<span class="sl2">' + (newHigh ? 'New High Score' : 'Score') + '</span>' +
       '<span class="sv">' + commas(score) + '</span>' +
       '<span class="sm">' + (newHigh ? (prevBest ? 'Beat ' + commas(prevBest) : 'First run')
                                      : 'Best ' + commas(career.bestScore)) + '</span>';
+    const padNote = parts.paddleHits ? ' (' + parts.paddleHits + ')' : '';
+    const modBits = [];
+    if (parts.buffHits) modBits.push(parts.buffHits + ' buff');
+    if (parts.nerfHits) modBits.push(parts.nerfHits + ' nerf');
+    if (parts.wildHits) modBits.push(parts.wildHits + ' wild');
+    const modNote = modBits.length ? ' (' + modBits.join(', ') + ')' : '';
+    br.style.display = '';
+    br.innerHTML =
+      '<div class="srow"><span>Survival · ' + fmtTime(parts.survivedS) + '</span><span>' + commas(parts.survival) + '</span></div>' +
+      '<div class="srow' + (parts.paddle ? '' : ' muted') + '"><span>Paddle hits' + padNote + '</span><span>' + commas(parts.paddle) + '</span></div>' +
+      '<div class="srow' + (parts.modifier ? '' : ' muted') + '"><span>Modifiers' + modNote + '</span><span>' + commas(parts.modifier) + '</span></div>' +
+      '<div class="srow muted"><span>Subtotal</span><span>' + commas(parts.subtotal) + '</span></div>' +
+      '<div class="srow muted"><span>Placement · ' + ordinal(parts.place) + ' of 6</span><span>×' + parts.placeMul + '</span></div>' +
+      '<div class="stotal"><span>Total</span><span>' + commas(parts.total) + '</span></div>';
   } else {
     sb.className = 'scoreband muted';
     sb.innerHTML = '<span class="sl2">Custom Run</span><span class="sm">Not scored</span>';
+    br.style.display = 'none';
+    br.innerHTML = '';
   }
 
   {
@@ -3946,8 +4114,9 @@ function renderScoreBar() {
   }
   const me = players[PLAYER];
   const place = me && me.out ? (me.place || 6) : players.filter(q => !q.out).length;
-  // liveOnly=true so the bar starts at 0 and only climbs with survival time
-  const live = matchScore(place, me && me.out ? (run.survived || elapsed) : elapsed, diffIdx, true, run.paddleHitsCenter, run.paddleHitsSide, run.ModifierHits);
+  // live uses current place so the total jumps when rivals fall (placement multiplier)
+  const live = matchScore(place, me && me.out ? (run.survived || elapsed) : elapsed, diffIdx, true,
+    playerHits, (run && run.buffHits) || 0, (run && run.nerfHits) || 0, (run && run.wildHits) || 0);
   const best = career.bestScore || 0;
   const ahead = best > 0 && live > best;
   if (ahead && run && !run.passedBest) {
@@ -4067,8 +4236,8 @@ const BRIEF_ROWS = [
     '<b style="color:#ff9a8f">Red</b> nerfs punish the <b>next player</b> to return it. ' +
     '<b style="color:#dcaaff">Violet</b> wildcards change the whole arena. ' +
     'Full list in the <b>Modifier Index</b>.'],
-  ['Score', 'Your score is how long you survived plus a placement bonus. ' +
-    'The running total sits under the HUD. Top scores appear on the online leaderboard.'],
+  ['Score', 'Survival time, paddle returns, and Modifiers add points. Placement multiplies your total ' +
+    '(higher finish = bigger multiplier), then difficulty. The running total sits under the HUD.'],
 ];
 const BRIEF_HTML = BRIEF_ROWS.map(r =>
   '<div class="bl"><div class="bt">' + r[0] + '</div><div>' + r[1] + '</div></div>').join('');
@@ -4309,7 +4478,8 @@ function showSetup() {
   running = false; over = false; paused = false; ending = false;
   document.getElementById('bPause').textContent = 'PAUSE';
   ['over', 'brief', 'pausePanel', 'codex', 'statsPanel', 'setPanel', 'achPanel',
-   'modePanel', 'customPanel', 'logPanel', 'nameGate', 'lbPanel', 'recentPanel'].forEach(id => {
+   'modePanel', 'customPanel', 'logPanel', 'nameGate', 'lbPanel', 'recentPanel', 'ctxPanel',
+   'scoreHelpPanel'].forEach(id => {
     const el = document.getElementById(id); if (el) el.classList.add('hidden');
   });
   refreshHiScore();
@@ -4705,10 +4875,46 @@ document.getElementById('bCustomStart').addEventListener('click', () => {
 });
 
 document.getElementById('bHow').addEventListener('click', showBriefing);
-document.getElementById('bStats').addEventListener('click', showStats);
-// tapping the high-score band goes where the detail lives
+// High Score band still opens Stats; bottom menu uses Scoring instead
 document.getElementById('hiBand').addEventListener('click', showStats);
 document.getElementById('bStatsBack').addEventListener('click', showSetup);
+
+const SCORE_HELP_ROWS = [
+  ['Earn', 'Points come from three sources while you play.'],
+  ['Survival', '100 points per second alive, scaled up the longer the match lasts ' +
+    '(multiplier = 1 + √(time / 150s)). Longer runs earn more per second.'],
+  ['Paddle', 'Returns escalate: first hit <b>+500</b>, then <b>+600</b>, <b>+700</b>, and so on ' +
+    '(+100 more each time). Any part of the paddle counts.'],
+  ['Modifiers', '<b style="color:#ffd97a">Buff</b> you collect: <b>+5,000</b>. ' +
+    '<b style="color:#ff9a8f">Nerf</b> you collect: <b>−5,000</b>. ' +
+    '<b style="color:#dcaaff">Wildcard</b> you collect: <b>+2,500</b>.'],
+  ['Subtotal', 'Survival + paddle + modifiers. This is your earned total before placement.'],
+  ['Placement', 'Your finish multiplies the subtotal:<br>' +
+    '6th ×1 · 5th ×1.25 · 4th ×1.5 · 3rd ×2 · 2nd ×2.5 · <b>1st ×3</b>.'],
+  ['Total', 'Subtotal × placement. The live score bar uses your <b>current</b> place, ' +
+    'so it jumps when rivals fall.'],
+  ['Stats', 'Tap the High Score band on the main menu to open career stats and local top scores.'],
+];
+function showScoreHelp() {
+  const body = document.getElementById('scoreHelpBody');
+  if (body) {
+    body.innerHTML = SCORE_HELP_ROWS.map(r =>
+      '<div class="bl"><div class="bt">' + r[0] + '</div><div>' + r[1] + '</div></div>').join('');
+  }
+  ['start', 'over', 'brief', 'pausePanel', 'codex', 'statsPanel', 'setPanel', 'achPanel',
+   'modePanel', 'customPanel', 'logPanel', 'lbPanel', 'recentPanel', 'ctxPanel'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.classList.add('hidden');
+  });
+  document.getElementById('scoreHelpPanel').classList.remove('hidden');
+  const card = document.getElementById('scoreHelpPanel').querySelector('.card');
+  if (card) card.scrollTop = 0;
+}
+function hideScoreHelp() {
+  document.getElementById('scoreHelpPanel').classList.add('hidden');
+  document.getElementById('start').classList.remove('hidden');
+}
+document.getElementById('bScoreHelp').addEventListener('click', showScoreHelp);
+document.getElementById('bScoreHelpBack').addEventListener('click', hideScoreHelp);
 document.getElementById('bBackMenu').addEventListener('click', showSetup);
 document.getElementById('bAgain').addEventListener('click', startGame);
 document.getElementById('bShare').addEventListener('click', shareResults);
@@ -4901,6 +5107,25 @@ setFxLevel(fxLevel);
 syncSettingsUI();
 checkAchievements();
 document.getElementById('verTag').textContent = 'v' + VERSION;
+// Silent triple-click on the version credit opens Project Context (no button styling).
+(function wireVerCtx() {
+  const el = document.getElementById('verTag');
+  if (!el) return;
+  let taps = 0, lastT = 0;
+  const WINDOW_MS = 900;
+  el.addEventListener('click', e => {
+    e.preventDefault();
+    e.stopPropagation();
+    const now = performance.now();
+    if (now - lastT > WINDOW_MS) taps = 0;
+    lastT = now;
+    taps++;
+    if (taps >= 3) {
+      taps = 0;
+      showProjectContext();
+    }
+  });
+})();
 refreshHiScore();
 refreshLevelBand();
 refreshMissionsUI();
@@ -4922,7 +5147,7 @@ function buildChangelog() {
 function showChangelog() {
   buildChangelog();
   ['start', 'over', 'brief', 'pausePanel', 'codex', 'statsPanel', 'setPanel',
-   'achPanel', 'modePanel', 'customPanel'].forEach(id => {
+   'achPanel', 'modePanel', 'customPanel', 'ctxPanel'].forEach(id => {
     const el = document.getElementById(id); if (el) el.classList.add('hidden');
   });
   document.getElementById('logPanel').classList.remove('hidden');
@@ -4933,8 +5158,25 @@ function hideChangelog() {
   document.getElementById('logPanel').classList.add('hidden');
   document.getElementById('start').classList.remove('hidden');
 }
+function showProjectContext() {
+  const body = document.getElementById('ctxBody');
+  if (body) body.textContent = PROJECT_CONTEXT;
+  ['start', 'over', 'brief', 'pausePanel', 'codex', 'statsPanel', 'setPanel',
+   'achPanel', 'modePanel', 'customPanel', 'logPanel', 'lbPanel', 'recentPanel'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.classList.add('hidden');
+  });
+  document.getElementById('ctxPanel').classList.remove('hidden');
+  const card = document.getElementById('ctxPanel').querySelector('.card');
+  if (card) card.scrollTop = 0;
+}
+function hideProjectContext() {
+  document.getElementById('ctxPanel').classList.add('hidden');
+  document.getElementById('start').classList.remove('hidden');
+}
 document.getElementById('bChangelog').addEventListener('click', showChangelog);
 document.getElementById('bLogBack').addEventListener('click', hideChangelog);
+const bCtxBack = document.getElementById('bCtxBack');
+if (bCtxBack) bCtxBack.addEventListener('click', hideProjectContext);
 document.getElementById('bLbBack').addEventListener('click', hideLeaderboard);
 document.getElementById('lbTabs').addEventListener('click', e => {
   const b = e.target.closest('button'); if (!b || !b.dataset.period) return;
