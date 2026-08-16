@@ -606,9 +606,9 @@
 <img id="toastIcon" src="" alt="">
 <div id="thint">Drag anywhere to move your paddle</div>
 <div id="corner">
-  <button class="mini" id="bGear">SETTINGS</button>
-  <button class="mini" id="bRestart">RESTART</button>
   <button class="mini" id="bPause">PAUSE</button>
+  <button class="mini" id="bRestart">RESTART</button>
+  <button class="mini" id="bGear">SETTINGS</button>
 </div>
 
 <div class="panel" id="nameGate">
@@ -1043,7 +1043,7 @@ const DIFF = [
 let diffIdx = 1;
 let startLives = 3;
 let displayName = 'RHYNOCK';
-const VERSION = '0.7.0';
+const VERSION = '0.7.1';
 /* Online leaderboard (Cloudflare Worker + D1).
    Leave empty to keep the game fully offline.
    After you deploy the Worker, set this to your workers.dev URL, e.g.:
@@ -1082,7 +1082,10 @@ Optional online leaderboard (Cloudflare Worker + D1) via LEADERBOARD_URL — lea
 - Main menu has a Modifiers On/Off toggle (ModifiersOn, remembered). Play button (#mPlay / startSimplePlay()) starts Normal difficulty, 3 lives, mid spawn rate, endless off; mode is modifier or vanilla based on the toggle.
 - Custom mode still exists in code (#customPanel) with lives, spawn rate, per-modifier toggles (ModifierToggles), endless, difficulty — but is not exposed on the simplified main menu.
 - Scoring only for vanilla + modifier (scoredMode()). Custom is deliberately unscored.
-- Score formula: survival = seconds × 100 × (1 + √(seconds/150)); paddle hits escalate 500, 600, 700…; modifiers buff +5000 / nerf −5000 / wild +2500; then × SCORE_PLACE_MUL[place]. No difficulty/mode multiplier on score.
+- Score formula: survival = seconds × 100 × (1 + √(seconds/150)); paddle hits escalate 500, 600, 700…; modifiers: hitting a buff +5000, hitting a nerf +5000, hitting a wildcard −2500, and getting hit by a nerf someone else collected −5000 (SCORE_NERFED, tracked via run/career.nerfedHits); then × SCORE_PLACE_MUL[place]. No difficulty/mode multiplier on score.
+- Bounty modifier removed as of 0.7.1 (was a wildcard, arena-wide, doubled the next concede cost).
+- Eclipse Drift (0.7.1): outbound spin 2-5s random (CW/CCW), ball frozen only while actively spinning, no countdown on resume. After a 15s hold, spins back to the original orientation mirroring the outbound duration/rate exactly (reversed), ball frozen again for that return leg. State: eclipseT/eclipseRate/eclipseSpin (active spin), eclipseHoldT (post-spin hold countdown), eclipseReturning (true during the return leg), eclipseOutSecs (outbound duration, reused for the return).
+- Pulse Contract (0.7.1): squeeze-and-release duration now randomized 1.5-3.5s per activation (PULSE_MIN/PULSE_MAX, stored per-activation in pulseDur) instead of a fixed 1.6s.
 - Persistence: localStorage keys (career, scores, settings, modifier toggles, progress, name, etc.). Never remove keys without a migration.
 - Progression systems (level/XP, prestige, achievements, missions) exist in code; Level/XP band on main menu is currently hidden (#lvlBand display:none).
 
@@ -1108,6 +1111,13 @@ ${VERSION} — Triple-click main-menu version opens this project context panel f
    Append a new entry and bump the patch digit of VERSION on every change set.
    The in-game Changelog panel reads this array directly. */
 const CHANGELOG = [
+  { v: '0.7.1', date: '2026-08-16', notes: [
+    'Modifier scoring rebalanced: buff +5000, nerf (collecting it) +5000, wildcard -2500, and a new -5000 penalty for whoever gets hit by a nerf effect.',
+    'Eclipse Drift reworked: 2-5s random rotation (CW or CCW), ball frozen only while actively turning, no countdown on resume, then after a 15s hold it spins back to the original orientation (mirroring the outbound duration and speed), ball frozen again during the return.',
+    'Bounty removed from the wildcard pool.',
+    'Pulse Contract duration randomized to 1.5-3.5s per activation (was a fixed 1.6s).',
+    'Arena corner: Settings and Pause buttons swapped.',
+  ]},
   { v: '0.7.0', date: '2026-08-16', notes: [
     'Modifier targeting: gold buffs the last hitter, red nerfs the next return, violet stays arena-wide.',
     'Scoring overhaul: survival = seconds × 100 × (1 + √(time/150)); paddle returns escalate (+500, +600, …); buff +5000 / nerf −5000 / wild +2500; placement multiplies the subtotal (6th ×1 → 1st ×3). No difficulty/mode score multiplier.',
@@ -1181,7 +1191,7 @@ const defaultCareer = () => ({
   bestRally: 0, bestTime: 0, bestPlace: 7, topSpeed: 0,
   bestScore: 0, bestScoreDiff: '', bestScoreMode: '', bestScorePlace: 0, bestScoreTime: 0,
   flawlessWins: 0, hardcoreWins: 0, ModifiersHit: 0,
-  buffHits: 0, nerfHits: 0, wildHits: 0,
+  buffHits: 0, nerfHits: 0, wildHits: 0, nerfedHits: 0,
   perfectHits: 0, quickReflexBursts: 0, zeroHitLosses: 0, noModifierWins: 0,
   bestRallyModifiers: 0, backstopSaves: 0, fastWins: 0, bestWallsRepairedInMatch: 0,
   slowEffectsTriggered: 0, paddleDistance: 0, hxStreak: 0, bestHxStreak: 0
@@ -1327,9 +1337,10 @@ function saveCareer() {
 const SCORE_PER_SEC = 100;
 const SCORE_PADDLE_BASE = 500;                               // first human return
 const SCORE_PADDLE_STEP = 100;                               // each later return adds this much more
-const SCORE_BUFF    = 5000;
-const SCORE_NERF    = -5000;
-const SCORE_WILD    = 2500;
+const SCORE_BUFF    = 5000;    // hitting a Buff token
+const SCORE_NERF    = 5000;    // hitting a Nerf token
+const SCORE_WILD    = -2500;   // hitting a Wildcard token
+const SCORE_NERFED  = -5000;   // being the one who gets nerfed after someone else hits it
 const SCORE_PLACE_MUL = [0, 3, 2.5, 2, 1.5, 1.25, 1];         // index = finishing place 1..6
 const SCORE_PLACE   = [0, 3000, 1500, 750, 250, 100, 50];    // legacy flat place XP (progress system)
 const SCORE_DIFF    = [1, 1.5, 2.25, 3.25];                  // Easy / Normal / Hard / Expert (XP only)
@@ -1340,14 +1351,15 @@ function paddlePoints(n) {
   // n/2 * (2*base + (n-1)*step)
   return Math.round(n * (2 * SCORE_PADDLE_BASE + (n - 1) * SCORE_PADDLE_STEP) / 2);
 }
-function scoreParts(place, survivedS, dIdx, liveOnly, paddleHits = 0, buffHits = 0, nerfHits = 0, wildHits = 0) {
+function scoreParts(place, survivedS, dIdx, liveOnly, paddleHits = 0, buffHits = 0, nerfHits = 0, wildHits = 0, nerfedHits = 0) {
   // Survival: duration scale 1 + sqrt(seconds / 150)
   const mult = 1 + Math.sqrt((survivedS || 0) / 150);
   const survival = Math.round((survivedS || 0) * SCORE_PER_SEC * mult);
 
   // Paddle: escalating series; modifiers flat (then × placement)
   const paddle = paddlePoints(paddleHits);
-  const modifier = (buffHits | 0) * SCORE_BUFF + (nerfHits | 0) * SCORE_NERF + (wildHits | 0) * SCORE_WILD;
+  const modifier = (buffHits | 0) * SCORE_BUFF + (nerfHits | 0) * SCORE_NERF
+    + (wildHits | 0) * SCORE_WILD + (nerfedHits | 0) * SCORE_NERFED;
 
   const subtotal = survival + paddle + modifier;
   // Placement multiplies the earned total; live score uses current place so the bar jumps when walls fall
@@ -1360,12 +1372,13 @@ function scoreParts(place, survivedS, dIdx, liveOnly, paddleHits = 0, buffHits =
     buffHits: buffHits | 0,
     nerfHits: nerfHits | 0,
     wildHits: wildHits | 0,
+    nerfedHits: nerfedHits | 0,
     place: place | 0,
     survivedS: survivedS || 0,
   };
 }
-function matchScore(place, survivedS, dIdx, liveOnly, paddleHits = 0, buffHits = 0, nerfHits = 0, wildHits = 0) {
-  return scoreParts(place, survivedS, dIdx, liveOnly, paddleHits, buffHits, nerfHits, wildHits).total;
+function matchScore(place, survivedS, dIdx, liveOnly, paddleHits = 0, buffHits = 0, nerfHits = 0, wildHits = 0, nerfedHits = 0) {
+  return scoreParts(place, survivedS, dIdx, liveOnly, paddleHits, buffHits, nerfHits, wildHits, nerfedHits).total;
 }
 function scoredMode() { return gameMode === 'vanilla' || gameMode === 'Modifier'; }
 const commas = v => Math.round(v || 0).toLocaleString('en-US');
@@ -1438,7 +1451,7 @@ function newRun() {
     hitTimes: [], ModifierUsedByPlayer: false, ModifiersThisRally: 0, bestModifiersInRally: 0,
     wallsRepairedThisMatch: 0, passedBest: false,
     paddleHitsCenter: 0, paddleHitsSide: 0, modifierHits: 0,
-    buffHits: 0, nerfHits: 0, wildHits: 0 };
+    buffHits: 0, nerfHits: 0, wildHits: 0, nerfedHits: 0 };
 }
 // Stagnation tracking: if the player is left out of the rally, bias ramps up so two
 // bots cannot trade forever while the human watches.
@@ -2128,16 +2141,22 @@ let ModifierTimer = 0;
 let bursts = [];          // pickup flashes
 let gfx = {};             // global (arena-wide) effects: id -> seconds remaining
 let spin = 0, spinRate = 0;   // Rotation: extra angle on every wall, unwinds to 0
-let eclipseSpin = 0, eclipseT = 0, eclipseRate = 0;   // Eclipse Drift: freeze balls, rotate, then resume
-const PULSE_DUR = 1.6;
-let pulseT = 0, pulseBaseR = 0;   // Pulse Contract: temporary radius squeeze-and-release
+// Eclipse Drift: freeze balls, spin out for a random 2-5s (CW or CCW), hold at the new
+// orientation for 15s, then spin back over the exact same duration/rate, reversed.
+let eclipseSpin = 0, eclipseT = 0, eclipseRate = 0;
+let eclipseHoldT = 0;          // countdown after the outbound spin stops, before the return spin
+let eclipseReturning = false;  // true while the return (unwind) spin is in progress
+let eclipseOutSecs = 0;        // outbound spin duration, reused verbatim for the return spin
+let eclipseOutRate = 0;        // outbound spin rate, reused (reversed) for the return spin
+const ECLIPSE_HOLD_DUR = 15;
+const PULSE_MIN = 1.5, PULSE_MAX = 3.5;
+let pulseT = 0, pulseBaseR = 0, pulseDur = PULSE_MIN;   // Pulse Contract: temporary radius squeeze-and-release
 // After Eclipse ends, AI aim is briefly unreliable (orientation shock). Pulse/Gravity also
 // raise AI blunder chance while active. Human player is never affected.
 let postEclipseMissT = 0;
 const POST_ECLIPSE_MISS_DUR = 2.5;
 const AI_WILD_MISS_PULSE_GRAV = 0.25;   // extra blunder probability while Pulse or Gravity active
 const AI_WILD_MISS_POST_ECLIPSE = 0.20; // extra blunder probability after Eclipse ends
-let bountyOn = false;
 
 const Modifier_FIRST = 10;   // no Modifiers in the opening seconds; learn the base game first
 const Modifier_MIN = 10, Modifier_MAX = 15;   // Mid rate base interval (seconds)
@@ -2172,9 +2191,11 @@ function fxDur(f) {
 }
 
 function clearFx() {
-  Modifiers = []; bursts = []; gfx = {}; bountyOn = false;
+  Modifiers = []; bursts = []; gfx = {};
   spin = 0; spinRate = 0;
-  eclipseSpin = 0; eclipseT = 0; eclipseRate = 0; pulseT = 0; pulseBaseR = 0;
+  eclipseSpin = 0; eclipseT = 0; eclipseRate = 0;
+  eclipseHoldT = 0; eclipseReturning = false; eclipseOutSecs = 0; eclipseOutRate = 0;
+  pulseT = 0; pulseBaseR = 0; pulseDur = PULSE_MIN;
   postEclipseMissT = 0;
   ModifierTimer = Modifier_FIRST;
   for (const p of players) { p.fx = {}; p.heavy = 0; }
@@ -2386,7 +2407,6 @@ function applyEffect(f, targets) {
       break;
 
     case 'gravity':   gfx.gravity = fxDur(f); break;
-    case 'bounty':    bountyOn = true; break;
 
     case 'split': {
       const src = balls[Math.floor(Math.random() * balls.length)] || null;
@@ -2404,17 +2424,24 @@ function applyEffect(f, targets) {
       // rapid squeeze-and-release of the whole arena; capture the true target once so
       // a second Pulse landing mid-squeeze doesn't ratchet the arena down permanently
       if (pulseT <= 0) pulseBaseR = Rtarget;
-      pulseT = PULSE_DUR;
+      pulseDur = PULSE_MIN + Math.random() * (PULSE_MAX - PULSE_MIN);   // 1.5..3.5s
+      pulseT = pulseDur;
       break;
     case 'eclipse': {
-      // Freeze the ball(s), spin the arena for a random 3–10s, then resume from the
-      // new orientation so every player is effectively at a different seat.
-      if (eclipseT > 0) break;   // already drifting — ignore stacked hits
-      const secs = 3 + Math.random() * 7;           // 3..10
-      const turns = 0.35 + Math.random() * 0.55;    // ~126° .. ~198°
+      // Freeze the ball(s), spin the arena for a random 2-5s (CW or CCW). Ball movement
+      // stays paused only while the spin is actively turning; once it stops, play resumes
+      // immediately with no countdown. After a 15s hold, it spins back to the original
+      // orientation, mirroring the outbound duration/speed exactly (reversed direction),
+      // freezing the ball again for that return trip.
+      if (eclipseT > 0 || eclipseHoldT > 0 || eclipseReturning) break;   // already mid-cycle
+      const secs = 2 + Math.random() * 3;            // 2..5s
+      const turns = 0.35 + Math.random() * 0.55;     // ~126° .. ~198°
       const dir = Math.random() < 0.5 ? 1 : -1;
       eclipseRate = dir * (TAU * turns) / secs;
       eclipseT = secs;
+      eclipseOutSecs = secs;
+      eclipseOutRate = eclipseRate;
+      eclipseReturning = false;
       // snapshot velocities so balls stay frozen in place during the spin
       for (const b of balls) {
         b._fvx = b.vx; b._fvy = b.vy;
@@ -2723,8 +2750,10 @@ function update(dt) {
     buildWalls();
   }
 
-  // Eclipse Drift — ball is frozen; arena rotates for a random duration, then
-  // velocity is restored so play continues from the new orientation.
+  // Eclipse Drift — ball is frozen only while the arena is actively spinning. Outbound
+  // spin runs for a random 2-5s, then play resumes immediately (no countdown). After a
+  // 15s hold, the return spin unwinds back to the original orientation, mirroring the
+  // outbound duration/rate exactly (reversed direction), freezing the ball again.
   if (eclipseT > 0) {
     eclipseT -= dt;
     eclipseSpin += eclipseRate * dt;
@@ -2735,10 +2764,33 @@ function update(dt) {
       for (const b of balls) {
         if (b._fvx !== undefined) { b.vx = b._fvx; b.vy = b._fvy; delete b._fvx; delete b._fvy; }
       }
-      // Keep eclipseSpin so the seating stays shifted (no snap-back).
-      // Orientation shock: AI aim is briefly less reliable after the spin ends.
+      // Orientation shock: AI aim is briefly less reliable right after a spin ends.
       postEclipseMissT = POST_ECLIPSE_MISS_DUR;
-      toast('ECLIPSE ENDS', '#dcaaff', 0.9);
+      if (eclipseReturning) {
+        // Return trip complete: snap fully back to the original orientation and stop.
+        eclipseReturning = false;
+        eclipseSpin = 0;
+        toast('ECLIPSE REALIGNED', '#dcaaff', 0.9);
+      } else {
+        // Outbound trip complete: hold here, then start the mirrored return spin.
+        eclipseHoldT = ECLIPSE_HOLD_DUR;
+        toast('ECLIPSE ENDS', '#dcaaff', 0.9);
+      }
+    }
+  } else if (eclipseHoldT > 0) {
+    eclipseHoldT -= dt;
+    if (eclipseHoldT <= 0) {
+      eclipseHoldT = 0;
+      // Mirror the outbound spin exactly: same duration and rate, reversed direction.
+      eclipseRate = -eclipseOutRate;
+      eclipseT = eclipseOutSecs;
+      eclipseReturning = true;
+      for (const b of balls) {
+        b._fvx = b.vx; b._fvy = b.vy;
+        b.vx = 0; b.vy = 0;
+      }
+      applyShake(5, 0.25);
+      toast('ECLIPSE REALIGNING', '#dcaaff', 0.9);
     }
   }
 
@@ -2748,7 +2800,7 @@ function update(dt) {
   // Rtarget the collapse animation already chases, so R eases toward it naturally.
   if (pulseT > 0) {
     pulseT -= dt;
-    const k = clamp(pulseT / PULSE_DUR, 0, 1);           // 1 -> 0 across the pulse
+    const k = clamp(pulseT / pulseDur, 0, 1);           // 1 -> 0 across the pulse
     const squeeze = 1 - 0.22 * Math.sin((1 - k) * Math.PI);
     Rtarget = pulseBaseR * squeeze;
     if (pulseT <= 0) { pulseT = 0; Rtarget = pulseBaseR; }
@@ -3106,7 +3158,11 @@ function collide(b) {
         b.y = w.ay + w.dy * tc + w.ny * (padFaceS() + 1.2);
         b.hitter = p;
         // a nerf Modifier this ball picked up earlier lands on whoever just returned it
-        if (b.pendingNerf) { applyEffect(b.pendingNerf, [p]); b.pendingNerf = null; }
+        if (b.pendingNerf) {
+          applyEffect(b.pendingNerf, [p]);
+          b.pendingNerf = null;
+          if (run && p.human) { run.nerfedHits++; career.nerfedHits = (career.nerfedHits || 0) + 1; }
+        }
         p.hitFlash = 1; rallyHits++;
         if (rallyHits > run.bestRally) run.bestRally = rallyHits;
         if (sp2 > run.topSpeed) run.topSpeed = sp2;
@@ -3164,12 +3220,7 @@ function concede(p, b, w) {
   // the out-of-bounds safety net has no wall to hand, so fall back to the player's own
   if (!w && p.wall >= 0) w = walls[p.wall];
 
-  const cost = bountyOn ? 2 : 1;
-  if (bountyOn) {
-    bountyOn = false;
-    toast('BOUNTY CLAIMED // ' + (p.human ? 'YOU' : p.name) + '  -2', '#dcaaff', 1.3);
-  }
-  p.lives -= cost;
+  p.lives -= 1;
   p.hurtFlash = 1;
   if (p.human) run.conceded++;
   applyShake(9, 0.32);
@@ -3287,7 +3338,7 @@ function endGame(winner, eliminated) {
   // Only the two preset modes are scored (see matchScore).
   const scored   = scoredMode();
   const parts    = scored
-    ? scoreParts(me.place, run.survived, diffIdx, false, playerHits, run.buffHits || 0, run.nerfHits || 0, run.wildHits || 0)
+    ? scoreParts(me.place, run.survived, diffIdx, false, playerHits, run.buffHits || 0, run.nerfHits || 0, run.wildHits || 0, run.nerfedHits || 0)
     : null;
   const score    = parts ? parts.total : 0;
   const prevBest = career.bestScore || 0;
@@ -3421,7 +3472,8 @@ function endGame(winner, eliminated) {
     mode: gameMode,
     buffHits: run.buffHits || 0,
     nerfHits: run.nerfHits || 0,
-    wildHits: run.wildHits || 0
+    wildHits: run.wildHits || 0,
+    nerfedHits: run.nerfedHits || 0
   });
   lastRunByDiff[diffIdx] = {
     place: me.place,
@@ -3443,7 +3495,8 @@ function endGame(winner, eliminated) {
     mode: gameMode,
     buffHits: run.buffHits || 0,
     nerfHits: run.nerfHits || 0,
-    wildHits: run.wildHits || 0
+    wildHits: run.wildHits || 0,
+    nerfedHits: run.nerfedHits || 0
   };
 
   document.getElementById('overPlace').innerHTML =
@@ -3462,6 +3515,7 @@ function endGame(winner, eliminated) {
     if (parts.buffHits) modBits.push(parts.buffHits + ' buff');
     if (parts.nerfHits) modBits.push(parts.nerfHits + ' nerf');
     if (parts.wildHits) modBits.push(parts.wildHits + ' wild');
+    if (parts.nerfedHits) modBits.push(parts.nerfedHits + ' nerfed');
     const modNote = modBits.length ? ' (' + modBits.join(', ') + ')' : '';
     br.style.display = '';
     br.innerHTML =
@@ -4026,7 +4080,7 @@ function renderScoreBar() {
   const place = me && me.out ? (me.place || 6) : players.filter(q => !q.out).length;
   // live uses current place so the total jumps when rivals fall (placement multiplier)
   const live = matchScore(place, me && me.out ? (run.survived || elapsed) : elapsed, diffIdx, true,
-    playerHits, (run && run.buffHits) || 0, (run && run.nerfHits) || 0, (run && run.wildHits) || 0);
+    playerHits, (run && run.buffHits) || 0, (run && run.nerfHits) || 0, (run && run.wildHits) || 0, (run && run.nerfedHits) || 0);
   const best = career.bestScore || 0;
   const ahead = best > 0 && live > best;
   if (ahead && run && !run.passedBest) {
@@ -4083,7 +4137,6 @@ function renderFxBar() {
     const f = FX[id]; if (!f) continue;
     out.push(pill(f.col, f.name, gfx[id].toFixed(1) + 's'));
   }
-  if (bountyOn) out.push(pill(FX.bounty.col, FX.bounty.name, 'ACTIVE'));
   if (balls.length > 1) out.push(pill(FX.split.col, 'Multiball', '×' + balls.length));
 
   const html = out.join('');
@@ -4102,7 +4155,6 @@ function fxTag() {
     if (me.heavy > 0) out.push('HEAVY x' + me.heavy);
   }
   for (const id of Object.keys(gfx)) if (FX[id]) out.push(FX[id].name.toUpperCase());
-  if (bountyOn) out.push('BOUNTY');
   if (balls.length > 1) out.push(balls.length + ' BALLS');
   return out.length ? '  ·  ' + out.join(' · ') : '';
 }
@@ -4163,7 +4215,6 @@ const Modifier_ICON_DATA = {
   'invert': 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48cGF0aCBmaWxsPSIjZmY5YThmIiBkPSJNMTk1Ljc3NSAyMS4wNmMtNS45OS4xNTMtMTEuOTk2LjU2Ni0xOC4wNjcgMS4zMjFDNzkuNDk2IDM0LjYwNCA5Ljk4NSAxMjIuNTY0IDIyLjQ0NSAyMTguOTAxYzEuNzA5IDEzLjIxNCAzLjU2NiAyNi4wMiA2LjYxIDM4LjE4Ny0uMDIyLjg4NS0uMTQ3IDEuNzUyLS4xNDcgMi42NDMgMCAzMi4yNzMgMTYuNzU2IDYwLjU5MyA0Mi4wMSA3Ni45NjNMNDkuNjIgNDQyLjE1Yy00LjA3NyAyMC4yNCAxNi42OSAzOC4yMyAzNy4zMSAzNy4xNmwxNDMuNTEyLTcuNDkxYzMwLjk1IDE1LjQ4IDY2LjgwMyAyMi4zODIgMTAzLjg1MSAxNy43NzIgOTguMjEyLTEyLjIyMiAxNjcuNzIzLTEwMC4xODIgMTU1LjI2My0xOTYuNTE5LTEuMDA3LTcuNzg2LTIuMDc1LTE1LjQ2OC0zLjM3OC0yMi45MTIuMzg3LTMuNDIyLjczNC02LjkwNC43MzQtMTAuNDI5IDAtMzQuMjI5LTE4Ljg2My02NC4xMTctNDYuNzExLTc5LjlsMjIuMTgtMTEwLjAwOWM0LjA3OC0yMC4yNC0xNi42ODgtMzguMjMtMzcuMzEtMzcuMTZMMjgxLjU2IDQwLjE1NGExODEuNDY4IDE4MS40NjggMCAwIDAtODUuNzg0LTE5LjA5M3ptMTIwLjU5NyA0MS44NTloODEuNjdjMTQuNDQgMCAyNiAxMS41NiAyNiAyNS45OTd2ODMuNzE4Yy05LjE0OC0zLjA1Mi0xOC45MjMtNC43LTI5LjA4NC00LjctNi4wNzcgMC0xMS44ODIuNjM0LTE3LjYyNyAxLjc2My02Ljg0LTQzLjE4Mi0yOS4zMDYtODAuMzgyLTYwLjk2LTEwNi43Nzh6TTE1My4zMjQgNzAuODVjNTguODc5LTEuNjI2IDEyOC4zMDQgNDYuMzEzIDE3NC41MDUgMTIzLjY2OS0xOC4yMyAxNy40NzctMjguMjggNDIuOTA1LTI0LjgyNCA2OS42MTkuMjE4IDEuNjkuNTYzIDMuMzQuODgxIDQuOTkzLjAwNy4wNDQtLjAwNy4xIDAgLjE0NyA0Ljc1NiA0Ni4xOTggNDMuNjE2IDgyLjI1IDkxLjA3MiA4Mi4yNSAyMy41MjcgMCA0NS04LjkyOCA2MS4yNTMtMjMuNS0zLjc3NSA0Ny45NjUtMjMuNjQgODYuNDQ0LTU4Ljc1NiAxMDMuNjk0LTYzLjA0IDMwLjk2NS0xNTIuODA4LTE3LjM4OC0yMDkuOTA2LTEwOS4xMjkgMTUuNDM2LTE2LjQzNSAyNC45NzItMzguNTMzIDI0Ljk3Mi02Mi44NjIgMC01MC42NjgtNDAuOTg3LTkxLjc5Ny05MS42Ni05MS43OTctMjUuNzA4IDAtNDguOTg2IDEwLjU2My02NS42NiAyNy42MTMgMS4yOTktNTMuMzE4IDIxLjQ0LTk2LjY4IDU5LjM0NC0xMTUuMjk3IDguNTkyLTQuMjIgMTcuNzM5LTcuMDAyIDI3LjE3NS04LjM3MiAzLjgyMi0uNTU1IDcuNjc5LS45MiAxMS42MDQtMS4wMjh6bS00Ny44ODYgMTI0Ljg0NGMyMS42NCAwIDM5LjIyIDE3LjU3NyAzOS4yMiAzOS4yMTZzLTE3LjU4IDM5LjIxNS0zOS4yMiAzOS4yMTUtMzkuMjItMTcuNTc3LTM5LjIyLTM5LjIxNSAxNy41NzktMzkuMjE2IDM5LjIyLTM5LjIxNnptMjY4LjUxNSAwYzIxLjY0IDAgMzkuMjIgMTcuNTc3IDM5LjIyIDM5LjIxNnMtMTcuNTggMzkuMjE1LTM5LjIyIDM5LjIxNS0zOS4wNzMtMTcuNTc3LTM5LjA3My0zOS4yMTUgMTcuNDMyLTM5LjIxNiAzOS4wNzMtMzkuMjE2ek04Ny45NTggMzQ1LjM2YzEwLjI0MiAzLjk0IDIxLjI5IDYuMTY4IDMyLjkwMyA2LjE2OCA1LjIxNSAwIDEwLjE1NC0uNjMyIDE1LjEzLTEuNDY4IDguMiAzOS44NjYgMjkuODcgNzQuMTgzIDU5LjYzNyA5OC45OTNoLTgxLjY3Yy0xNC40NCAwLTI2LTExLjU2LTI2LTI1Ljk5N1YzNDUuMzZ6Ii8+PC9zdmc+',
   'split': 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48cGF0aCBmaWxsPSIjZGNhYWZmIiBkPSJNMzA0LjgzMyAxNmMtMjYxLjY5IDAtMzIwLjcxIDM4Ny42NTctNjIuMzQzIDM4Ny42NTcgODYuMjg0IDAgODYuOTU1LTEyOS4zNzUgMC0xMjkuMzc1LTEzOS45NDcgMC05OS4xMzQtMjAyLjg5NiA2Mi4zNDMtMjU4LjI4MnptLTMwLjkzOCA5Mi4zNDNjLTg2LjI4MyAwLTg2Ljk1NSAxMjkuMzc1IDAgMTI5LjM3NSAxMzkuOTUgMCA4OC4zNTMgMjAyLjg5Ni03My4xMjUgMjU4LjI4MiAyNjEuNjkgMCAzMzEuNDktMzg3LjY1NyA3My4xMjUtMzg3LjY1N3oiLz48L3N2Zz4=',
   'rotate': 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48cGF0aCBmaWxsPSIjZGNhYWZmIiBkPSJNMTc2LjUzIDE5LjQ3Yy0uNTMtLjAwNC0xLjA1OC4wMTQtMS41OTMuMDMtLjU3LjAxNy0xLjE0NS4wNTUtMS43MTguMDk0LTE1LjI5MyAxLjAzOC0zMS42NTYgOS45ODYtNDUuMjgyIDMxLjc1LTI3LjQ3NyA0My44ODUtMjguNTI1IDk3LjY4LTUuODQ0IDEzNi4yOCAxNS4wOTMgMjUuNjkgNDAuNDE3IDQ1LjE4OCA3Ni44NzUgNTEuMTU3YTY0LjA5OSA2NC4wOTkgMCAwIDEgNS40NjgtMTguNTkzYy0xMS40MDUtMTIuMzI3LTE4LjAxLTI2LjI0Mi0yMC4yNS00MS4wNjItNC43NDYtMzEuMzggOC43ODQtNjQuMzIgMjkuMDMtOTUuMDMgOC40OTQtMTIuODg0IDkuNDUtMjQuNTIgNi4zNDUtMzQuNjU3LTMuMTA2LTEwLjE0LTEwLjczLTE4LjkyNS0yMC44MTMtMjQuMjUtNi42NDctMy41MS0xNC4yNDctNS42NzQtMjIuMjItNS43MnptMTk4LjA2NCAyOS43NWMtMzcuMDcuMDUtNzEuODQyIDE0LjU1Ny05NC41MyAzOS4zMS0yMS4yODggMjMuMjI1LTMyLjYzNSA1NS4zNTYtMjUuMzc3IDk0Ljg3NmE2NC41NjQgNjQuNTY0IDAgMCAxIDguMzQ0LS41NjJjMi4yNDggMCA0LjQ2OC4xMTggNi42NTguMzQ0IDguNjc4LTE3Ljg4IDIxLjI4Mi0zMC4zODMgMzYuNjg3LTM3Ljc4MiAyOC42MDgtMTMuNzQgNjQuMDc4LTEwLjQ0NSA5OS4zNzUtLjA5NCAxNC44MDYgNC4zNDMgMjYuMjE4IDEuODUgMzUtNC4wOTMgOC43ODItNS45NDQgMTQuOTI4LTE1LjgzIDE3LjA2My0yNy4wMzIgNC4yNjgtMjIuNDA3LTYuMDctNDkuNC00NS43NS02MC4wMzItMTIuNTAzLTMuMzUtMjUuMTEzLTQuOTU0LTM3LjQ3LTQuOTM3ek0yNjEuNjg4IDc3LjgxMmMtOC42NjMgMC0xNy4xOTUuNjkzLTI1LjUgMS45NjgtMS43NjQgNC45MDItNC4xODUgOS44MDMtNy4zNDQgMTQuNTk1LTE4LjkxNSAyOC42OS0yOS44MiA1Ny45MTQtMjYuMTg4IDgxLjkzOCAxLjQ5NyA5LjkgNS4yOSAxOS4zMiAxMi4yOCAyOC4wNjJhNjUuMTkzIDY1LjE5MyAwIDAgMSAyMS45MDgtMTUuOTM4Yy04LjMzLTQ0LjU2IDMuNTQzLTgzLjA3IDI3LjcyLTExMC41OTMtLjk2Mi0uMDE3LTEuOTEyLS4wMy0yLjg3Ny0uMDN6bTg5LjI1IDc3LjMxMmMtMS4wMi0uMDA2LTIuMDI3LjAxLTMuMDMyLjAzLTEyLjUwMi4yNS0yMy44NTYgMi40OTMtMzMuNDM3IDcuMDk1LTEwLjc0NSA1LjE2LTE5Ljg5NCAxMy4xOTctMjYuNjU4IDI1LjU2M2E2NC45NDkgNjQuOTQ5IDAgMCAxIDE5LjE4OCAxMi4zNzVjMjMuMzcyLTEzLjM4MiA0Ny4yOTgtMTkuMTIgNzAuMDk0LTE4LjQwNyAxMy40My40MjIgMjYuNDYyIDMuMDk1IDM4Ljc1IDcuNzIgMS4xOS40NDggMi4zNTYuOTI0IDMuNTMgMS40MDZhMTY1LjE0IDE2NS4xNCAwIDAgMC0xMS4zMTItMjUuODc1IDcxLjYgNzEuNiAwIDAgMS03LjU2Mi0xLjc4Yy0xNy4zOS01LjEtMzQuMjc2LTguMDQtNDkuNTYzLTguMTI1em0tMjQ3LjUgMzcuNDM4YTE2NS4zNjUgMTY1LjM2NSAwIDAgMC02Ljc1IDI5LjUzIDY5LjQyMyA2OS40MjMgMCAwIDEgMTAuOTM3IDEwLjQ3YzIyLjEzIDI2LjI5IDQ3LjA2MiA0NS4wMyA3MS4xMjUgNDguMzc1IDguOTcyIDEuMjQ2IDE4LjEuNiAyNy40MzgtMi42NTdhNjQuMTkzIDY0LjE5MyAwIDAgMS03LjA2My0yMC43OGMtNDMuMTYyLTYuNDY4LTc0Ljk2NS0yOS40NDUtOTMuMTU2LTYwLjQwNmExMjYuNDcxIDEyNi40NzEgMCAwIDEtMi41MzItNC41M3ptMjY2Ljk2OCA3LjU2MmMtLjkuMDE2LTEuODEzLjA1My0yLjcyLjA5NC0xNS45MTcuNzEtMzIuNDM0IDUuMjUtNDguOTk4IDE0LjQzNmE2NC4zNDMgNjQuMzQzIDAgMCAxIDcuNDY4IDE4Ljk3YzE1Ljk5NSAyLjU5OCAyOS40MTYgOS4xNyA0MC4xNTYgMTkgMjMuNDEzIDIxLjQyNSAzMy41NzUgNTUuNTczIDM3LjEyNSA5Mi4xODYgMS40OSAxNS4zNiA4LjA1OCAyNS4wMDQgMTYuODQ0IDMwLjkzOCA4Ljc4OCA1LjkzNCAyMC4yNSA3Ljk0NiAzMS40NCA1Ljc1IDIyLjM4LTQuMzkgNDMuNTgtMjQuMDU3IDM4LjY1NS02NC44NDQtNi4yMDYtNTEuNDAzLTM5LjE5NS05My45MTgtODEuMDk0LTEwOS42ODctMTIuMjc0LTQuNjItMjUuMzUtNy4wOS0zOC44NzQtNi44NDV6TTI2My4wMyAyMDEuNTNjLTI1LjUxIDAtNDYgMjAuNDktNDYgNDYgMCAyNS41MTMgMjAuNDkgNDYgNDYgNDYgMjUuNTEzIDAgNDUuOTctMjAuNDg3IDQ1Ljk3LTQ2IDAtMjUuNTEtMjAuNDU3LTQ2LTQ1Ljk3LTQ2ek02MS45MDcgMjI4LjY1N2MtMTAuNjAyLjA5Ny0yMS4xODQgNC45NC0yOS4xNTYgMTMuMDk0LTE1Ljk0NCAxNi4zMS0yMi4yNDggNDQuNTE0IDQuOTM4IDc1LjMxMyAzNC4yNjIgMzguODE1IDg1LjU0NiA1NS4xMiAxMjkgNDQuMzQzIDI3Ljc4Ni02Ljg5IDUyLjgwNy0yNC40NDIgNjktNTUuMzEyYTY1LjAwMiA2NS4wMDIgMCAwIDEtMTguMDk0LTEyLjY1NmMtMTMuODQ0IDYuMDU0LTI3Ljc4NSA3LjkyMy00MS40MDYgNi4wMy0zMS40MzUtNC4zNjctNTkuMTg3LTI2LjczMy04Mi44NzUtNTQuODc0LTkuOTM3LTExLjgwNC0yMC44MDUtMTYuMDM0LTMxLjQwNy0xNS45Mzh6TTMyNy40NyAyNTIuNDdjLS42MTcgOC4wNzUtMi43MDUgMTUuNzYtNi4wMzMgMjIuNzUgMzEuMzEzIDI4LjYzNiA0NC45MDQgNjQuNDY2IDQzLjM0NCA5OS42MjQgMCAuMDMuMDAzLjA2MiAwIC4wOTRhMTY3LjI3OSAxNjcuMjc5IDAgMCAwIDIxLjM0NS0yMC4xNTcgNzEuNjMyIDcxLjYzMiAwIDAgMS0xLjI4LTguMTg2Yy0zLjMxOC0zNC4yMDUtMTMuMjM1LTYzLjc4Ni0zMS4xNTgtODAuMTg4LTcuMTctNi41NjMtMTUuNzIyLTExLjQ1LTI2LjIxOC0xMy45Mzd6bS0xNi40MDggMzguMjVhNjUuMTYgNjUuMTYgMCAwIDEtMTYgMTIuOTM2YzIuNCAxNS44NjMuMjc0IDMwLjUzMi01LjY4NyA0My42ODgtMTMuMSAyOC45MS00Mi4zOTMgNDkuMTk0LTc2LjA5NCA2My45MzctMTQuMTM1IDYuMTg2LTIxLjI0MiAxNS40LTI0LjE1NSAyNS41OTUtMi45MTMgMTAuMTk2LTEuMzEgMjEuNzMgNC4yNSAzMS42ODggMTEuMTIgMTkuOTEyIDM2LjQxNSAzMy45NyA3My42NTYgMTYuNjI1IDQ2LjkzNS0yMS44NiA3Ny4wOC02Ni40MjggNzkuMDY0LTExMS4xNTcgMS4yOTQtMjkuMTgtOC44OC01OC43MzctMzUuMDMtODMuMzF6bS0zMy41OTIgMTkuODRhNjQuMjczIDY0LjI3MyAwIDAgMS0xNC40NCAxLjY1N2MtMy4yMiAwLTYuMzctLjI2LTkuNDY3LS43Mi0xOC42NjggMzcuMDk3LTQ4Ljc1IDU5LjcyMy04Mi4zNzUgNjguMDYzLTEuNjI1LjQwMi0zLjI3Ljc4Ni00LjkwNyAxLjEyNWExNjYuMTk5IDE2Ni4xOTkgMCAwIDAgMzEuODE0IDE3LjQzNyA3MS42OTUgNzEuNjk1IDAgMCAxIDcuNzItMy45N2MzMS40OC0xMy43NzIgNTYuNTMzLTMyLjM2OCA2Ni41Ni01NC41IDMuOTk0LTguODEgNS45NjUtMTguNDA2IDUuMDk1LTI5LjA5MnoiLz48L3N2Zz4=',
-  'bounty': 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48cGF0aCBmaWxsPSIjZGNhYWZmIiBkPSJNMjQ3IDI0djE1LjJDMTM0LjQgNDMuODEgNDMuODEgMTM0LjQgMzkuMiAyNDdIMjR2MThoMTUuMmM0LjYxIDExMi42IDk1LjIgMjAzLjIgMjA3LjggMjA3LjhWNDg4aDE4di0xNS4yYzExMi42LTQuNiAyMDMuMi05NS4yIDIwNy44LTIwNy44SDQ4OHYtMThoLTE1LjJDNDY4LjIgMTM0LjQgMzc3LjYgNDMuODEgMjY1IDM5LjJWMjRoLTE4em0wIDMzLjIxVjg4aDE4VjU3LjIxQzM2Ny44IDYxLjc4IDQ1MC4yIDE0NC4yIDQ1NC44IDI0N0g0MjR2MThoMzAuOGMtNC42IDEwMi44LTg3IDE4NS4yLTE4OS44IDE4OS44VjQyNGgtMTh2MzAuOGMtMTAyLjgtNC42LTE4NS4yMi04Ny0xODkuNzktMTg5LjhIODh2LTE4SDU3LjIxQzYxLjc4IDE0NC4yIDE0NC4yIDYxLjc4IDI0NyA1Ny4yMXptOSA1Mi43OWE2NCA2NCAwIDAgMC02NCA2NCA2NCA2NCAwIDAgMCAzOC4xIDU4LjVDMTcyLjYgMjgwLjkgMTYxLjkgMzQ5LjYgMTc2IDQwNmgxNjBjMTQuMS01Ni40IDMuMy0xMjUuMi01NC4xLTE3My42QTY0IDY0IDAgMCAwIDMyMCAxNzRhNjQgNjQgMCAwIDAtNjQtNjR6Ii8+PC9zdmc+',
   'pulse': 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48cGF0aCBmaWxsPSIjZGNhYWZmIiBkPSJNMjU2IDIxQzEyNi4yMTMgMjEgMjEgMTI2LjIxMyAyMSAyNTZzMTA1LjIxMyAyMzUgMjM1IDIzNSAyMzUtMTA1LjIxMyAyMzUtMjM1UzM4NS43ODcgMjEgMjU2IDIxem0wIDM4LjYyOGM0NC42NzIgMCA4NS44MzIgMTQuOTg4IDExOC44MjIgNDAuMDk3bC0zMy42MzQgMzMuNjM1Yy0yNC4xNS0xNi44MS01My41MjMtMjYuNTg1LTg1LjE4OC0yNi41ODVzLTYxLjAzOCA5Ljc3NC04NS4xODggMjYuNTg0bC0zMy42MzQtMzMuNjM0YzMyLjk5LTI1LjExIDc0LjE1LTQwLjA5NyAxMTguODIyLTQwLjA5N3ptLTE1Ni4yNzUgNzcuNTUgMzMuNjM0IDMzLjYzNWMtMTYuODEgMjQuMTQ5LTI2LjU4NCA1My41MjItMjYuNTg0IDg1LjE4N3M5Ljc3NCA2MS4wMzkgMjYuNTg0IDg1LjE4N2wtMzMuNjM0IDMzLjYzNUM3NC42MTUgMzQxLjgwMyA1OS42MjggMzAwLjY3MiA1OS42MjggMjU2czE0Ljk4OC04NS44MzIgNDAuMDk3LTExOC44MjJ6bTMxMi41NSAwYzI1LjExIDMyLjk5IDQwLjA5NyA3NC4xNSA0MC4wOTcgMTE4LjgyMnMtMTQuOTg4IDg1LjgwMy00MC4wOTcgMTE4LjgyMmwtMzMuNjM0LTMzLjYzNWMxNi44MS0yNC4xNDkgMjYuNTg0LTUzLjUyMiAyNi41ODQtODUuMTg3cy05Ljc3NC02MS4wMzgtMjYuNTg0LTg1LjE4OGwzMy42MzQtMzMuNjM0ek0yNTYgMTUwLjM5N2M1OC4zNDkgMCAxMDUuNjAzIDQ3LjI1NCAxMDUuNjAzIDEwNS42MDNTMzE0LjM1IDM2MS43NSAyNTYgMzYxLjc1IDE1MC4zOTcgMzE0LjM0OSAxNTAuMzk3IDI1NiAxOTcuNjUgMTUwLjM5NyAyNTYgMTUwLjM5N3ptMCA1MS4yNmMtMjkuOTg5IDAtNTQuMzQ0IDI0LjM1NS01NC4zNDQgNTQuMzQzczI0LjM1NSA1NC4zNDQgNTQuMzQ0IDU0LjM0NCA1NC4zNDQtMjQuMzU1IDU0LjM0NC01NC4zNDQtMjQuMzU2LTU0LjM0NC01NC4zNDQtNTQuMzQ0ek0xNzAuODEyIDM3OC42NGMyNC4xNSAxNi44MSA1My41MjMgMjYuNTg0IDg1LjE4OCAyNi41ODRzNjEuMDM4LTkuNzc0IDg1LjE4Ny0yNi41ODRsMzMuNzgyIDMzLjc4MWMtMzMuMDAzIDI1LjE3NS03NC4yNjIgNDAuMDk3LTExOC45NjkgNDAuMDk3cy04NS45NjYtMTQuOTIyLTExOC45NjktNDAuMDk3bDMzLjc4MS0zMy43ODF6Ii8+PC9zdmc+',
   'gravity': 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48cGF0aCBmaWxsPSIjZGNhYWZmIiBkPSJNMjEgMjEuMDAyYTExNTAuMTE5IDExNTAuMTE5IDAgMCAxIDcuMzQ2IDU1LjY4M2MxMS43OC00LjE1MyAyNC40LTYuNDY1IDM3LjYxMi02LjQ2NSA2Mi4zNjQgMCAxMTIuODM1IDUwLjQ3IDExMi44MzUgMTEyLjgzNXMtNTAuNDcxIDExMi45OC0xMTIuODM1IDExMi45OGMtMTAuMDQgMC0xOS44My0xLjIzLTI5LjA5LTMuNjczLS41MDkgMjYuNjE0LTEuNTMzIDUyLjI3Mi0zLjA4NiA3Ni45ODYgMjEuOTAyLTQuNDk2IDQ0LjU0My02Ljg4NCA2Ni45OTYtNi45MDUgMjIuODk0IDAgNDUuNjYgMi4zMjggNjcuNDM2IDcuMDUyIDIzLjczNyA1LjIxNyA0NS4zMzcgMTIuNzQyIDY2LjcwMyAxOS42ODggMjEuMjcyIDYuODUyIDQyLjQ5NSAxMy4zNTEgNjQuNzkxIDE2LjE2IDM0LjkzIDQuNDY1IDcyLjU3OC0uMDUgMTA0Ljc1NC0xMy4wNzUtMzAuMzEgMTUuMjczLTY4LjEwMyAyMi45MTYtMTA1LjkzIDIwLjg2Mi0yNC4wNzgtMS4zNDQtNDcuNDEzLTYuMzAyLTY5Ljc4Ny0xMS43NTMtMjIuNTItNS40MjYtNDQuNTI0LTExLjM0OS02Ni40MDgtMTQuMzk4LTQ0LjM1My02LjMtOTAuODMxLTEuMjczLTEzMC42MTIgMTIuNDg4LS4zNTcgNC4zNi0uNzg2IDguNzk4LTEuMTc1IDEzLjA3NiAzMC42MS05LjQ2NSA2My4zNzItMTQuMzY4IDk1LjkzOS0xNC4zOTggMjIuODk0IDAgNDUuNTEzIDIuMzI4IDY3LjI5IDcuMDUyIDIzLjczNiA1LjIxNyA0NS40ODMgMTIuODg4IDY2Ljg0OCAxOS44MzQgMjEuMjcyIDYuODUyIDQyLjQ5NiAxMy4yMDUgNjQuNzkyIDE2LjAxNCAzNC45MyA0LjQ2NSA3Mi41NzgtLjA1IDEwNC43NTQtMTMuMDc2LTMwLjMxIDE1LjI3My02OC4xMDQgMjIuOTE2LTEwNS45MyAyMC44NjMtMjQuMDc4LTEuMzQ1LTQ3LjQxMy02LjMwMy02OS43ODYtMTEuNzU0LTIyLjUyMi01LjQyNS00NC41MjUtMTEuMjAyLTY2LjQwOC0xNC4yNTEtNTYuNDA4LTguMDEyLTExNi4yMTUgMi4zNjItMTYxLjMxOSAyNS43MTEtMS43NDIgMTQuNzQ5LTMuNjIxIDI5LjA0Ny01LjczIDQyLjQ2IDY0Ljg0Ny0xMC4xNzQgMTQ2LjI4Ni0xNi4zMDggMjM1LjA3My0xNi4zMDggODguNzIyIDAgMTcwLjEgNi4xNDcgMjM0LjkyNSAxNi4zMDgtNi44My00My41NzItMTEuNjk2LTk0LjcxMi0xNC4yNS0xNTAuNDQ2LTIwLjc3NiA3LjUxNC00My4xODMgMTEuNjA3LTY2LjU1NiAxMS42MDctMTA4LjE1IDAtMTk1Ljg0NS04Ny42OTUtMTk1Ljg0NS0xOTUuODQ0IDAtNDQuODI0IDE1LjE4My04Ni4wMiA0MC41NS0xMTkuMDA1QzE2Ni41NzIgMzcuMjUzIDg1LjU1OCAzMS4xNiAyMSAyMS4wMDJ6bTQ2OS45OTggMGMtNTQuNTM4IDguNTc0LTEyMC44NTkgMTQuMTMtMTkzLjM0NyAxNS43Mi0zMS44NjQgMjkuOTU3LTUxLjg2MyA3Mi40MDgtNTEuODYzIDExOS41OTMgMCA5MC43ODIgNzMuNjIxIDE2NC40MDMgMTY0LjQwNSAxNjQuNDAzIDIzLjIxOSAwIDQ1LjIxNS00LjgzMiA2NS4yMzItMTMuNTE3LS40MTQtMTUuMTYyLS42OTUtMzAuNTkyLS43MzUtNDYuMjc5LTMuNCAyLjEwNC02LjgxIDQuMTAzLTEwLjQzIDUuODc3LS4yNC4xMTctLjQ5Ny4xNzktLjczNS4yOTYtMS40MDIuNjc1LTIuODMgMS40MzQtNC4yNjEgMi4wNTctLjM4Ni4xNjQtLjc5MS4yNzctMS4xNzYuNDQyLTEuMjk4LjU1LTIuNjQ2IDEuMTEtMy45NjcgMS42MTUtLjMzMy4xMjctLjY5NS4xNy0xLjAyOC4yOTdhMTIwLjgwNSAxMjAuODA1IDAgMCAxLTkuNDAzIDMuMDg1Yy0xLjYwOC40NTYtMy4yMTUuOTMyLTQuODQ4IDEuMzIyLS4xNTUuMDQzLS4yODcuMTEzLS40NDIuMTQ2LS41OTguMTQxLTEuMTYyLjMxLTEuNzYzLjQ0Mi0xLjI0LjI3Mi0yLjU2Ny41LTMuODIuNzM0LTEuMjkuMjQtMi42NjMuMzktMy45NjcuNTg4LS41MDUuMDc1LS45NjIuMjItMS40Ny4yOTctLjU5Mi4wODQtMS4xNjcuMDcyLTEuNzYyLjE0NS0zLjAwNS4zNzYtNi4wNDIuNzI2LTkuMTEuODgxaC0uNTg3Yy0xLjkwMy4wOS0zLjgwNS4xNDYtNS43My4xNDYtNjcuODkgMC0xMjIuODI1LTU1LjA4Mi0xMjIuODI1LTEyMi45NzEgMC0yLjEyMi4wNDMtNC4yMjMuMTQ2LTYuMzE4IDEuMTY2LTIzLjA0NSA4LjcyOC00NC40NzMgMjAuODYyLTYyLjQ0IDEuMTAzLTEuNjM0IDIuMi0zLjEyNiAzLjM4LTQuNzAyIDIyLjM4OC0yOS45NDcgNTguMTI3LTQ5LjM2NSA5OC40MzYtNDkuMzY1IDIuMTM1IDAgNC4yMDkuMDUgNi4zMTguMTQ1IDMuMDY4LjE1NSA2LjEwNC41MDYgOS4xMDkuODgyLjU3NS4wNzIgMS4xOS4wNjUgMS43NjMuMTQ1LjUwMi4wNzMuOTcuMjE3IDEuNDcuMjk3IDEuMzUyLjIwNiAyLjYyNy4zMzggMy45NjYuNTg3LjUyOS4wOTkgMS4wOS4xODggMS42MTYuMjk2IDEuMzAzLjI1OSAyLjY3OS41OCAzLjk2Ny44ODIuMTUuMDUuMjkxLjExMi40NDIuMTQ1IDEuNjM0LjM5IDMuMjQuODcgNC44NDggMS4zMjMgMy41NTQgMS4wMDUgNy4wMTcgMi4wNyAxMC40MzIgMy4zNzkgMS4zMzQuNTEgMi42NTQgMS4wNjIgMy45NjYgMS42MTYuMzguMTYuNzk3LjI3NyAxLjE3Ni40NDIuNjA3LjI2MyAxLjE2LjYwOCAxLjc2My44ODEgNi4wMzIgMi43NDQgMTEuODczIDUuOTA3IDE3LjMzNiA5LjU1LjIwMi4xMzYuMzg2LjMwNi41ODguNDQyIDEuMjkuODcxIDIuNTY2IDEuNzI2IDMuODIgMi42NDQuMDkuMDY1LjIwNy4wODUuMjk2LjE0Ni45MDguNjY4IDEuNzcyIDEuMzY2IDIuNjQ1IDIuMDU3IDEuNjEtMTMuMjY1IDMuMzgyLTI2LjE4NyA1LjI5LTM4LjM0NnptLTgwLjgwNSA2OS42NGMtMzYuMzE0IDAtNjUuNjc0IDI5LjM2LTY1LjY3NCA2NS42NzNzMjkuMzYgNjUuODIgNjUuNjc0IDY1LjgyIDY1LjgyLTI5LjUwNyA2NS44Mi02NS44Mi0yOS41MDctNjUuNjczLTY1LjgyLTY1LjY3M3pNNjUuOTU4IDEwMy4xM2E3OS40OTYgNzkuNDk2IDAgMCAwLTM0LjM4IDcuNzg3YzMuNzE4IDQ0Ljc1OSA1LjczIDkzLjY0NiA1LjczIDE0NS4xNTZ2MS45MWE3OS45ODcgNzkuOTg3IDAgMCAwIDI4LjY1IDUuMjljNDQuMjA3IDAgNzkuOTI0LTM1Ljg2NSA3OS45MjQtODAuMDcycy0zNS43MTctODAuMDctNzkuOTI0LTgwLjA3eiIvPjwvc3ZnPg==',
   'eclipse': 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48cGF0aCBmaWxsPSIjZGNhYWZmIiBkPSJNMjg1LjM3NSAyMWMyMS4xODMgMi43NDEgNDEuNiA4LjEyIDYwLjY2IDE2LjAxbC0zNi44NjYgOTcuNjcxYTEzNS4zMSAxMzUuMzEgMCAwIDEgMjMuNzkzIDEzLjY2bDY2LjUzNS04MC42MzVjMTYuNyAxMi43MzEgMzEuNTU3IDI3LjYgNDQuMzU2IDQ0LjIxbC04MC45MjggNjYuMjRhMTMyLjY0IDEzMi42NCAwIDAgMSAxMy42NiAyMy41bDk4LjExMi0zNi41NzFjNy45NzggMTkuMDQ3IDEzLjU2IDM5LjE4OCAxNi4zMDMgNjAuMzY1bC0xMDMuNCAxNi44OWMuNDcgNC41MTguNTg3IDkuMDIuNTg3IDEzLjY2IDAgNC41OS0uMTI3IDkuMTkyLS41ODcgMTMuNjZMNDkxIDI4Ni42OTdjLTIuNzQzIDIxLjE3OC04LjMyNSA0MS4zMi0xNi4zMDMgNjAuMzY2bC05OC4xMTItMzYuNzJjLTMuNzY4IDguMzctOC4zMTIgMTYuMy0xMy42NiAyMy42NDhsODAuOTI4IDY2LjI0Yy0xMi44MDUgMTYuNjA1LTI3LjY1NiAzMS40NzgtNDQuMzU2IDQ0LjIxbC02Ni41MzUtODAuNjM1YTEzNS40NTggMTM1LjQ1OCAwIDAgMS0yMy43OTMgMTMuNjZsMzYuODY2IDk3LjY3MmMtMTkuMDYgNy44ODktMzkuNDc3IDEzLjEyMS02MC42NiAxNS44NjJsLTE3LjAzOC0xMDIuNTE5Yy00LjA2Mi40MTQtOC4xODguNTYyLTEyLjMzNy41ODgtNC4xNDgtLjA1LTguMjc1LS4xNzQtMTIuMzM4LS41ODhsLTE3LjAzNyAxMDIuNTJjLTIxLjE4My0yLjc0Mi00MS42LTcuOTc0LTYwLjY2LTE1Ljg2M2wzNi44NjYtOTcuNjcyYTEzNS40NzYgMTM1LjQ3NiAwIDAgMS0yMy43OTQtMTMuNjZsLTY2LjUzNCA4MC42MzVjLTE2LjcwMS0xMi43MzItMzEuNTUyLTI3LjYwNS00NC4zNTYtNDQuMjFsODAuOTI4LTY2LjI0Yy01LjM0OC03LjM0Ny05Ljg5My0xNS4yNzktMTMuNjYtMjMuNjQ3bC05OC4xMTIgMzYuNzE5Yy03Ljk3OC0xOS4wNDctMTMuNTYtMzkuMTg4LTE2LjMwMy02MC4zNjZsMTAzLjQtMTcuMDM3Yy0uNDYtNC40NjgtLjU4Ny05LjA3MS0uNTg3LTEzLjY2IDAtNC42NC4xMTctOS4xNDIuNTg3LTEzLjY2TDIxIDIyNS40NWMyLjc0Mi0yMS4xNzcgOC4zMjUtNDEuMzE4IDE2LjMwMy02MC4zNjVsOTguMTEyIDM2LjU3MWExMzIuNjQgMTMyLjY0IDAgMCAxIDEzLjY2LTIzLjVsLTgwLjkyOC02Ni4yNGMxMi43OTgtMTYuNjEgMjcuNjU1LTMxLjQ3OSA0NC4zNTYtNDQuMjFsNjYuNTM0IDgwLjYzNWExMzUuMzM5IDEzNS4zMzkgMCAwIDEgMjMuNzk0LTEzLjY2TDE2NS45NjUgMzcuMDFjMTkuMDYtNy44OSAzOS40NzctMTMuMjY4IDYwLjY2LTE2LjAxbDE3LjAzNyAxMDIuNjY3YzQuMDYyLS40MTggOC4xODktLjU2NSAxMi4zMzgtLjU4OCA0LjE1LjA0MyA4LjI3NS4xNyAxMi4zMzcuNTg4TDI4NS4zNzUgMjF6TTI1NiAxNDAuMTE2Yy02My43MjcuNzgyLTExNS4wMDQgNTIuMzQ3LTExNS4wMDMgMTE1Ljg4NGwzMy45MjgtMi40OTdjMCA0NC44NTggMzYuMTQ5IDc3LjU1OCA4MS4wNzUgNzguNDMxIDQ0LjkyNy0uODczIDgxLjA3NS0zMy41NzQgODEuMDc1LTc4LjQzTDM3MS4wMDMgMjU2YzAtNjMuNTM3LTUxLjI3NS0xMTUuMTAyLTExNS4wMDMtMTE1Ljg4NHptMjIuOTEzIDE4LjA2NWMzNS4zMTYgMCA0Ni41NiA2NS43MTkgNDYuNTYgOTcuNTI1IDAgNDAuMjMtMzAuODk0IDYxLjUzNS02OS40NzMgNjIuNDIyLTM4LjU3OC0uODg3LTY5LjQ3Mi0yMi4xOTMtNjkuNDcyLTYyLjQyMiAwLTMxLjgwNiAxMS4yNDMtOTcuNTI1IDQ2LjU2LTk3LjUyNXY1My42MWMwIDEzLjU0NCAxMC4wNzIgMjQuNTM2IDIyLjkxMiAyNS40MDkgMTIuODQtLjg3MyAyMi45MTItMTEuODY1IDIyLjkxMi0yNS40MXYtNTMuNjA5eiIvPjwvc3ZnPg=='
@@ -4196,14 +4247,12 @@ const EFFECTS = [
     list:[
       { id:'split',    name:'Split',     dur:0,  durTxt:'Until lost',
         desc:'A second ball enters play. Either one can score on anybody.' },
-      { id:'bounty',   name:'Bounty',    dur:0,  durTxt:'Until claimed', global:true,
-        desc:'The next player to concede loses two wall segments instead of one.' },
-      { id:'pulse',    name:'Pulse Contract', dur:0, durTxt:'Instant',
-        desc:'The whole arena squeezes inward and snaps back over about two seconds.' },
+      { id:'pulse',    name:'Pulse Contract', dur:0, durTxt:'1.5–3.5s',
+        desc:'The whole arena squeezes inward and snaps back over a random 1.5–3.5 seconds.' },
       { id:'gravity',  name:'Gravity Well', dur:8, durTxt:'8s', global:true,
         desc:'A hard pull toward the centre of the arena bends every ball\u2019s path. Lead your shots.' },
-      { id:'eclipse',  name:'Eclipse Drift', dur:0,  durTxt:'3–10s', global:true,
-        desc:'The ball freezes while the arena rotates for a random 3–10 seconds. When it stops, play resumes from a new angle.' },
+      { id:'eclipse',  name:'Eclipse Drift', dur:0,  durTxt:'2–5s', global:true,
+        desc:'The ball freezes while the arena spins for a random 2–5 seconds, then play resumes at once. 15 seconds later it spins back to the original angle the same way.' },
     ]},
 ];
 
@@ -4402,7 +4451,8 @@ function showSetup() {
 }
 function careerHtml() {
   const wr = career.games ? Math.round(career.wins / career.games * 100) : 0;
-  const buff = career.buffHits || 0, nerf = career.nerfHits || 0, wild = career.wildHits || 0;
+  const buff = career.buffHits || 0, nerf = career.nerfHits || 0, wild = career.wildHits || 0,
+        nerfed = career.nerfedHits || 0;
   return statLine('High score', career.bestScore ? commas(career.bestScore) : '—') +
     statLine('Total play time', fmtTime(career.playTime)) +
     statLine('Matches played', career.games) +
@@ -4410,19 +4460,22 @@ function careerHtml() {
     statLine('Longest match', career.bestTime ? fmtTime(career.bestTime) : '—') +
     statLine('Most rallies', career.bestRally || '—') +
     statLine('Fastest ball', career.topSpeed ? Math.round(career.topSpeed) + ' px/s' : '—') +
-    statLine('Modifiers hit', 'B ' + buff + ' · N ' + nerf + ' · W ' + wild);
+    statLine('Modifiers hit', 'B ' + buff + ' · N ' + nerf + ' · W ' + wild) +
+    statLine('Times nerfed', nerfed);
 }
 function lastRunHtmlFor(snap) {
   if (!snap) return '<div class="sl"><span>No matches yet</span><span>—</span></div>';
   const s = snap;
-  const buff = s.buffHits || 0, nerf = s.nerfHits || 0, wild = s.wildHits || 0;
+  const buff = s.buffHits || 0, nerf = s.nerfHits || 0, wild = s.wildHits || 0,
+        nerfed = s.nerfedHits || 0;
   return statLine('Score', s.scored === false ? 'Not scored' : commas(s.score || 0)) +
     statLine('Place', ordinal(s.place) + ' of 6') +
     statLine('Survival time', fmtTime(s.survived)) +
     statLine('Hits', s.returns) +
     statLine('Lives left', s.lives + ' / ' + s.startLives) +
     statLine('Top ball speed', Math.round(s.topSpeed) + ' px/s') +
-    statLine('Modifiers hit', 'B ' + buff + ' · N ' + nerf + ' · W ' + wild);
+    statLine('Modifiers hit', 'B ' + buff + ' · N ' + nerf + ' · W ' + wild) +
+    statLine('Times nerfed', nerfed);
 }
 const esc = t => String(t == null ? '' : t)
   .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -4799,8 +4852,9 @@ const SCORE_HELP_ROWS = [
   ['Paddle', 'Returns escalate: first hit <b>+500</b>, then <b>+600</b>, <b>+700</b>, and so on ' +
     '(+100 more each time). Any part of the paddle counts.'],
   ['Modifiers', '<b style="color:#ffd97a">Buff</b> you collect: <b>+5,000</b>. ' +
-    '<b style="color:#ff9a8f">Nerf</b> you collect: <b>−5,000</b>. ' +
-    '<b style="color:#dcaaff">Wildcard</b> you collect: <b>+2,500</b>.'],
+    '<b style="color:#ff9a8f">Nerf</b> you collect: <b>+5,000</b>. ' +
+    '<b style="color:#dcaaff">Wildcard</b> you collect: <b>−2,500</b>. ' +
+    'Getting hit by a nerf someone else collected: <b>−5,000</b>.'],
   ['Subtotal', 'Survival + paddle + modifiers. This is your earned total before placement.'],
   ['Placement', 'Your finish multiplies the subtotal:<br>' +
     '6th ×1 · 5th ×1.25 · 4th ×1.5 · 3rd ×2 · 2nd ×2.5 · <b>1st ×3</b>.'],
@@ -4970,7 +5024,7 @@ window.__hex = {
   }),
   setup: (d, l) => { diffIdx = d; startLives = l; },
   start: (allAI) => { startGame(); if (allAI) players.forEach(p => p.human = false); },
-  kill: (i) => { const p = players[i]; if (p && !p.out) { p.lives = 1; p.fx = {}; bountyOn = false;
+  kill: (i) => { const p = players[i]; if (p && !p.out) { p.lives = 1; p.fx = {};
                    concede(p, balls[0] || newBall(CX, CY, 0, 0), null); } },
   hit:  (i) => { const p = players[i]; if (p && !p.out) concede(p, balls[0] || newBall(CX, CY, 0, 0), null); },
   give: (i, id) => { const p = players[i]; if (p && FX[id]) { applyEffect(FX[id], [p]); return true; } return false; },
