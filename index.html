@@ -629,6 +629,15 @@
       </span>
     </div>
 
+    <div class="crow" id="mDiffRow">
+      <span class="clab">Difficulty</span>
+      <span class="row cseg" id="mDiff">
+        <button class="opt" data-d="0" type="button">Easy</button>
+        <button class="opt on" data-d="1" type="button">Medium</button>
+        <button class="opt" data-d="2" type="button">Hard</button>
+      </span>
+    </div>
+
     <div class="modes">
       <button class="mode Modifier playbig" id="mPlay" type="button">
         <span class="mi" id="mPlayIcon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.6 20.4 7.3v9.4L12 21.4 3.6 16.7V7.3z"/><text x="12" y="16.4" text-anchor="middle" font-size="11" font-weight="700" fill="currentColor" stroke="none">M</text></svg></span>
@@ -661,9 +670,9 @@
         <span class="mview">Tap for top 25</span>
       </div>
       <div class="row tabs minilb-tabs" id="miniLbTabs">
-        <button class="opt on" data-period="all">All Time</button>
-        <button class="opt" data-period="week">7 Days</button>
-        <button class="opt" data-period="day">Today</button>
+        <button class="opt" data-diff="0">Easy</button>
+        <button class="opt on" data-diff="1">Medium</button>
+        <button class="opt" data-diff="2">Hard</button>
       </div>
       <div id="miniLbBody" class="minilb-body lbstatus">Loading…</div>
     </div>
@@ -704,9 +713,9 @@
     <h1 style="font-size:22px">LEADERBOARD</h1>
     <div class="sub">Top scores</div>
     <div class="row tabs" id="lbTabs" style="margin-bottom:12px">
-      <button class="opt on" data-period="all">All Time</button>
-      <button class="opt" data-period="week">Last 7 Days</button>
-      <button class="opt" data-period="day">Today</button>
+      <button class="opt" data-diff="0">Easy</button>
+      <button class="opt on" data-diff="1">Medium</button>
+      <button class="opt" data-diff="2">Hard</button>
     </div>
     <div id="lbBody" class="lbstatus">Loading…</div>
   </div>
@@ -753,9 +762,8 @@
     <div class="grouplabel" style="margin-top:16px">Difficulty</div>
     <div class="row" id="modeDiff">
       <button class="opt" data-d="0">Easy</button>
-      <button class="opt on" data-d="1">Normal</button>
+      <button class="opt on" data-d="1">Medium</button>
       <button class="opt" data-d="2">Hard</button>
-      <button class="opt" data-d="3">Expert</button>
     </div>
     <div class="btnrow"><button class="go" id="bModeStart">Start</button></div>
   </div>
@@ -799,9 +807,8 @@
     <div class="grouplabel" style="margin-top:14px">Difficulty</div>
     <div class="row" id="cDiff">
       <button class="opt" data-d="0">Easy</button>
-      <button class="opt on" data-d="1">Normal</button>
+      <button class="opt on" data-d="1">Medium</button>
       <button class="opt" data-d="2">Hard</button>
-      <button class="opt" data-d="3">Expert</button>
     </div>
 
     <div class="btnrow"><button class="go custom" id="bCustomStart">Start</button></div>
@@ -937,6 +944,11 @@
     </div>
 
     <h4 class="hshead" id="boardHead" style="margin-top:18px">High Scores</h4>
+    <div class="row tabs" id="hsTabs" style="margin-bottom:8px">
+      <button class="opt" data-diff="0" type="button">Easy</button>
+      <button class="opt on" data-diff="1" type="button">Medium</button>
+      <button class="opt" data-diff="2" type="button">Hard</button>
+    </div>
     <div id="hsBoard"></div>
   </div>
 </div>
@@ -1032,17 +1044,16 @@ const WALL_COL = '#6d8296';        // inert bumper walls (square duel)
 const DIFF = [
   // Base AI skill is per-tier. Late-game pressure² softly raises blunder chance and
   // aim error (proportional to the tier’s base rates). Arena pressure also speeds the
-  // ball and shrinks paddles. Tiers: Easy/Normal/Hard beatable; Expert near-impossible.
-  { label:'EASY',   err:0.14,  blunder:0.07,  react:0.16,  pad:1.35, look:0.78, ballBase:0.58, ballMax:1.15, crack:0 },
-  { label:'NORMAL', err:0.07,  blunder:0.03,  react:0.08,  pad:2.10, look:0.92, ballBase:0.82, ballMax:1.65, crack:0 },
-  { label:'HARD',   err:0.028, blunder:0.01,  react:0.04,  pad:2.90, look:0.98, ballBase:1.05, ballMax:2.15, crack:0 },
-  { label:'EXPERT', err:0.008, blunder:0.001, react:0.015, pad:4.40, look:1.00, ballBase:1.32, ballMax:2.75, crack:0 },
+  // ball and shrinks paddles. Three tiers: Easy / Medium / Hard.
+  { label:'EASY',   err:0.09,  blunder:0.05,  react:0.12,  pad:1.65, look:0.85, ballBase:0.65, ballMax:1.30, crack:0 },
+  { label:'MEDIUM', err:0.07,  blunder:0.03,  react:0.08,  pad:2.10, look:0.92, ballBase:0.82, ballMax:1.65, crack:0 },
+  { label:'HARD',   err:0.04,  blunder:0.015, react:0.05,  pad:2.55, look:0.96, ballBase:1.00, ballMax:2.00, crack:0 },
 ];
 
 let diffIdx = 1;
 let startLives = 3;
 let displayName = 'RHYNOCK';
-const VERSION = '0.8.0';
+const VERSION = '0.8.3';
 /* Online leaderboard (Cloudflare Worker + D1).
    Leave empty to keep the game fully offline.
    After you deploy the Worker, set this to your workers.dev URL, e.g.:
@@ -1073,21 +1084,21 @@ Optional online leaderboard (Cloudflare Worker + D1) via LEADERBOARD_URL — lea
 - PLAYER index is always 1 (bottom wall after seating rotation).
 - Key globals: players[], walls[], balls[], Modifiers[], DIFF[], FX{}, run, career, tiers, scoreBoard.
 - Physics / loop: collide(), serve(), threat(), update(), layout(), buildWalls(), resize(), frame().
-- Difficulty table DIFF[0..3] controls AI error, reaction, paddle speed, ball base/max speed. AI blunder/aim soft-scale with pressure² (late-game fray).
+- Difficulty table DIFF[0..2] (Easy / Medium / Hard) controls AI error, reaction, paddle speed, ball base/max speed. AI blunder/aim soft-scale with pressure² (late-game fray).
 - Modifiers (buffs / nerfs / wildcards):
   - Gold (buff) → last hitter only
   - Red (nerf) → next player to hit (pending on the ball)
   - Violet (wildcard) → arena-wide
 - Aiming (0.7.4): outgoing direction comes from contact point, NOT angle of incidence (a mirror bounce would leave a stationary paddle unable to aim). ang = sign(off) * AIM_MAX_ANGLE * |off|^AIM_CURVE, with AIM_MAX_ANGLE 62\u00b0 and AIM_CURVE 1.35. Paddle motion (PADDLE_CARRY) adds fine steering on top, clamped by MAX_DEFLECT. Tune AIM_MAX_ANGLE/AIM_CURVE to change how much control the player has.
-- Spawn odds are FLAT as of 0.7.3 (pickEffect): one combined pool, every modifier equally likely, no category weighting. Ineligible entries are excluded so another modifier takes the slot: Repair while all walls are full, Split at 3+ balls, and any id already on the field.
+- Spawn odds are FLAT as of 0.7.3 (pickEffect): one combined pool, every modifier equally likely, no category weighting. Ineligible entries are excluded so another modifier takes the slot: Repair while all walls are full, Split at 3+ balls, and any id already on the field. Uncollected modifiers expire after 20 seconds.
 - Nerf roster: choke (Shrink, 10s) and invert (Invert, fixed 5s \u2014 exempt from fxDur arena scaling).
 - Eclipse fairness: after each rotation giveEclipseRunway() backs the ball along its velocity until the nearest wall is >= ECLIPSE_MIN_REACT seconds away, capped so it never leaves the arena. Without it the ball can unfreeze inches from a player who had no way to see it coming.
 - reanchorDrag() runs every frame while eclipseT > 0: the touch anchor is wall-relative, so a rotating wall invalidates it and the paddle stops answering the finger.
 - Concede pacing (SERVE_DELAY_LIFE_LOST 1s / SERVE_DELAY_KNOCKOUT 2s): hidden holds added to serveTimer after a concede. serveTimer freezes the ball only; paddles and arena animation keep running and no countdown UI appears.
-- Main menu has a Modifiers On/Off toggle (ModifiersOn, remembered). Play button (#mPlay / startSimplePlay()) starts Normal difficulty, 3 lives, mid spawn rate, endless off; mode is modifier or vanilla based on the toggle.
+- Main menu has a Modifiers On/Off toggle and Easy/Medium/Hard difficulty selector (both remembered). Play button (#mPlay / startSimplePlay()) uses the selected difficulty, 3 lives, ModifierRate locked to difficulty (0/1/2), endless off; mode is modifier or vanilla based on the Modifiers toggle.
 - Custom mode still exists in code (#customPanel) with lives, spawn rate, per-modifier toggles (ModifierToggles), endless, difficulty — but is not exposed on the simplified main menu.
 - Scoring only for vanilla + modifier (scoredMode()). Custom is deliberately unscored.
-- Score formula: survival = seconds × 100 × (1 + √(seconds/150)); paddle hits escalate 500, 600, 700…; modifiers: hitting a buff +5000, hitting a nerf +5000, hitting a wildcard +2500, and getting hit by a nerf someone else collected −5000 (SCORE_NERFED, tracked via run/career.nerfedHits); then × SCORE_PLACE_MUL[place]. No difficulty/mode multiplier on score.
+- Score formula: survival = seconds × 100 × (1 + √(seconds/150)); paddle hits escalate 500, 600, 700…; modifiers: buff +5000, nerf collect +5000, wild +2500, nerfed −5000; then × SCORE_PLACE_MUL[place]; then × SCORE_DIFF_MUL[diffIdx] (Easy 0.75 / Medium 1.0 / Hard 1.25). Difficulty multiplier is applied AFTER placement.
 - Bounty modifier removed as of 0.7.1 (was a wildcard, arena-wide, doubled the next concede cost).
 - Eclipse Drift (0.7.1): outbound spin 2-5s random (CW/CCW), ball frozen only while actively spinning, no countdown on resume. After a 15s hold, spins back to the original orientation mirroring the outbound duration/rate exactly (reversed), ball frozen again for that return leg. State: eclipseT/eclipseRate/eclipseSpin (active spin), eclipseHoldT (post-spin hold countdown), eclipseReturning (true during the return leg), eclipseOutSecs (outbound duration, reused for the return).
 - Pulse Contract (0.7.1): squeeze-and-release duration now randomized 1.5-3.5s per activation (PULSE_MIN/PULSE_MAX, stored per-activation in pulseDur) instead of a fixed 1.6s.
@@ -1101,8 +1112,8 @@ Optional online leaderboard (Cloudflare Worker + D1) via LEADERBOARD_URL — lea
 === UI / PANELS ===
 - Panels: nameGate, start, modePanel, customPanel, brief, pausePanel, codex, achPanel, over, setPanel, statsPanel, scoreHelpPanel, logPanel, lbPanel, recentPanel, ctxPanel.
 - showSetup() is the common "back to menu" entry; keep logPanel, lbPanel, recentPanel, ctxPanel, scoreHelpPanel (and any new panels) in its hide list.
-- Main menu High Score band opens Stats; bottom "Scoring" button opens scoreHelpPanel (formula explanation).
-- Compact mini-leaderboard (top 5 + All Time / 7 Days / Today tabs) on main menu under High Score; tap opens full top-25 #lbPanel.
+- Main menu High Score band shows the best for the currently selected difficulty (tiers[diffIdx].bestScore) and opens Stats; bottom "Scoring" button opens scoreHelpPanel (formula explanation).
+- Compact mini-leaderboard (top 5, Easy / Medium / Hard tabs) on main menu under High Score; tap opens full top-25 #lbPanel with the same difficulty tabs. Time filters (7 Days / Today) removed; all-time only, split by difficulty. Missing difficulty on old rows is backfilled as Medium.
 - Mini Recent Matches (top 5) under that; tap opens full list #recentPanel.
 - Safe-area insets via #safe + env(). Touch vs mouse via TOUCH flag.
 - Quality: fxLevel 0/1/2 (Off / Low / High). glow() zeros expensive shadowBlur on lower settings. Battery saver = 30 fps (fpsCap).
@@ -1120,6 +1131,28 @@ ${VERSION} — Triple-click main-menu version opens this project context panel f
    Append a new entry and bump the patch digit of VERSION on every change set.
    The in-game Changelog panel reads this array directly. */
 const CHANGELOG = [
+  { v: '0.8.3', date: '2026-08-16', notes: [
+    'High Score banner meta: difficulty + place only (no mode tag; place is “1st” not “1st of 6”).',
+    'Stats → High Scores: Easy / Medium / Hard tabs; local board stores top 10 per difficulty.',
+    'Mini leaderboard rows no longer repeat the difficulty label (filter tabs already convey it).',
+    'Score breakdown: removed redundant After Placement line.',
+  ]},
+  { v: '0.8.2', date: '2026-08-16', notes: [
+    'High scores are tracked per difficulty (Easy / Medium / Hard). Main-menu High Score band and in-match chase target follow the selected difficulty.',
+    'Leaderboard fetch limit raised to 500 so difficulty-filtered boards stay populated.',
+    'Removed dead helpers (lbModifiersTag, wireLbBreakdownClicks, unused liveOnly score arg).',
+    'Stale score-formula comment updated to document the difficulty multiplier.',
+  ]},
+  { v: '0.8.1', date: '2026-08-16', notes: [
+    'Main menu: Easy / Medium / Hard difficulty selector (Medium default, remembered).',
+    'DIFF retuned to three tiers with the requested AI/ball parameters; Expert removed.',
+    'Modifier spawn rate locked to difficulty (Easy=Min, Medium=Mid, Hard=Max).',
+    'Score formula: difficulty multiplier applied AFTER placement (Easy ×0.75, Medium ×1, Hard ×1.25).',
+    'Score breakdown now shows Survival → Paddle → Modifiers → Subtotal → Placement → After Placement → Difficulty → Final.',
+    'Leaderboards restructured: all-time only, split into Easy / Medium / Hard views (missing difficulty backfilled as Medium).',
+    'Recent matches and leaderboard rows display difficulty.',
+    'Uncollected modifiers now expire after 20 seconds.',
+  ]},
   { v: '0.8.0', date: '2026-08-16', notes: [
     'Toast notifications cleaned up: removed Eclipse status, respawn, arena collapse, image save, sharing, and prestige messages.',
     'Kept only: Match Start (5–4–3–2–1–GO), Unpause Resume (3–2–1–GO), and New High Score.',
@@ -1259,8 +1292,8 @@ const defaultCareer = () => ({
 // One record per difficulty plus the combined total, so an Expert survival run is not
 // buried under a pile of Easy wins. `tiers[4]` is the all-difficulties roll-up.
 const DIFF_KEY = 'hexapong_bydiff_v1';
-let tiers = [defaultCareer(), defaultCareer(), defaultCareer(), defaultCareer()];
-let lastRunByDiff = [null, null, null, null];
+let tiers = [defaultCareer(), defaultCareer(), defaultCareer()];
+let lastRunByDiff = [null, null, null];
 const LASTBYDIFF_KEY = 'hexapong_lastbydiff_v1';
 let career = defaultCareer();
 let lastRunSnap = null;   // snapshot of the most recent finished match
@@ -1275,10 +1308,30 @@ try {
   const ss = localStorage.getItem(SETTINGS_KEY);
   if (ss) savedSettings = JSON.parse(ss);
   const bd = localStorage.getItem(DIFF_KEY);
-  if (bd) { const a = JSON.parse(bd); if (Array.isArray(a) && a.length === 4)
-    tiers = a.map(x => Object.assign(defaultCareer(), x || {})); }
+  if (bd) {
+    const a = JSON.parse(bd);
+    if (Array.isArray(a)) {
+      // Migrate old 4-tier (Easy/Normal/Hard/Expert) → 3-tier (Easy/Medium/Hard).
+      // Expert stats fold into Hard; Normal becomes Medium (index 1).
+      if (a.length === 4) {
+        tiers = [
+          Object.assign(defaultCareer(), a[0] || {}),
+          Object.assign(defaultCareer(), a[1] || {}),
+          Object.assign(defaultCareer(), a[2] || {}, a[3] || {}), // Hard + Expert
+        ];
+      } else if (a.length >= 3) {
+        tiers = a.slice(0, 3).map(x => Object.assign(defaultCareer(), x || {}));
+      }
+    }
+  }
   const lb = localStorage.getItem(LASTBYDIFF_KEY);
-  if (lb) { const a = JSON.parse(lb); if (Array.isArray(a) && a.length === 4) lastRunByDiff = a; }
+  if (lb) {
+    const a = JSON.parse(lb);
+    if (Array.isArray(a)) {
+      if (a.length === 4) lastRunByDiff = [a[0] || null, a[1] || null, a[2] || a[3] || null];
+      else if (a.length >= 3) lastRunByDiff = a.slice(0, 3);
+    }
+  }
 } catch (e) { /* private mode / blocked storage */ }
 
 /* A single best is a target; a table is a rivalry. Five per difficulty, so an Expert
@@ -1334,13 +1387,19 @@ function recentRowHtml(r) {
   const bits = [];
   const dateStr = formatLbDate(r);
   if (dateStr) bits.push(dateStr);
+  const dIdx = normalizeLbDiff(r);
+  bits.push(titleCase(DIFF[dIdx] ? DIFF[dIdx].label : 'MEDIUM'));
   if (r.place != null) bits.push(ordinal(r.place));
   const dur = formatLbDuration(r.duration);
   if (dur) bits.push(dur);
   // Mode tags (Modified/Vanilla) intentionally omitted (0.7.7)
   const hasBr = r.breakdown && typeof r.breakdown === 'object';
+  let br = r.breakdown;
+  if (hasBr && br && br.dIdx == null) {
+    br = Object.assign({}, br, { dIdx: dIdx, diffMul: SCORE_DIFF_MUL[dIdx] || 1 });
+  }
   return '<div class="lbrow' + (hasBr ? ' hasbr' : '') + '"' +
-    (hasBr ? ' data-br="' + encodeURIComponent(JSON.stringify(r.breakdown)) + '" data-nm="' + encodeURIComponent(String(r.name || 'PLAYER')) + '" data-sc="' + (r.score || 0) + '"' : '') + '>' +
+    (hasBr ? ' data-br="' + encodeURIComponent(JSON.stringify(br)) + '" data-nm="' + encodeURIComponent(String(r.name || 'PLAYER')) + '" data-sc="' + (r.score || 0) + '"' : '') + '>' +
     '<span class="lbr">' + (r.rank || '') + '</span>' +
     '<span class="lbn">' + (hasBr ? '<button type="button" class="lbn-btn">' + nm + '</button>' : nm) +
       (bits.length ? '<em>' + bits.join(' · ') + '</em>' : '') +
@@ -1420,9 +1479,37 @@ function hideRecentMatches() {
 
 function recordScore(entry) {
   scoreBoard.push(entry);
-  scoreBoard.sort((a, b) => (b.score - a.score) || ((a.at || 0) - (b.at || 0)));
-  scoreBoard = scoreBoard.slice(0, 10);
+  // Keep top 10 per difficulty so Easy / Medium / Hard boards stay independent
+  const byDiff = [[], [], []];
+  for (const e of scoreBoard) {
+    const d = clamp(e.d | 0, 0, 2);
+    byDiff[d].push(e);
+  }
+  scoreBoard = [];
+  for (const list of byDiff) {
+    list.sort((a, b) => (b.score - a.score) || ((a.at || 0) - (b.at || 0)));
+    scoreBoard.push.apply(scoreBoard, list.slice(0, 10));
+  }
   try { localStorage.setItem(SCORES_KEY, JSON.stringify(scoreBoard)); } catch (e) {}
+}
+
+
+/* Per-difficulty high scores live on tiers[0..2].bestScore (and optional meta).
+   The main-menu band and in-match chase target always use the currently selected difficulty. */
+function bestForDiff(d) {
+  d = clamp(d | 0, 0, tiers.length - 1);
+  const t = tiers[d] || {};
+  return t.bestScore || 0;
+}
+function bestMetaForDiff(d) {
+  d = clamp(d | 0, 0, tiers.length - 1);
+  const t = tiers[d] || {};
+  return {
+    score: t.bestScore || 0,
+    mode: t.bestScoreMode || '',
+    place: t.bestScorePlace || 0,
+    time: t.bestScoreTime || 0,
+  };
 }
 
 function saveCareer() {
@@ -1433,8 +1520,8 @@ function saveCareer() {
 
 /* ── score ────────────────────────────────────────────────────────────────
    Earned points (survival + paddles + modifiers) form a subtotal. Placement
-   multiplies that subtotal (6th=1× … 1st=3×). No difficulty/mode multiplier.
-   Custom matches are deliberately unscored. */
+   multiplies that subtotal (6th=1× … 1st=3×), then difficulty multiplies
+   again (Easy ×0.75 / Medium ×1 / Hard ×1.25). Custom matches are unscored. */
 const SCORE_PER_SEC = 100;
 const SCORE_PADDLE_BASE = 500;                               // first human return
 const SCORE_PADDLE_STEP = 100;                               // each later return adds this much more
@@ -1443,8 +1530,9 @@ const SCORE_NERF    = 5000;    // hitting a Nerf token
 const SCORE_WILD    = 2500;    // hitting a Wildcard token
 const SCORE_NERFED  = -5000;   // being the one who gets nerfed after someone else hits it
 const SCORE_PLACE_MUL = [0, 3, 2.5, 2, 1.5, 1.25, 1];         // index = finishing place 1..6
+const SCORE_DIFF_MUL  = [0.75, 1.0, 1.25];                    // Easy / Medium / Hard — applied AFTER placement
 const SCORE_PLACE   = [0, 3000, 1500, 750, 250, 100, 50];    // legacy flat place XP (progress system)
-const SCORE_DIFF    = [1, 1.5, 2.25, 3.25];                  // Easy / Normal / Hard / Expert (XP only)
+const SCORE_DIFF    = [1, 1.5, 2.25];                        // Easy / Medium / Hard (XP only)
 /** Sum of escalating paddle points: 500 + 600 + 700 + … for n hits */
 function paddlePoints(n) {
   n = n | 0;
@@ -1452,12 +1540,12 @@ function paddlePoints(n) {
   // n/2 * (2*base + (n-1)*step)
   return Math.round(n * (2 * SCORE_PADDLE_BASE + (n - 1) * SCORE_PADDLE_STEP) / 2);
 }
-function scoreParts(place, survivedS, dIdx, liveOnly, paddleHits = 0, buffHits = 0, nerfHits = 0, wildHits = 0, nerfedHits = 0) {
+function scoreParts(place, survivedS, dIdx, paddleHits = 0, buffHits = 0, nerfHits = 0, wildHits = 0, nerfedHits = 0) {
   // Survival: duration scale 1 + sqrt(seconds / 150)
   const mult = 1 + Math.sqrt((survivedS || 0) / 150);
   const survival = Math.round((survivedS || 0) * SCORE_PER_SEC * mult);
 
-  // Paddle: escalating series; modifiers flat (then × placement)
+  // Paddle: escalating series; modifiers flat (then × placement, then × difficulty)
   const paddle = paddlePoints(paddleHits);
   const modifier = (buffHits | 0) * SCORE_BUFF + (nerfHits | 0) * SCORE_NERF
     + (wildHits | 0) * SCORE_WILD + (nerfedHits | 0) * SCORE_NERFED;
@@ -1465,10 +1553,13 @@ function scoreParts(place, survivedS, dIdx, liveOnly, paddleHits = 0, buffHits =
   const subtotal = survival + paddle + modifier;
   // Placement multiplies the earned total; live score uses current place so the bar jumps when walls fall
   const placeMul = SCORE_PLACE_MUL[clamp(place | 0, 1, 6)] || 1;
-  const total = Math.round(subtotal * placeMul);
+  const afterPlace = Math.round(subtotal * placeMul);
+  // Difficulty multiplier is applied AFTER placement (Easy ×0.75 / Medium ×1 / Hard ×1.25)
+  const diffMul = SCORE_DIFF_MUL[clamp(dIdx | 0, 0, SCORE_DIFF_MUL.length - 1)] || 1;
+  const total = Math.round(afterPlace * diffMul);
   return {
-    survival, paddle, modifier, subtotal, total,
-    mult, placeMul,
+    survival, paddle, modifier, subtotal, afterPlace, total,
+    mult, placeMul, diffMul,
     paddleHits: paddleHits | 0,
     buffHits: buffHits | 0,
     nerfHits: nerfHits | 0,
@@ -1476,10 +1567,11 @@ function scoreParts(place, survivedS, dIdx, liveOnly, paddleHits = 0, buffHits =
     nerfedHits: nerfedHits | 0,
     place: place | 0,
     survivedS: survivedS || 0,
+    dIdx: dIdx | 0,
   };
 }
-function matchScore(place, survivedS, dIdx, liveOnly, paddleHits = 0, buffHits = 0, nerfHits = 0, wildHits = 0, nerfedHits = 0) {
-  return scoreParts(place, survivedS, dIdx, liveOnly, paddleHits, buffHits, nerfHits, wildHits, nerfedHits).total;
+function matchScore(place, survivedS, dIdx, paddleHits = 0, buffHits = 0, nerfHits = 0, wildHits = 0, nerfedHits = 0) {
+  return scoreParts(place, survivedS, dIdx, paddleHits, buffHits, nerfHits, wildHits, nerfedHits).total;
 }
 function scoredMode() { return gameMode === 'vanilla' || gameMode === 'Modifier'; }
 const commas = v => Math.round(v || 0).toLocaleString('en-US');
@@ -1493,12 +1585,15 @@ function breakdownHtml(parts) {
   if (parts.wildHits) modBits.push(parts.wildHits + ' wild');
   if (parts.nerfedHits) modBits.push(parts.nerfedHits + ' nerfed');
   const modNote = modBits.length ? ' (' + modBits.join(', ') + ')' : '';
+  const dLabel = (DIFF[parts.dIdx] && DIFF[parts.dIdx].label) || 'MEDIUM';
+  const diffMul = parts.diffMul != null ? parts.diffMul : 1;
   return '<div class="srow"><span>Survival · ' + fmtTime(parts.survivedS || 0) + '</span><span>' + commas(parts.survival) + '</span></div>' +
     '<div class="srow' + (parts.paddle ? '' : ' muted') + '"><span>Paddle hits' + padNote + '</span><span>' + commas(parts.paddle) + '</span></div>' +
     '<div class="srow' + (parts.modifier ? '' : ' muted') + '"><span>Modifiers' + modNote + '</span><span>' + commas(parts.modifier) + '</span></div>' +
     '<div class="srow muted"><span>Subtotal</span><span>' + commas(parts.subtotal) + '</span></div>' +
     '<div class="srow muted"><span>Placement · ' + ordinal(parts.place || 6) + '</span><span>×' + (parts.placeMul || 1) + '</span></div>' +
-    '<div class="stotal"><span>Total</span><span>' + commas(parts.total) + '</span></div>';
+    '<div class="srow muted"><span>Difficulty · ' + titleCase(dLabel) + '</span><span>×' + diffMul + '</span></div>' +
+    '<div class="stotal"><span>Final Total</span><span>' + commas(parts.total) + '</span></div>';
 }
 let brFrom = 'lbPanel';
 function showBreakdown(parts, name, score, from) {
@@ -1524,24 +1619,7 @@ function hideBreakdown() {
   if (el) el.classList.remove('hidden');
   else showSetup();
 }
-function wireLbBreakdownClicks(containerId, fromPanel) {
-  const body = document.getElementById(containerId);
-  if (!body || body._brWired) return;
-  body._brWired = true;
-  body.addEventListener('click', e => {
-    const btn = e.target.closest('.lbn-btn');
-    if (!btn) return;
-    const row = btn.closest('.lbrow');
-    if (!row || !row.dataset.br) return;
-    e.preventDefault(); e.stopPropagation();
-    try {
-      const parts = JSON.parse(decodeURIComponent(row.dataset.br));
-      const nm = decodeURIComponent(row.dataset.nm || 'PLAYER');
-      const sc = +(row.dataset.sc || 0);
-      showBreakdown(parts, nm, sc, fromPanel);
-    } catch (err) {}
-  });
-}
+
 
 const titleCase = t => (t || '').charAt(0) + (t || '').slice(1).toLowerCase();
 
@@ -1843,12 +1921,12 @@ function formatLbDuration(s) {
   if (s >= 60) return Math.floor(s / 60) + 'm ' + Math.floor(s % 60) + 's';
   return s.toFixed(1) + 's';
 }
-let lbPeriod = 'all'; // all | week | day
+let lbDiffIdx = 1; // 0=Easy 1=Medium 2=Hard (default Medium)
 function syncLbTabs() {
   const mark = (id) => {
     const tabs = document.getElementById(id);
     if (!tabs) return;
-    [...tabs.children].forEach(b => b.classList.toggle('on', b.dataset.period === lbPeriod));
+    [...tabs.children].forEach(b => b.classList.toggle('on', +b.dataset.diff === lbDiffIdx));
   };
   mark('lbTabs');
   mark('miniLbTabs');
@@ -1877,29 +1955,39 @@ function formatLbDate(r) {
   const mm = String(d.getMinutes()).padStart(2, '0');
   return y + '.' + m + '.' + day + ' ' + hh + ':' + mm;
 }
-// Every submission already carries mode ('Modifier' or 'vanilla', see submitOnlineScore) —
-// it was just never shown, back when everyone was forced into Modifier mode anyway and the
-// field would have been redundant. Now that the menu toggle can turn Modifiers off, it is
-// worth a word. Older rows submitted before this existed simply omit the tag rather than
-// guess at a mode that was never recorded.
-function lbModifiersTag(r) {
-  const raw = String(r.mode || r.gameMode || '').toLowerCase();
-  if (raw === 'vanilla') return 'Vanilla';
-  if (raw === 'modifier' || raw === 'token') return 'Modified';
-  return '';
+// Mode tags (Modified/Vanilla) intentionally omitted from leaderboard rows (0.7.7).
+
+function normalizeLbDiff(r) {
+  // Backfill: any score that predates difficulty tracking is treated as Medium.
+  const raw = String(r.difficulty || r.diff || r.d || '').toUpperCase();
+  if (raw === 'EASY' || raw === '0') return 0;
+  if (raw === 'HARD' || raw === '2' || raw === 'EXPERT' || raw === '3') return 2;
+  // MEDIUM / NORMAL / missing / anything else → Medium
+  return 1;
 }
-function lbRowHtml(r) {
+function filterLbByDiff(rows) {
+  return (rows || []).filter(r => normalizeLbDiff(r) === lbDiffIdx);
+}
+
+function lbRowHtml(r, opts) {
+  opts = opts || {};
+  const showDiff = opts.showDiff !== false; // default true (full leaderboard)
   const dateStr = formatLbDate(r);
   const bits = [];
   if (dateStr) bits.push(dateStr);
+  const dIdx = normalizeLbDiff(r);
+  if (showDiff) bits.push(titleCase(DIFF[dIdx] ? DIFF[dIdx].label : 'MEDIUM'));
   if (r.place != null) bits.push(ordinal(r.place));
   const dur = formatLbDuration(r.duration);
   if (dur) bits.push(dur);
-  // Mode tags (Modified/Vanilla) intentionally omitted (0.7.7)
   const nm = String(r.name || 'PLAYER').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   const hasBr = r.breakdown && typeof r.breakdown === 'object';
+  let br = r.breakdown;
+  if (hasBr && br && br.dIdx == null) {
+    br = Object.assign({}, br, { dIdx: dIdx, diffMul: SCORE_DIFF_MUL[dIdx] || 1 });
+  }
   return '<div class="lbrow' + (hasBr ? ' hasbr' : '') + '"' +
-    (hasBr ? ' data-br="' + encodeURIComponent(JSON.stringify(r.breakdown)) + '" data-nm="' + encodeURIComponent(String(r.name || 'PLAYER')) + '" data-sc="' + (r.score || 0) + '"' : '') + '>' +
+    (hasBr ? ' data-br="' + encodeURIComponent(JSON.stringify(br)) + '" data-nm="' + encodeURIComponent(String(r.name || 'PLAYER')) + '" data-sc="' + (r.score || 0) + '"' : '') + '>' +
     '<span class="lbr">' + (r.rank || '') + '</span>' +
     '<span class="lbn">' + (hasBr ? '<button type="button" class="lbn-btn">' + nm + '</button>' : nm) +
       (bits.length ? '<em>' + bits.join(' · ') + '</em>' : '') +
@@ -1908,9 +1996,8 @@ function lbRowHtml(r) {
   '</div>';
 }
 function emptyLbMsg() {
-  return lbPeriod === 'day' ? 'No scores today yet — be the first.'
-    : lbPeriod === 'week' ? 'No scores in the last 7 days yet.'
-    : 'No scores yet — be the first.';
+  const labels = ['Easy', 'Medium', 'Hard'];
+  return 'No ' + (labels[lbDiffIdx] || 'Medium') + ' scores yet — be the first.';
 }
 async function loadLeaderboard() {
   const body = document.getElementById('lbBody');
@@ -1926,17 +2013,18 @@ async function loadLeaderboard() {
   try {
     // Over-fetch so the cutoff filter can still fill a top 25
     const url = LEADERBOARD_URL.replace(/\/+$/, '') +
-      '/api/top?limit=200&period=' + encodeURIComponent(lbPeriod || 'all');
+      '/api/top?limit=500&period=all';
     const res = await fetch(url, { method: 'GET', cache: 'no-store' });
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const data = await res.json();
-    const rows = applyLbCutoff(data.scores || [], 25);
+    const filtered = filterLbByDiff(data.scores || []);
+    const rows = applyLbCutoff(filtered, 25);
     if (!rows.length) {
       body.textContent = emptyLbMsg();
       return;
     }
     body.className = '';
-    body.innerHTML = rows.map(lbRowHtml).join('');
+    body.innerHTML = rows.map(r => lbRowHtml(r, { showDiff: true })).join('');
   } catch (e) {
     body.className = 'lbstatus';
     body.textContent = 'Could not reach the leaderboard. Check your connection.';
@@ -1956,17 +2044,18 @@ async function loadMiniLeaderboard() {
   try {
     // Over-fetch so the cutoff filter can still fill a top 5
     const url = LEADERBOARD_URL.replace(/\/+$/, '') +
-      '/api/top?limit=200&period=' + encodeURIComponent(lbPeriod || 'all');
+      '/api/top?limit=500&period=all';
     const res = await fetch(url, { method: 'GET', cache: 'no-store' });
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const data = await res.json();
-    const rows = applyLbCutoff(data.scores || [], 5);
+    const filtered = filterLbByDiff(data.scores || []);
+    const rows = applyLbCutoff(filtered, 5);
     if (!rows.length) {
       body.textContent = emptyLbMsg();
       return;
     }
     body.className = 'minilb-body';
-    body.innerHTML = rows.map(lbRowHtml).join('');
+    body.innerHTML = rows.map(r => lbRowHtml(r, { showDiff: false })).join('');
   } catch (e) {
     body.className = 'minilb-body lbstatus';
     body.textContent = 'Could not reach leaderboard';
@@ -2314,12 +2403,12 @@ function serve(fromWall) {
   } else {
     // Center serves: mild difficulty-scaled preference toward the player's wall so
     // higher difficulties feel more aggressive without looking scripted.
-    const bias = [0.08, 0.16, 0.26, 0.36][diffIdx] || 0;
+    const bias = [0.08, 0.16, 0.26][diffIdx] || 0;
     const me = players[PLAYER];
     const pw = me && !me.out && me.wall >= 0 ? walls[me.wall] : null;
     if (pw && Math.random() < bias) {
       const prefer = Math.atan2(pw.my - CY, pw.mx - CX);
-      ang = prefer + (Math.random() - 0.5) * (1.35 - diffIdx * 0.12);
+      ang = prefer + (Math.random() - 0.5) * (1.35 - diffIdx * 0.15);
     } else {
       ang = Math.random() * TAU;
     }
@@ -2935,7 +3024,11 @@ function update(dt) {
       ModifierTimer = ModifierInterval();
     }
   }
-  for (const t of Modifiers) t.born += dt;   // Modifiers now sit there until something hits them
+  // Age tokens; expire uncollected ones after 20s so the arena stays readable
+  for (let i = Modifiers.length - 1; i >= 0; i--) {
+    Modifiers[i].born += dt;
+    if (Modifiers[i].born >= 20) Modifiers.splice(i, 1);
+  }
 
   // ── paddles ─────────────────────────────────────────
   for (const w of walls) {
@@ -3246,7 +3339,7 @@ function collide(b) {
         // out of the rally (stagnation ramp) or after several pure AI-AI exchanges.
         if (!p.human) {
           consecutiveAiHits++;
-          let biasAmt = [0.04, 0.09, 0.15, 0.22][diffIdx] || 0;  // base bias by difficulty
+          let biasAmt = [0.04, 0.09, 0.15][diffIdx] || 0;  // base bias by difficulty
           const idle = Math.max(0, elapsed - lastPlayerHitAt);
           // Ramp: after ~2s idle → 1.5×, ~5s → ~3×. Caps so it never looks scripted.
           // 1.5s threshold allows a natural AI exchange, 3.5s window reaches full ramp at ~5s, 2.2× multiplier caps at 3×.
@@ -3461,16 +3554,24 @@ function endGame(winner, eliminated) {
   // Only the two preset modes are scored (see matchScore).
   const scored   = scoredMode();
   const parts    = scored
-    ? scoreParts(me.place, run.survived, diffIdx, false, playerHits, run.buffHits || 0, run.nerfHits || 0, run.wildHits || 0, run.nerfedHits || 0)
+    ? scoreParts(me.place, run.survived, diffIdx, playerHits, run.buffHits || 0, run.nerfHits || 0, run.wildHits || 0, run.nerfedHits || 0)
     : null;
   const score    = parts ? parts.total : 0;
-  const prevBest = career.bestScore || 0;
+  // Per-difficulty high score (tiers[diffIdx]); overall career.bestScore still tracks the global max
+  const prevBest = bestForDiff(diffIdx);
   const newHigh  = scored && score > prevBest;
   if (newHigh) {
-    career.bestScoreDiff  = DIFF[diffIdx].label;
-    career.bestScoreMode  = gameMode;
-    career.bestScorePlace = me.place;
-    career.bestScoreTime  = run.survived;
+    const t = tiers[diffIdx] || (tiers[diffIdx] = Object.assign(defaultCareer(), {}));
+    t.bestScoreMode  = gameMode;
+    t.bestScorePlace = me.place;
+    t.bestScoreTime  = run.survived;
+    // Keep legacy overall meta in sync when this is also a global best
+    if (score > (career.bestScore || 0)) {
+      career.bestScoreDiff  = DIFF[diffIdx].label;
+      career.bestScoreMode  = gameMode;
+      career.bestScorePlace = me.place;
+      career.bestScoreTime  = run.survived;
+    }
   }
 
   // roll the run into the career totals
@@ -3509,7 +3610,8 @@ function endGame(winner, eliminated) {
       place: me.place || 6,
       breakdown: parts ? {
         survival: parts.survival, paddle: parts.paddle, modifier: parts.modifier,
-        subtotal: parts.subtotal, total: parts.total, placeMul: parts.placeMul,
+        subtotal: parts.subtotal, afterPlace: parts.afterPlace, total: parts.total,
+        placeMul: parts.placeMul, diffMul: parts.diffMul, dIdx: parts.dIdx,
         place: parts.place, survivedS: parts.survivedS,
         paddleHits: parts.paddleHits, buffHits: parts.buffHits,
         nerfHits: parts.nerfHits, wildHits: parts.wildHits, nerfedHits: parts.nerfedHits
@@ -3632,22 +3734,9 @@ function endGame(winner, eliminated) {
     sb.innerHTML = '<span class="sl2">' + (newHigh ? 'New High Score' : 'Score') + '</span>' +
       '<span class="sv">' + commas(score) + '</span>' +
       '<span class="sm">' + (newHigh ? (prevBest ? 'Beat ' + commas(prevBest) : 'First run')
-                                     : 'Best ' + commas(career.bestScore)) + '</span>';
-    const padNote = parts.paddleHits ? ' (' + parts.paddleHits + ')' : '';
-    const modBits = [];
-    if (parts.buffHits) modBits.push(parts.buffHits + ' buff');
-    if (parts.nerfHits) modBits.push(parts.nerfHits + ' nerf');
-    if (parts.wildHits) modBits.push(parts.wildHits + ' wild');
-    if (parts.nerfedHits) modBits.push(parts.nerfedHits + ' nerfed');
-    const modNote = modBits.length ? ' (' + modBits.join(', ') + ')' : '';
+                                     : 'Best ' + commas(bestForDiff(diffIdx))) + '</span>';
     br.style.display = '';
-    br.innerHTML =
-      '<div class="srow"><span>Survival · ' + fmtTime(parts.survivedS) + '</span><span>' + commas(parts.survival) + '</span></div>' +
-      '<div class="srow' + (parts.paddle ? '' : ' muted') + '"><span>Paddle hits' + padNote + '</span><span>' + commas(parts.paddle) + '</span></div>' +
-      '<div class="srow' + (parts.modifier ? '' : ' muted') + '"><span>Modifiers' + modNote + '</span><span>' + commas(parts.modifier) + '</span></div>' +
-      '<div class="srow muted"><span>Subtotal</span><span>' + commas(parts.subtotal) + '</span></div>' +
-      '<div class="srow muted"><span>Placement · ' + ordinal(parts.place) + ' of 6</span><span>×' + parts.placeMul + '</span></div>' +
-      '<div class="stotal"><span>Total</span><span>' + commas(parts.total) + '</span></div>';
+    br.innerHTML = breakdownHtml(parts);
   } else {
     sb.className = 'scoreband muted';
     sb.innerHTML = '<span class="sl2">Custom Run</span><span class="sm">Not scored</span>';
@@ -4254,9 +4343,8 @@ function renderScoreBar() {
   const me = players[PLAYER];
   const place = me && me.out ? (me.place || 6) : players.filter(q => !q.out).length;
   // live uses current place so the total jumps when rivals fall (placement multiplier)
-  const live = matchScore(place, me && me.out ? (run.survived || elapsed) : elapsed, diffIdx, true,
-    playerHits, (run && run.buffHits) || 0, (run && run.nerfHits) || 0, (run && run.wildHits) || 0, (run && run.nerfedHits) || 0);
-  const best = career.bestScore || 0;
+  const live = matchScore(place, me && me.out ? (run.survived || elapsed) : elapsed, diffIdx, playerHits, (run && run.buffHits) || 0, (run && run.nerfHits) || 0, (run && run.wildHits) || 0, (run && run.nerfedHits) || 0);
+  const best = bestForDiff(diffIdx);
   const ahead = best > 0 && live > best;
   if (ahead && run && !run.passedBest) {
     run.passedBest = true;
@@ -4545,15 +4633,20 @@ function showBriefing() {
 function refreshHiScore() {
   const el = document.getElementById('hiBand');
   if (!el) return;
-  const best = career.bestScore || 0;
+  // High score is always for the difficulty currently selected on the main menu
+  const meta = bestMetaForDiff(diffIdx);
+  const best = meta.score || 0;
   el.classList.toggle('off', best <= 0);
-  if (best <= 0) return;
+  if (best <= 0) {
+    document.getElementById('hiVal').textContent = '0';
+    document.getElementById('hiMeta').textContent = titleCase(DIFF[diffIdx] ? DIFF[diffIdx].label : 'MEDIUM');
+    return;
+  }
   document.getElementById('hiVal').textContent = commas(best);
   const bits = [];
-  if (career.bestScoreDiff)  bits.push(titleCase(career.bestScoreDiff));
-  if (career.bestScoreMode)  bits.push(career.bestScoreMode === 'Modifier' ? 'Modifier' : 'Vanilla');
-  if (career.bestScorePlace) bits.push(ordinal(career.bestScorePlace) + ' of 6');
-  document.getElementById('hiMeta').textContent = bits.join(' \u00b7 ');
+  bits.push(titleCase(DIFF[diffIdx] ? DIFF[diffIdx].label : 'MEDIUM'));
+  if (meta.place) bits.push(ordinal(meta.place));
+  document.getElementById('hiMeta').textContent = bits.join(' · ');
 }
 
 function refreshLevelBand() {
@@ -4623,10 +4716,14 @@ function lastRunHtmlFor(snap) {
 const esc = t => String(t == null ? '' : t)
   .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
+let hsDiffIdx = 1; // Easy / Medium / Hard for local high-score board (default Medium)
 function boardHtml() {
-  const rows = scoreBoard.slice(0, 10);
+  const rows = scoreBoard
+    .filter(e => clamp(e.d | 0, 0, 2) === hsDiffIdx)
+    .sort((a, b) => (b.score - a.score) || ((a.at || 0) - (b.at || 0)))
+    .slice(0, 10);
   if (!rows.length)
-    return '<div class="sl"><span>No scores yet</span><span>&mdash;</span></div>';
+    return '<div class="sl"><span>No ' + (DIFF[hsDiffIdx] ? DIFF[hsDiffIdx].label.toLowerCase() : 'medium') + ' scores yet</span><span>&mdash;</span></div>';
   return rows.map((e, i) => {
     const meta = [
       ordinal(e.p || 6),
@@ -4638,6 +4735,11 @@ function boardHtml() {
       '<span class="hss">' + commas(e.score) + '</span></div>';
   }).join('');
 }
+function syncHsTabs() {
+  const tabs = document.getElementById('hsTabs');
+  if (!tabs) return;
+  [...tabs.children].forEach(b => b.classList.toggle('on', +b.dataset.diff === hsDiffIdx));
+}
 
 function paintStats() {
   document.getElementById('careerHead').textContent = 'Career';
@@ -4645,6 +4747,9 @@ function paintStats() {
   document.getElementById('statCareerMenu').innerHTML = careerHtml();
   document.getElementById('statLastRun').innerHTML = lastRunHtmlFor(lastRunSnap);
   document.getElementById('boardHead').textContent = 'High Scores';
+  // Default local board tab to the difficulty currently selected on the main menu
+  hsDiffIdx = clamp(diffIdx, 0, 2);
+  syncHsTabs();
   document.getElementById('hsBoard').innerHTML = boardHtml();
 }
 
@@ -4896,9 +5001,10 @@ function syncCustomUI() {
 // choice survives from one match to the next.
 function startSimplePlay() {
   gameMode = ModifiersOn ? 'Modifier' : 'vanilla';
-  diffIdx = 1;           // Normal
+  // diffIdx is the value chosen on the main menu (persisted)
   startLives = 3;
-  ModifierRate = 1;         // Mid = half as often as previous double (Max) rate
+  // Spawn rate is locked to difficulty: Easy=Min, Medium=Mid, Hard=Max
+  ModifierRate = clamp(diffIdx, 0, 2);
   endlessMode = false;
   saveSettings();
   startGame();
@@ -4909,6 +5015,22 @@ if (mPlayBtn) mPlayBtn.addEventListener('click', startSimplePlay);
 // Modifiers on/off toggle: default on, remembered via saveSettings/applySavedSettings
 // (ModifiersOn already round-trips through both). This just adds the menu control and
 // keeps the Play button's icon/colour in sync with the current choice.
+
+function syncDiffToggle() {
+  const seg = document.getElementById('mDiff');
+  if (seg) [...seg.children].forEach(b => b.classList.toggle('on', +b.dataset.d === diffIdx));
+}
+const mDiffSeg = document.getElementById('mDiff');
+if (mDiffSeg) mDiffSeg.addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  diffIdx = clamp(+b.dataset.d, 0, DIFF.length - 1);
+  syncDiffToggle();
+  // Keep ModifierRate in sync with the selected difficulty for the simple play path
+  ModifierRate = diffIdx;
+  saveSettings();
+  refreshHiScore();
+});
+
 function syncModifiersToggle() {
   const seg = document.getElementById('mModifiers');
   if (seg) [...seg.children].forEach(b => b.classList.toggle('on', (b.dataset.t === '1') === ModifiersOn));
@@ -4984,6 +5106,16 @@ document.getElementById('bHow').addEventListener('click', showBriefing);
 document.getElementById('hiBand').addEventListener('click', showStats);
 document.getElementById('bStatsBack').addEventListener('click', showSetup);
 
+const hsTabsEl = document.getElementById('hsTabs');
+if (hsTabsEl) hsTabsEl.addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b || b.dataset.diff == null) return;
+  hsDiffIdx = clamp(+b.dataset.diff, 0, 2);
+  syncHsTabs();
+  const board = document.getElementById('hsBoard');
+  if (board) board.innerHTML = boardHtml();
+});
+
+
 const SCORE_HELP_ROWS = [
   ['Earn', 'Points come from three sources while you play.'],
   ['Survival', '100 points per second alive, scaled up the longer the match lasts ' +
@@ -4997,8 +5129,10 @@ const SCORE_HELP_ROWS = [
   ['Subtotal', 'Survival + paddle + modifiers. This is your earned total before placement.'],
   ['Placement', 'Your finish multiplies the subtotal:<br>' +
     '6th ×1 · 5th ×1.25 · 4th ×1.5 · 3rd ×2 · 2nd ×2.5 · <b>1st ×3</b>.'],
-  ['Total', 'Subtotal × placement. The live score bar uses your <b>current</b> place, ' +
-    'so it jumps when rivals fall.'],
+  ['Difficulty', 'Difficulty multiplies the post-placement total:<br>' +
+    '<b>Easy ×0.75</b> · <b>Medium ×1.0</b> · <b>Hard ×1.25</b>.'],
+  ['Final', 'Subtotal × placement × difficulty. The live score bar uses your <b>current</b> place ' +
+    'and the selected difficulty, so it jumps when rivals fall.'],
   ['Stats', 'Tap the High Score band on the main menu to open career stats and local top scores.'],
 ];
 function showScoreHelp() {
@@ -5202,6 +5336,7 @@ newRun();
 // restore menu + quality prefs (after ModifiersOn / sound exist)
 applySavedSettings();
 syncModifiersToggle();
+syncDiffToggle();
 // accessibility: respect reduced-motion unless the player already saved an FX choice
 try {
   if (!savedSettings || (typeof savedSettings.fxLevel !== 'number' && typeof savedSettings.lite !== 'boolean')) {
@@ -5307,8 +5442,8 @@ const bCtxBack = document.getElementById('bCtxBack');
 if (bCtxBack) bCtxBack.addEventListener('click', hideProjectContext);
 document.getElementById('bLbBack').addEventListener('click', hideLeaderboard);
 document.getElementById('lbTabs').addEventListener('click', e => {
-  const b = e.target.closest('button'); if (!b || !b.dataset.period) return;
-  lbPeriod = b.dataset.period;
+  const b = e.target.closest('button'); if (!b || b.dataset.diff == null) return;
+  lbDiffIdx = clamp(+b.dataset.diff, 0, 2);
   loadLeaderboard();
 });
 // Compact leaderboard on main menu: tabs switch period; rest of the card opens full top-10
@@ -5320,9 +5455,9 @@ if (miniLbEl) {
   });
 }
 document.getElementById('miniLbTabs').addEventListener('click', e => {
-  const b = e.target.closest('button'); if (!b || !b.dataset.period) return;
+  const b = e.target.closest('button'); if (!b || b.dataset.diff == null) return;
   e.stopPropagation();
-  lbPeriod = b.dataset.period;
+  lbDiffIdx = clamp(+b.dataset.diff, 0, 2);
   loadMiniLeaderboard();
 });
 const miniRecentEl = document.getElementById('miniRecent');
