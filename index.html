@@ -1043,7 +1043,7 @@ const DIFF = [
 let diffIdx = 1;
 let startLives = 3;
 let displayName = 'RHYNOCK';
-const VERSION = '0.7.1';
+const VERSION = '0.7.2';
 /* Online leaderboard (Cloudflare Worker + D1).
    Leave empty to keep the game fully offline.
    After you deploy the Worker, set this to your workers.dev URL, e.g.:
@@ -1111,6 +1111,9 @@ ${VERSION} — Triple-click main-menu version opens this project context panel f
    Append a new entry and bump the patch digit of VERSION on every change set.
    The in-game Changelog panel reads this array directly. */
 const CHANGELOG = [
+  { v: '0.7.2', date: '2026-08-16', notes: [
+    'Bugfix: conceding a point (without being eliminated) threw an error from a leftover reference to the removed Bounty cost variable, which silently killed concede() before it could re-serve the ball. The ball now respawns correctly after every non-eliminating life loss.',
+  ]},
   { v: '0.7.1', date: '2026-08-16', notes: [
     'Modifier scoring rebalanced: buff +5000, nerf (collecting it) +5000, wildcard -2500, and a new -5000 penalty for whoever gets hit by a nerf effect.',
     'Eclipse Drift reworked: 2-5s random rotation (CW or CCW), ball frozen only while actively turning, no countdown on resume, then after a 15s hold it spins back to the original orientation (mirroring the outbound duration and speed), ball frozen again during the return.',
@@ -3290,7 +3293,7 @@ function concede(p, b, w) {
     return true;
   }
 
-  toast(p.name + '  -' + cost, p.col, 0.85);
+  toast(p.name + '  -1', p.col, 0.85);
   if (balls.length === 0) serve(p.wall >= 0 ? p.wall : null);
   return true;
 }
