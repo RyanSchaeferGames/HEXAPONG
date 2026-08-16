@@ -178,10 +178,13 @@
   #toast{position:fixed;left:0;right:0;top:42%;z-index:9;text-align:center;pointer-events:none;
     padding:0 12px;font-size:78px;letter-spacing:.2em;font-weight:800;opacity:0;
     transition:opacity .25s;text-transform:uppercase}
+  #toast.small{font-size:26px;letter-spacing:.14em;top:38%;font-weight:700}
   #toastIcon{position:fixed;left:50%;top:31%;z-index:9;pointer-events:none;
     width:64px;height:64px;transform:translate(-50%,-50%) scale(.7);opacity:0;
     transition:opacity .25s,transform .25s}
   #toastIcon.on{opacity:1;transform:translate(-50%,-50%) scale(1)}
+  #toastIcon.small{width:28px;height:28px;top:33%}
+  #toastIcon.small.on{transform:translate(-50%,-50%) scale(1)}
   #corner{position:fixed;
     left:calc(12px + env(safe-area-inset-left,0px));
     right:calc(12px + env(safe-area-inset-right,0px));
@@ -271,6 +274,9 @@
     color:#5f87a8;text-transform:uppercase;margin-top:2px}
   .lbrow .lbs{font-size:15px;font-weight:800;color:#ffd97a;font-variant-numeric:tabular-nums;
     text-shadow:0 0 10px rgba(255,200,90,.35)}
+  .lbrow.hasbr .lbn-btn{font:inherit;font-size:inherit;letter-spacing:inherit;color:inherit;
+    background:none;border:none;padding:0;cursor:pointer;text-align:left}
+  .lbrow.hasbr .lbn-btn:hover{color:#ffd97a;text-decoration:underline}
   .lbstatus{font-size:11px;letter-spacing:.1em;color:#5f87a8;padding:18px 8px;text-align:center}
 
   /* ── mode screens ────────────────────────────────────────────────────── */
@@ -546,6 +552,7 @@
     .tokrow .tn{font-size:9px}
     .tokgrid{gap:6px}
     #toast{font-size:54px;letter-spacing:.12em}
+    #toast.small{font-size:18px;letter-spacing:.1em}
   }
   /* short viewports (landscape phones) are wide enough to miss the width query above,
      but still too short to show a whole panel, so they need the sticky action row too */
@@ -714,7 +721,16 @@
   </div>
 </div>
 
-<div class="panel hidden" id="logPanel">
+<div class="panel hidden" 
+<div class="panel hidden" id="brPanel">
+  <div class="card">
+    <div class="pbar"><button class="backlink" id="bBrBack">← Back</button></div>
+    <h1 class="ruled" style="font-size:20px;letter-spacing:.14em" id="brTitle">SCORE</h1>
+    <div class="scoreband" id="brScoreBand"></div>
+    <div id="brBody" class="scorebreak"></div>
+  </div>
+</div>
+id="logPanel">
   <div class="card wide">
     <div class="pbar"><button class="backlink" id="bLogBack">&#10094; Back</button></div>
     <h1 style="font-size:22px">CHANGELOG</h1>
@@ -1026,7 +1042,7 @@ const DIFF = [
 let diffIdx = 1;
 let startLives = 3;
 let displayName = 'RHYNOCK';
-const VERSION = '0.7.6';
+const VERSION = '0.7.7';
 /* Online leaderboard (Cloudflare Worker + D1).
    Leave empty to keep the game fully offline.
    After you deploy the Worker, set this to your workers.dev URL, e.g.:
@@ -1044,7 +1060,17 @@ Optional online leaderboard (Cloudflare Worker + D1) via LEADERBOARD_URL — lea
 === VERSION & CHANGELOG (MANDATORY ON EVERY CHANGE SET) ===
 - Constant: const VERSION = 'x.y.z';
 - Always increment the PATCH (last) digit for any non-trivial change set.
-- Array: const CHANGELOG = [ { v, date, notes: [...] }, ... ] (newest first).
+- Array: const CHANGELOG = [
+  { v: '0.7.7', date: '2026-08-16', notes: [
+    'No duplicate modifiers: the same modifier cannot appear on the arena twice, and cannot re-spawn while still active (player FX, global FX, or Eclipse cycle).',
+    'Life-loss and elimination toasts suppressed; modifier-hit toasts kept at ~1/3 size so they no longer block the arena.',
+    'Score breakdown stored with each scored match and viewable by tapping a name on the full leaderboard and Recent Matches panels.',
+    'Leaderboard / Recent rows show place only (e.g. 6th) and no longer show Modified/Vanilla mode tags.',
+    'Gravity Well restored to the wildcard pool.',
+    'Ball-stuck watchdog: if every ball is motionless while no freeze (serve/Eclipse) is active, velocities are restored or gently re-launched.',
+    'Worker: /api/recent endpoint, optional breakdown JSON column on score submit, mode accepts modifier|token|vanilla.',
+  ]},
+ { v, date, notes: [...] }, ... ] (newest first).
 - Prepend a new entry describing what you changed.
 - Version string appears as plain text on the main menu (#verTag). Looks like normal credit text — not a button.
 - Triple-click #verTag (3 clicks within ~900ms) opens #ctxPanel with this PROJECT_CONTEXT text.
@@ -1075,6 +1101,10 @@ Optional online leaderboard (Cloudflare Worker + D1) via LEADERBOARD_URL — lea
 - Bounty modifier removed as of 0.7.1 (was a wildcard, arena-wide, doubled the next concede cost).
 - Eclipse Drift (0.7.1): outbound spin 2-5s random (CW/CCW), ball frozen only while actively spinning, no countdown on resume. After a 15s hold, spins back to the original orientation mirroring the outbound duration/rate exactly (reversed), ball frozen again for that return leg. State: eclipseT/eclipseRate/eclipseSpin (active spin), eclipseHoldT (post-spin hold countdown), eclipseReturning (true during the return leg), eclipseOutSecs (outbound duration, reused for the return).
 - Pulse Contract (0.7.1): squeeze-and-release duration now randomized 1.5-3.5s per activation (PULSE_MIN/PULSE_MAX, stored per-activation in pulseDur) instead of a fixed 1.6s.
+- Modifier uniqueness (0.7.7): pickEffect excludes any id already on the field as a token OR currently active (player.fx timer, gfx timer, or Eclipse cycle in progress). Same rule for all buffs/nerfs/wildcards.
+- Gravity Well (0.7.7): restored as a wildcard; pulls balls toward arena centre while gfx.gravity > 0.
+- Ball freeze watchdog (0.7.7): if serveTimer<=0 and eclipseT<=0 but every ball has near-zero speed, restore _fvx/_fvy if present else nudge outward.
+- Score breakdown (0.7.7): submitOnlineScore and local scoreBoard rows may include a 'breakdown' object (survival/paddle/modifier/subtotal/placeMul/total + hit counts). Leaderboard/Recent name clicks open a breakdown panel when data exists.
 - Persistence: localStorage keys (career, scores, settings, modifier toggles, progress, name, etc.). Never remove keys without a migration.
 - Progression systems (level/XP, prestige, achievements) exist in code; Level/XP band on main menu is currently hidden (#lvlBand display:none). Daily Missions were removed in 0.7.3.
 
@@ -1270,8 +1300,17 @@ function afterLbCutoff(r) {
 
 // Filter, then renumber so ranks read 1,2,3… instead of inheriting server ranks
 // with holes punched in them. `limit` trims back to the size the panel wants.
+function normalizeLbRow(r) {
+  if (!r) return r;
+  let br = r.breakdown;
+  if (typeof br === 'string') {
+    try { br = JSON.parse(br); } catch (e) { br = null; }
+  }
+  if (br && typeof br === 'object') r = Object.assign({}, r, { breakdown: br });
+  return r;
+}
 function applyLbCutoff(rows, limit) {
-  const kept = (rows || []).filter(afterLbCutoff);
+  const kept = (rows || []).map(normalizeLbRow).filter(afterLbCutoff);
   const out = limit ? kept.slice(0, limit) : kept;
   return out.map((r, i) => Object.assign({}, r, { rank: i + 1 }));
 }
@@ -1282,14 +1321,15 @@ function recentRowHtml(r) {
   const bits = [];
   const dateStr = formatLbDate(r);
   if (dateStr) bits.push(dateStr);
-  if (r.place != null) bits.push(ordinal(r.place) + ' of 6');
+  if (r.place != null) bits.push(ordinal(r.place));
   const dur = formatLbDuration(r.duration);
   if (dur) bits.push(dur);
-  const tag = lbModifiersTag(r);
-  if (tag) bits.push(tag);
-  return '<div class="lbrow">' +
+  // Mode tags (Modified/Vanilla) intentionally omitted (0.7.7)
+  const hasBr = r.breakdown && typeof r.breakdown === 'object';
+  return '<div class="lbrow' + (hasBr ? ' hasbr' : '') + '"' +
+    (hasBr ? ' data-br="' + encodeURIComponent(JSON.stringify(r.breakdown)) + '" data-nm="' + encodeURIComponent(String(r.name || 'PLAYER')) + '" data-sc="' + (r.score || 0) + '"' : '') + '>' +
     '<span class="lbr">' + (r.rank || '') + '</span>' +
-    '<span class="lbn">' + nm +
+    '<span class="lbn">' + (hasBr ? '<button type="button" class="lbn-btn">' + nm + '</button>' : nm) +
       (bits.length ? '<em>' + bits.join(' · ') + '</em>' : '') +
     '</span>' +
     '<span class="lbs">' + commas(r.score) + '</span></div>';
@@ -1430,6 +1470,66 @@ function matchScore(place, survivedS, dIdx, liveOnly, paddleHits = 0, buffHits =
 }
 function scoredMode() { return gameMode === 'vanilla' || gameMode === 'Modifier'; }
 const commas = v => Math.round(v || 0).toLocaleString('en-US');
+
+function breakdownHtml(parts) {
+  if (!parts) return '<div class="lbstatus">Breakdown unavailable</div>';
+  const padNote = parts.paddleHits ? ' (' + parts.paddleHits + ')' : '';
+  const modBits = [];
+  if (parts.buffHits) modBits.push(parts.buffHits + ' buff');
+  if (parts.nerfHits) modBits.push(parts.nerfHits + ' nerf');
+  if (parts.wildHits) modBits.push(parts.wildHits + ' wild');
+  if (parts.nerfedHits) modBits.push(parts.nerfedHits + ' nerfed');
+  const modNote = modBits.length ? ' (' + modBits.join(', ') + ')' : '';
+  return '<div class="srow"><span>Survival · ' + fmtTime(parts.survivedS || 0) + '</span><span>' + commas(parts.survival) + '</span></div>' +
+    '<div class="srow' + (parts.paddle ? '' : ' muted') + '"><span>Paddle hits' + padNote + '</span><span>' + commas(parts.paddle) + '</span></div>' +
+    '<div class="srow' + (parts.modifier ? '' : ' muted') + '"><span>Modifiers' + modNote + '</span><span>' + commas(parts.modifier) + '</span></div>' +
+    '<div class="srow muted"><span>Subtotal</span><span>' + commas(parts.subtotal) + '</span></div>' +
+    '<div class="srow muted"><span>Placement · ' + ordinal(parts.place || 6) + '</span><span>×' + (parts.placeMul || 1) + '</span></div>' +
+    '<div class="stotal"><span>Total</span><span>' + commas(parts.total) + '</span></div>';
+}
+let brFrom = 'lbPanel';
+function showBreakdown(parts, name, score, from) {
+  brFrom = from || 'lbPanel';
+  const title = document.getElementById('brTitle');
+  if (title) title.textContent = (name || 'PLAYER').toUpperCase();
+  const sb = document.getElementById('brScoreBand');
+  if (sb) {
+    sb.className = 'scoreband';
+    sb.innerHTML = '<span class="sl2">Score</span><span class="sv">' + commas(score || (parts && parts.total) || 0) + '</span>';
+  }
+  const body = document.getElementById('brBody');
+  if (body) body.innerHTML = breakdownHtml(parts);
+  ['start', 'over', 'brief', 'pausePanel', 'codex', 'statsPanel', 'setPanel', 'achPanel',
+   'modePanel', 'customPanel', 'logPanel', 'lbPanel', 'recentPanel', 'ctxPanel', 'scoreHelpPanel'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.classList.add('hidden');
+  });
+  document.getElementById('brPanel').classList.remove('hidden');
+}
+function hideBreakdown() {
+  document.getElementById('brPanel').classList.add('hidden');
+  const el = document.getElementById(brFrom);
+  if (el) el.classList.remove('hidden');
+  else showSetup();
+}
+function wireLbBreakdownClicks(containerId, fromPanel) {
+  const body = document.getElementById(containerId);
+  if (!body || body._brWired) return;
+  body._brWired = true;
+  body.addEventListener('click', e => {
+    const btn = e.target.closest('.lbn-btn');
+    if (!btn) return;
+    const row = btn.closest('.lbrow');
+    if (!row || !row.dataset.br) return;
+    e.preventDefault(); e.stopPropagation();
+    try {
+      const parts = JSON.parse(decodeURIComponent(row.dataset.br));
+      const nm = decodeURIComponent(row.dataset.nm || 'PLAYER');
+      const sc = +(row.dataset.sc || 0);
+      showBreakdown(parts, nm, sc, fromPanel);
+    } catch (err) {}
+  });
+}
+
 const titleCase = t => (t || '').charAt(0) + (t || '').slice(1).toLowerCase();
 
 // fold one finished match into a record, used for both the tier and the overall total
@@ -1779,14 +1879,16 @@ function lbRowHtml(r) {
   const dateStr = formatLbDate(r);
   const bits = [];
   if (dateStr) bits.push(dateStr);
-  if (r.place != null) bits.push(ordinal(r.place) + ' of 6');
+  if (r.place != null) bits.push(ordinal(r.place));
   const dur = formatLbDuration(r.duration);
   if (dur) bits.push(dur);
-  const tag = lbModifiersTag(r);
-  if (tag) bits.push(tag);
-  return '<div class="lbrow">' +
+  // Mode tags (Modified/Vanilla) intentionally omitted (0.7.7)
+  const nm = String(r.name || 'PLAYER').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const hasBr = r.breakdown && typeof r.breakdown === 'object';
+  return '<div class="lbrow' + (hasBr ? ' hasbr' : '') + '"' +
+    (hasBr ? ' data-br="' + encodeURIComponent(JSON.stringify(r.breakdown)) + '" data-nm="' + encodeURIComponent(String(r.name || 'PLAYER')) + '" data-sc="' + (r.score || 0) + '"' : '') + '>' +
     '<span class="lbr">' + (r.rank || '') + '</span>' +
-    '<span class="lbn">' + (r.name || 'PLAYER') +
+    '<span class="lbn">' + (hasBr ? '<button type="button" class="lbn-btn">' + nm + '</button>' : nm) +
       (bits.length ? '<em>' + bits.join(' · ') + '</em>' : '') +
     '</span>' +
     '<span class="lbs">' + commas(r.score) + '</span>' +
@@ -2250,19 +2352,34 @@ function restartMatch() {
 function allPlayersFullLives() {
   return players.every(p => p.out || p.lives >= startLives);
 }
+function isModifierLive(id) {
+  // Token already on the arena
+  if (Modifiers.some(t => t.fx && t.fx.id === id)) return true;
+  // Player-scoped FX still ticking
+  for (const p of players) {
+    if (!p.out && p.fx && p.fx[id] > 0) return true;
+  }
+  // Arena-wide gfx (Gravity Well, etc.)
+  if (gfx[id] > 0) return true;
+  // Eclipse has its own multi-phase state machine
+  if (id === 'eclipse' && (eclipseT > 0 || eclipseHoldT > 0 || eclipseReturning)) return true;
+  // Pulse Contract
+  if (id === 'pulse' && pulseT > 0) return true;
+  return false;
+}
+
 function pickEffect() {
   // Flat, equal odds: every modifier in the roster has the same chance to spawn,
   // regardless of whether it is a buff, nerf, or wildcard. Ineligible modifiers are
   // simply excluded from the pool, so something else takes the slot instead:
   //   - Repair is held back while every wall is at full lives (nothing to repair)
   //   - Split is held back at 3+ balls
-  //   - No duplicate of a modifier already sitting on the field
+  //   - No duplicate of a modifier already sitting on the field OR still active
   const full = allPlayersFullLives();
-  const active = new Set(Modifiers.map(t => t.fx && t.fx.id));
   const pool = [];
   for (const g of EFFECTS) {
     for (const f of g.list) {
-      if (active.has(f.id)) continue;
+      if (isModifierLive(f.id)) continue;
       if (f.id === 'split' && balls.length >= 3) continue;
       if (f.id === 'repair' && full) continue;
       pool.push(f);
@@ -2344,7 +2461,7 @@ function resolveModifier(t, b, p) {
     applyEffect(f, players.filter(q => !q.out));
   }
 
-  toast(f.name.toUpperCase(), f.col, 1.25, Modifier_ICON_DATA[f.id]);
+  toast(f.name.toUpperCase(), f.col, 1.0, Modifier_ICON_DATA[f.id], true);
 }
 
 function applyEffect(f, targets) {
@@ -2626,23 +2743,27 @@ function removalOrder(L) {
   return out;
 }
 
-function toast(txt, col, dur, icon) {
+function toast(txt, col, dur, icon, small) {
+  if (!txt) return;
   const el = document.getElementById('toast');
   el.textContent = txt; el.style.color = col;
   el.style.textShadow = '0 0 18px ' + col + ', 0 0 44px ' + col;
+  el.classList.toggle('small', !!small);
   el.style.opacity = '1';
   clearTimeout(el._t);
-  el._t = setTimeout(() => { el.style.opacity = '0'; }, (dur || 1.1) * 1000);
+  el._t = setTimeout(() => { el.style.opacity = '0'; el.classList.remove('small'); }, (dur || 1.1) * 1000);
 
   const iconEl = document.getElementById('toastIcon');
   clearTimeout(iconEl._t);
   if (icon) {
     iconEl.src = icon;
     iconEl.style.filter = 'drop-shadow(0 0 16px ' + col + ')';
+    iconEl.classList.toggle('small', !!small);
     iconEl.classList.add('on');
-    iconEl._t = setTimeout(() => { iconEl.classList.remove('on'); }, (dur || 1.1) * 1000);
+    iconEl._t = setTimeout(() => { iconEl.classList.remove('on'); iconEl.classList.remove('small'); }, (dur || 1.1) * 1000);
   } else {
     iconEl.classList.remove('on');
+    iconEl.classList.remove('small');
   }
 }
 
@@ -2720,6 +2841,12 @@ function update(dt) {
       eclipseRate = 0;
       for (const b of balls) {
         if (b._fvx !== undefined) { b.vx = b._fvx; b.vy = b._fvy; delete b._fvx; delete b._fvy; }
+        // Safety: if the freeze snapshot was lost, re-launch instead of leaving a dead ball
+        if (Math.hypot(b.vx, b.vy) < 1e-3) {
+          const a = Math.atan2(b.y - CY, b.x - CX) + Math.PI + (Math.random() - 0.5) * 0.6;
+          const sp = R * 0.6;
+          b.vx = Math.cos(a) * sp; b.vy = Math.sin(a) * sp;
+        }
         // The walls moved while the ball sat still: make sure whoever is now in its
         // path actually has time to reach it before it scores on them.
         giveEclipseRunway(b);
@@ -2917,6 +3044,31 @@ function update(dt) {
       }
       b.stallX = b.x; b.stallY = b.y;
       b.stallT = 0;
+    }
+  }
+
+  // Freeze watchdog (0.7.7): if no serve/Eclipse freeze is active but every live ball
+  // is effectively motionless, restore frozen snapshots or gently re-launch. Prevents
+  // the "score ticks, ball stuck mid-arena until pause" failure mode.
+  if (serveTimer <= 0 && eclipseT <= 0 && balls.length) {
+    let allStill = true;
+    for (const b of balls) {
+      if (Math.hypot(b.vx, b.vy) > 8) { allStill = false; break; }
+    }
+    if (allStill) {
+      for (const b of balls) {
+        if (b._fvx !== undefined) {
+          b.vx = b._fvx; b.vy = b._fvy;
+          delete b._fvx; delete b._fvy;
+        }
+        if (Math.hypot(b.vx, b.vy) < 8) {
+          const a = Math.atan2(b.y - CY, b.x - CX) + Math.PI + (Math.random() - 0.5) * 0.8;
+          const sp = R * 0.6;
+          b.vx = Math.cos(a) * sp;
+          b.vy = Math.sin(a) * sp;
+        }
+        giveEclipseRunway(b);
+      }
     }
   }
 }
@@ -3202,7 +3354,7 @@ function concede(p, b, w) {
     knockouts++;
     // Stronger elimination beat: bigger shake, longer flash, layered tone
     applyShake(22, 0.72); collapseFlash = 1.35;
-    toast(p.human ? '' : p.name + '', p.col, 1.7);
+    // elimination toast suppressed (0.7.7) — shake/flash/SFX still fire
     beep(90, 0.18, 'sawtooth', 0.09);
     setTimeout(() => beep(55, 0.55, 'sawtooth', 0.09), 100);
     setTimeout(() => beep(40, 0.35, 'triangle', 0.05), 220);
@@ -3235,7 +3387,7 @@ function concede(p, b, w) {
     return true;
   }
 
-  toast(p.name + '  -1', p.col, 0.85);
+  // life-loss toast suppressed (0.7.7)
   if (balls.length === 0) {
     serve(p.wall >= 0 ? p.wall : null);
     serveTimer += SERVE_DELAY_LIFE_LOST;
@@ -3322,15 +3474,23 @@ function endGame(winner, eliminated) {
     lastScoreStamp = Date.now();
     recordScore({ score: score, n: displayName || 'PLAYER', d: diffIdx, m: gameMode,
                   p: me.place, t: run.survived, at: lastScoreStamp,
-                  lv: progress.level, pr: progress.prestige || 0 });
+                  lv: progress.level, pr: progress.prestige || 0,
+                  breakdown: parts || null });
     // Fire-and-forget global submit when online; never blocks the results screen
     submitOnlineScore({
       name: displayName || 'PLAYER',
       score: score,
       difficulty: DIFF[diffIdx].label,
-      mode: gameMode,
+      mode: gameMode === 'Modifier' ? 'token' : (gameMode === 'vanilla' ? 'vanilla' : gameMode),
       duration: run.survived || elapsed || 0,
       place: me.place || 6,
+      breakdown: parts ? {
+        survival: parts.survival, paddle: parts.paddle, modifier: parts.modifier,
+        subtotal: parts.subtotal, total: parts.total, placeMul: parts.placeMul,
+        place: parts.place, survivedS: parts.survivedS,
+        paddleHits: parts.paddleHits, buffHits: parts.buffHits,
+        nerfHits: parts.nerfHits, wildHits: parts.wildHits, nerfedHits: parts.nerfedHits
+      } : null,
     });
   }
 
@@ -3412,7 +3572,8 @@ function endGame(winner, eliminated) {
     buffHits: run.buffHits || 0,
     nerfHits: run.nerfHits || 0,
     wildHits: run.wildHits || 0,
-    nerfedHits: run.nerfedHits || 0
+    nerfedHits: run.nerfedHits || 0,
+    breakdown: parts || null
   });
   lastRunByDiff[diffIdx] = {
     place: me.place,
@@ -4227,6 +4388,8 @@ const EFFECTS = [
     list:[
       { id:'split',    name:'Split',     dur:0,  durTxt:'Until lost',
         desc:'A second ball enters play. Either one can score on anybody.' },
+      { id:'gravity',  name:'Gravity Well', dur:8, durTxt:'8s', global:true,
+        desc:'Balls are pulled toward the centre of the arena for a few seconds.' },
       { id:'pulse',    name:'Pulse Contract', dur:0, durTxt:'1.5–3.5s',
         desc:'The whole arena squeezes inward and snaps back over a random 1.5–3.5 seconds.' },
       { id:'eclipse',  name:'Eclipse Drift', dur:0,  durTxt:'2–5s', global:true,
@@ -4397,7 +4560,7 @@ function showSetup() {
   document.getElementById('bPause').textContent = 'PAUSE';
   ['over', 'brief', 'pausePanel', 'codex', 'statsPanel', 'setPanel', 'achPanel',
    'modePanel', 'customPanel', 'logPanel', 'nameGate', 'lbPanel', 'recentPanel', 'ctxPanel',
-   'scoreHelpPanel'].forEach(id => {
+   'scoreHelpPanel', 'brPanel'].forEach(id => {
     const el = document.getElementById(id); if (el) el.classList.add('hidden');
   });
   refreshHiScore();
@@ -4442,12 +4605,8 @@ function boardHtml() {
   if (!rows.length)
     return '<div class="sl"><span>No scores yet</span><span>&mdash;</span></div>';
   return rows.map((e, i) => {
-    // gameMode is stored as 'Modifier' or 'vanilla'; accept either casing.
-    const modeRaw = String(e.m || '').toLowerCase();
-    const modeLabel = (modeRaw === 'modifier' || modeRaw === 'token') ? 'Modifier' : 'Vanilla';
     const meta = [
-      modeLabel,
-      ordinal(e.p || 6) + ' of 6',
+      ordinal(e.p || 6),
       fmtTime(e.t || 0)
     ].filter(Boolean).join(' · ');
     return '<div class="hsrow' + (e.at && e.at === lastScoreStamp ? ' fresh' : '') + '">' +
@@ -5031,6 +5190,30 @@ setFxLevel(fxLevel);
 syncSettingsUI();
 checkAchievements();
 document.getElementById('verTag').textContent = 'v' + VERSION;
+
+// Breakdown panel: click name on leaderboard / recent rows (delegation)
+(function wireBreakdownDelegation() {
+  document.addEventListener('click', e => {
+    const btn = e.target.closest('.lbn-btn');
+    if (!btn) return;
+    const row = btn.closest('.lbrow');
+    if (!row || !row.dataset.br) return;
+    // Only when a board panel is visible
+    const lbOpen = document.getElementById('lbPanel') && !document.getElementById('lbPanel').classList.contains('hidden');
+    const recentOpen = document.getElementById('recentPanel') && !document.getElementById('recentPanel').classList.contains('hidden');
+    if (!lbOpen && !recentOpen) return;
+    e.preventDefault(); e.stopPropagation();
+    try {
+      const parts = JSON.parse(decodeURIComponent(row.dataset.br));
+      const nm = decodeURIComponent(row.dataset.nm || 'PLAYER');
+      const sc = +(row.dataset.sc || 0);
+      showBreakdown(parts, nm, sc, lbOpen ? 'lbPanel' : 'recentPanel');
+    } catch (err) {}
+  });
+  const back = document.getElementById('bBrBack');
+  if (back) back.addEventListener('click', hideBreakdown);
+})();
+
 // Silent triple-click on the version credit opens Project Context (no button styling).
 (function wireVerCtx() {
   const el = document.getElementById('verTag');
