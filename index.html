@@ -423,16 +423,6 @@
   #scorebar.near .sb,#scorebar.near .sd{color:#c99a4a}
   #scorebar.urgent .sc{color:#ff9a5c;text-shadow:0 0 16px rgba(255,140,70,.65)}
   #scorebar.urgent .sb,#scorebar.urgent .sd{color:#d48a5a}
-  .missionband{width:100%;margin:0 0 14px;padding:10px 12px;text-align:left;
-    border:1px solid rgba(110,180,240,.25);background:rgba(10,24,40,.4)}
-  .missionband h4{font-size:9.5px;letter-spacing:.2em;color:#5f87a8;text-transform:uppercase;
-    margin-bottom:8px}
-  .missionrow{display:flex;align-items:center;gap:8px;padding:5px 0;
-    border-bottom:1px solid rgba(90,150,200,.1);font-size:11px;color:#a8cfe8}
-  .missionrow:last-child{border-bottom:none}
-  .missionrow.done{color:#9ff5b0}
-  .missionrow .mp{margin-left:auto;font-variant-numeric:tabular-nums;color:#7ba3c0;font-size:10px}
-  .missionrow.done .mp{color:#9ff5b0}
   .xpbreak{text-align:left;font-size:11px;letter-spacing:.04em;color:#7ba3c0;margin:8px 0 4px;
     font-variant-numeric:tabular-nums;line-height:1.7}
   .xpbreak b{color:#dff1ff;font-weight:700}
@@ -1036,7 +1026,7 @@ const DIFF = [
 let diffIdx = 1;
 let startLives = 3;
 let displayName = 'RHYNOCK';
-const VERSION = '0.7.2';
+const VERSION = '0.7.3';
 /* Online leaderboard (Cloudflare Worker + D1).
    Leave empty to keep the game fully offline.
    After you deploy the Worker, set this to your workers.dev URL, e.g.:
@@ -1072,6 +1062,9 @@ Optional online leaderboard (Cloudflare Worker + D1) via LEADERBOARD_URL — lea
   - Gold (buff) → last hitter only
   - Red (nerf) → next player to hit (pending on the ball)
   - Violet (wildcard) → arena-wide
+- Spawn odds are FLAT as of 0.7.3 (pickEffect): one combined pool, every modifier equally likely, no category weighting. Ineligible entries are excluded so another modifier takes the slot: Repair while all walls are full, Split at 3+ balls, and any id already on the field.
+- Nerf roster: choke (Shrink, 10s) and invert (Invert, fixed 5s \u2014 exempt from fxDur arena scaling).
+- Concede pacing (SERVE_DELAY_LIFE_LOST 1s / SERVE_DELAY_KNOCKOUT 2s): hidden holds added to serveTimer after a concede. serveTimer freezes the ball only; paddles and arena animation keep running and no countdown UI appears.
 - Main menu has a Modifiers On/Off toggle (ModifiersOn, remembered). Play button (#mPlay / startSimplePlay()) starts Normal difficulty, 3 lives, mid spawn rate, endless off; mode is modifier or vanilla based on the toggle.
 - Custom mode still exists in code (#customPanel) with lives, spawn rate, per-modifier toggles (ModifierToggles), endless, difficulty — but is not exposed on the simplified main menu.
 - Scoring only for vanilla + modifier (scoredMode()). Custom is deliberately unscored.
@@ -1080,7 +1073,7 @@ Optional online leaderboard (Cloudflare Worker + D1) via LEADERBOARD_URL — lea
 - Eclipse Drift (0.7.1): outbound spin 2-5s random (CW/CCW), ball frozen only while actively spinning, no countdown on resume. After a 15s hold, spins back to the original orientation mirroring the outbound duration/rate exactly (reversed), ball frozen again for that return leg. State: eclipseT/eclipseRate/eclipseSpin (active spin), eclipseHoldT (post-spin hold countdown), eclipseReturning (true during the return leg), eclipseOutSecs (outbound duration, reused for the return).
 - Pulse Contract (0.7.1): squeeze-and-release duration now randomized 1.5-3.5s per activation (PULSE_MIN/PULSE_MAX, stored per-activation in pulseDur) instead of a fixed 1.6s.
 - Persistence: localStorage keys (career, scores, settings, modifier toggles, progress, name, etc.). Never remove keys without a migration.
-- Progression systems (level/XP, prestige, achievements, missions) exist in code; Level/XP band on main menu is currently hidden (#lvlBand display:none).
+- Progression systems (level/XP, prestige, achievements) exist in code; Level/XP band on main menu is currently hidden (#lvlBand display:none). Daily Missions were removed in 0.7.3.
 
 === UI / PANELS ===
 - Panels: nameGate, start, modePanel, customPanel, brief, pausePanel, codex, achPanel, over, setPanel, statsPanel, scoreHelpPanel, logPanel, lbPanel, recentPanel, ctxPanel.
@@ -1104,6 +1097,15 @@ ${VERSION} — Triple-click main-menu version opens this project context panel f
    Append a new entry and bump the patch digit of VERSION on every change set.
    The in-game Changelog panel reads this array directly. */
 const CHANGELOG = [
+  { v: '0.7.3', date: '2026-08-16', notes: [
+    'New nerf: Invert. The next player to return the ball has their controls reversed for 5 seconds \u2014 swipe right and the paddle goes left. Fixed 5s regardless of arena size.',
+    'Modifier spawn odds are now flat: every modifier has an equal chance, with no buff/nerf/wildcard category weighting. Repair still sits out while every wall is at full lives, and another modifier takes its slot instead.',
+    'Hidden regroup pauses after a concede: 1s before the ball resumes when a life is lost, 2s when a wall is knocked out and the arena collapses. No countdown is shown \u2014 paddles stay live, only the ball is held.',
+    'Removed the Daily Missions system, which had been awarding XP invisibly since its UI was retired.',
+    'Removed dead code: the entire unused arena Rotation system, and the unreachable drag / static / phase effect handlers that were still being evaluated every frame.',
+    'Removed career stat fields that were never incremented (backstopSaves, slowEffectsTriggered).',
+    'Fixed a typo in the XP mission hook that tested a career counter to choose between two per-run counters.',
+  ]},
   { v: '0.7.2', date: '2026-08-16', notes: [
     'Bugfix: conceding a point (without being eliminated) threw an error from a leftover reference to the removed Bounty cost variable, which silently killed concede() before it could re-serve the ball. The ball now respawns correctly after every non-eliminating life loss.',
     'Wildcard scoring reverted: hitting a Wildcard is +2500 again (not -2500).',
@@ -1192,8 +1194,8 @@ const defaultCareer = () => ({
   flawlessWins: 0, hardcoreWins: 0, ModifiersHit: 0,
   buffHits: 0, nerfHits: 0, wildHits: 0, nerfedHits: 0,
   perfectHits: 0, quickReflexBursts: 0, zeroHitLosses: 0, noModifierWins: 0,
-  bestRallyModifiers: 0, backstopSaves: 0, fastWins: 0, bestWallsRepairedInMatch: 0,
-  slowEffectsTriggered: 0, paddleDistance: 0, hxStreak: 0, bestHxStreak: 0
+  bestRallyModifiers: 0, fastWins: 0, bestWallsRepairedInMatch: 0,
+  paddleDistance: 0, hxStreak: 0, bestHxStreak: 0
 });
 // One record per difficulty plus the combined total, so an Expert survival run is not
 // buried under a pile of Easy wins. `tiers[4]` is the all-difficulties roll-up.
@@ -1466,8 +1468,6 @@ function defaultProgress() {
     prestige: 0,     // star count
     winStreak: 0,
     lastWinDate: '', // YYYY-MM-DD local for first-win-of-day
-    missionsDate: '',
-    missions: null,
     tipsSeen: false,
   };
 }
@@ -1553,60 +1553,6 @@ function doPrestige() {
 function localDateStr() {
   const d = new Date();
   return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
-}
-
-/* ── daily missions (deterministic offline rotation) ─────────────────────── */
-const MISSION_POOL = [
-  { id: 'ret40', label: 'Return 40 balls', key: 'returns', target: 40, xp: 600 },
-  { id: 'ret80', label: 'Return 80 balls', key: 'returns', target: 80, xp: 1000 },
-  { id: 'sur60', label: 'Survive 60s', key: 'survived', target: 60, xp: 500 },
-  { id: 'sur90', label: 'Survive 90s on Hard+', key: 'survivedHard', target: 90, xp: 900 },
-  { id: 'tok5', label: 'Trigger 5 Modifiers', key: 'Modifiers', target: 5, xp: 700 },
-  { id: 'win1', label: 'Win a match', key: 'wins', target: 1, xp: 800 },
-  { id: 'rally20', label: 'Hit a 20-rally', key: 'rally', target: 20, xp: 750 },
-];
-function daySeed(str) {
-  let h = 2166136261;
-  for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); }
-  return h >>> 0;
-}
-function ensureMissions() {
-  const today = localDateStr();
-  if (progress.missionsDate === today && Array.isArray(progress.missions) && progress.missions.length === 3)
-    return progress.missions;
-  const seed = daySeed(today);
-  const pool = MISSION_POOL.slice();
-  const picks = [];
-  let s = seed;
-  for (let i = 0; i < 3 && pool.length; i++) {
-    s = (Math.imul(s, 1664525) + 1013904223) >>> 0;
-    const idx = s % pool.length;
-    const m = pool.splice(idx, 1)[0];
-    picks.push({ id: m.id, label: m.label, key: m.key, target: m.target, xp: m.xp, cur: 0, done: false });
-  }
-  progress.missionsDate = today;
-  progress.missions = picks;
-  saveProgress();
-  return picks;
-}
-function tickMissions(snap) {
-  const list = ensureMissions();
-  let bonus = 0;
-  for (const m of list) {
-    if (m.done) continue;
-    let add = 0;
-    if (m.key === 'returns') add = snap.returns || 0;
-    else if (m.key === 'survived') add = Math.floor(snap.survived || 0);
-    else if (m.key === 'survivedHard') add = (snap.diffIdx >= 2) ? Math.floor(snap.survived || 0) : 0;
-    else if (m.key === 'Modifiers') add = snap.Modifiers || 0;
-    else if (m.key === 'wins') add = snap.won ? 1 : 0;
-    else if (m.key === 'rally') add = snap.rally || 0;
-    // missions track best single-match progress for the day (not cumulative across matches)
-    m.cur = Math.max(m.cur || 0, add);
-    if (m.cur >= m.target) { m.done = true; bonus += m.xp; }
-  }
-  saveProgress();
-  return bonus;
 }
 
 // Achievement badge artwork, embedded locally (downloaded from game-icons.net, CC BY 3.0)
@@ -2003,7 +1949,7 @@ function layout() {
 
 function buildWalls() {
   const sides = seating.length || N;
-  const start = Math.PI / 2 - Math.PI / sides + spin + eclipseSpin;  // side 0 flat along the bottom (+ Rotation/Eclipse)
+  const start = Math.PI / 2 - Math.PI / sides + eclipseSpin;  // side 0 flat along the bottom (+ Eclipse Drift)
   walls.length = 0;
   for (let i = 0; i < sides; i++) {
     const a1 = start + (i / sides) * TAU, a2 = start + ((i + 1) / sides) * TAU;
@@ -2078,6 +2024,11 @@ let players = [];
 let balls = [];                 // more than one once Split is in play
 let running = false, paused = false, over = false;
 let serveTimer = 0, shakeT = 0, shakeMag = 0;
+// Hidden regroup pauses added on top of the normal serve delay. No countdown is shown:
+// paddles stay live and the arena keeps animating, only the ball is held. Gives the
+// player a beat to re-read the arena after it changes under them.
+const SERVE_DELAY_LIFE_LOST = 1.0;   // someone conceded but is still in the match
+const SERVE_DELAY_KNOCKOUT  = 2.0;   // a wall was eliminated and the arena collapsed
 let countdown = 0;          // 5..1 then GO at match start; 3..1 on resume
 let rallyHits = 0, elapsed = 0, playerHits = 0, knockouts = 0;
 let pressure = 0;
@@ -2090,11 +2041,10 @@ let collapseFlash = 0;
    A Modifier drifts into the arena mid-rally. When any ball touches it, the effect
    applies to every living player. Category is readable before you commit from
    shape and colour, which is the whole point. */
-let Modifiers = [];          // {x,y,fx,born,life,spin,pulse}
+let Modifiers = [];          // {x,y,fx,born,r}
 let ModifierTimer = 0;
 let bursts = [];          // pickup flashes
 let gfx = {};             // global (arena-wide) effects: id -> seconds remaining
-let spin = 0, spinRate = 0;   // Rotation: extra angle on every wall, unwinds to 0
 // Eclipse Drift: freeze balls, spin out for a random 2-5s (CW or CCW), hold at the new
 // orientation for 15s, then spin back over the exact same duration/rate, reversed.
 let eclipseSpin = 0, eclipseT = 0, eclipseRate = 0;
@@ -2140,13 +2090,15 @@ function sizeMul(p) {
 // Durations shrink with the arena: ten seconds is about three rallies in a hexagon
 // but nearer eight in the two-player square, which would make late effects overbearing.
 function fxDur(f) {
+  // Invert is a fixed 5s by design: it is a control-scheme flip, and a shrinking
+  // window would make an already-disorienting effect inconsistent to learn.
+  if (f.id === 'invert') return f.dur;
   const k = clamp((walls.length || 6) / 6, 0.68, 1);
   return f.dur * k;
 }
 
 function clearFx() {
   Modifiers = []; bursts = []; gfx = {};
-  spin = 0; spinRate = 0;
   eclipseSpin = 0; eclipseT = 0; eclipseRate = 0;
   eclipseHoldT = 0; eclipseReturning = false; eclipseOutSecs = 0; eclipseOutRate = 0;
   pulseT = 0; pulseBaseR = 0; pulseDur = PULSE_MIN;
@@ -2250,24 +2202,25 @@ function allPlayersFullLives() {
   return players.every(p => p.out || p.lives >= startLives);
 }
 function pickEffect() {
-  // buffs a little likelier than nerfs, wildcards rarest — but skip a category
-  // entirely if every Modifier in it has been toggled off, trying the others instead
-  const r = Math.random();
-  const primary = r < 0.40 ? 0 : r < 0.76 ? 1 : 2;
-  const order = [primary, ...[0, 1, 2].filter(i => i !== primary)];
+  // Flat, equal odds: every modifier in the roster has the same chance to spawn,
+  // regardless of whether it is a buff, nerf, or wildcard. Ineligible modifiers are
+  // simply excluded from the pool, so something else takes the slot instead:
+  //   - Repair is held back while every wall is at full lives (nothing to repair)
+  //   - Split is held back at 3+ balls
+  //   - No duplicate of a modifier already sitting on the field
   const full = allPlayersFullLives();
-  // No duplicate types while a Modifier of that id is already on the field
   const active = new Set(Modifiers.map(t => t.fx && t.fx.id));
-  for (const idx of order) {
-    const g = EFFECTS[idx];
-    // Simple build: always use the full roster (no Custom toggles)
-    const pool = g.list.filter(f =>
-      !active.has(f.id) &&
-      (f.id !== 'split' || balls.length < 3) &&
-      !(full && f.id === 'repair'));
-    if (pool.length) return pool[Math.floor(Math.random() * pool.length)];
+  const pool = [];
+  for (const g of EFFECTS) {
+    for (const f of g.list) {
+      if (active.has(f.id)) continue;
+      if (f.id === 'split' && balls.length >= 3) continue;
+      if (f.id === 'repair' && full) continue;
+      pool.push(f);
+    }
   }
-  return null;   // every Modifier is toggled off / already active
+  if (!pool.length) return null;   // everything is already active / ineligible
+  return pool[Math.floor(Math.random() * pool.length)];
 }
 
 function ModifierR() { return Math.max(12, R * 0.0605); }   // 10% bigger than before
@@ -2348,7 +2301,7 @@ function resolveModifier(t, b, p) {
 function applyEffect(f, targets) {
   const dur = fxDur(f);
   switch (f.id) {
-    case 'overdrive': case 'choke':
+    case 'overdrive': case 'choke': case 'invert':
       for (const q of targets) { q.fx[f.id] = dur; q.hurtFlash = f.key === 'n' ? 1 : q.hurtFlash; }
       break;
 
@@ -2546,8 +2499,7 @@ function dragMove(x, y) {
   drag.lastX = x; drag.lastY = y;
   const [lo, hi] = posLimits(w);
   const flip = fxHas(p, 'invert') ? -1 : 1;
-  const slowPad = fxHas(p, 'drag') ? 0.5 : 1;
-  const want = drag.pos + (projOnWall(x, y, w) - drag.proj) * TOUCH_SENS * flip * slowPad;
+  const want = drag.pos + (projOnWall(x, y, w) - drag.proj) * TOUCH_SENS * flip;
   p.pos = clamp(want, lo, hi);
   // pinned at an end: re-anchor here so the return stroke responds immediately
   if (want < lo || want > hi) { drag.proj = projOnWall(x, y, w); drag.pos = p.pos; }
@@ -2682,7 +2634,7 @@ function update(dt) {
     if (p.sweetFlash) p.sweetFlash = Math.max(0, p.sweetFlash - dt * 2.8);
     p.hurtFlash = Math.max(0, p.hurtFlash - dt * 1.6);
     for (const k of Object.keys(p.fx)) { p.fx[k] -= dt; if (p.fx[k] <= 0) delete p.fx[k]; }
-    p.jit = fxHas(p, 'static') ? (Math.random() - 0.5) * PAD.thick * 1.5 : 0;
+    p.jit = 0;
   }
   for (const k of Object.keys(gfx)) { gfx[k] -= dt; if (gfx[k] <= 0) delete gfx[k]; }
   for (const w of walls) w.flash = Math.max(0, w.flash - dt * 3);
@@ -2692,13 +2644,6 @@ function update(dt) {
   if (debris.length) debris = debris.filter(g => g.t > 0);
   for (const b of bursts) b.t -= dt * 2.2;
   if (bursts.length) bursts = bursts.filter(b => b.t > 0);
-
-  // arena spin (Rotation) — unwinds back to square, rebuilding geometry as it goes
-  if (spinRate > 0) {
-    spin += spinRate * dt;
-    if (spin >= TAU) { spin = 0; spinRate = 0; }
-    buildWalls();
-  }
 
   // Eclipse Drift — ball is frozen only while the arena is actively spinning. Outbound
   // spin runs for a random 2-5s, then play resumes immediately (no countdown). After a
@@ -2767,7 +2712,7 @@ function update(dt) {
   // ── Modifiers ──────────────────────────────────────────
   // nothing spawns during a serve or while the arena is collapsing/spinning: those
   // moments are busy enough already
-  const calm = serveTimer <= 0 && spinRate === 0 && eclipseT <= 0 && Math.abs(R - Rtarget) <= 0.4;
+  const calm = serveTimer <= 0 && eclipseT <= 0 && Math.abs(R - Rtarget) <= 0.4;
   if (ModifiersOn && running && !over && calm && Modifiers.length < MAX_ModifierS) {
     ModifierTimer -= dt;
     if (ModifierTimer <= 0) {
@@ -2782,7 +2727,6 @@ function update(dt) {
     const p = w.owner;
     if (!p) continue;
     const [lo, hi] = posLimits(w);
-    const slowPad = fxHas(p, 'drag') ? 0.5 : 1;
     const flip = fxHas(p, 'invert') ? -1 : 1;
 
     if (p.human) {
@@ -2791,18 +2735,13 @@ function update(dt) {
       if (kl || kr) {
         const axis = Math.abs(w.dx) > 0.01 ? w.dx : w.dy;
         const sgn = axis >= 0 ? 1 : -1;
-        p.pos += ((kr ? 1 : 0) - (kl ? 1 : 0)) * sgn * flip * 1.30 * slowPad * dt;
+        p.pos += ((kr ? 1 : 0) - (kl ? 1 : 0)) * sgn * flip * 1.30 * dt;
         moved = true; mouse.active = false;
       }
       if (!moved && mouse.active && mouse.x >= 0) {
         let t = ((mouse.x - w.ax) * w.dx + (mouse.y - w.ay) * w.dy) / w.len;
         if (flip < 0) t = 1 - t;                      // absolute pointer: mirror the wall
-        p.pos += (clamp(t, lo, hi) - p.pos) * Math.min(1, dt * 22 * slowPad);
-      }
-      // the wall moves under the finger during a spin, so keep re-anchoring the drag
-      if (drag.active && spinRate > 0) {
-        drag.proj = projOnWall(drag.lastX, drag.lastY, w);
-        drag.pos = p.pos;
+        p.pos += (clamp(t, lo, hi) - p.pos) * Math.min(1, dt * 22);
       }
     } else {
       const th = threat(w);
@@ -2840,7 +2779,7 @@ function update(dt) {
         want = 0.5 + Math.sin(elapsed * 0.6 + p.aiJitter) * 0.12;
       }
       p.aiTarget += (want - p.aiTarget) * Math.min(1, dt * 12);
-      const maxStep = d.pad * dt * slowPad;
+      const maxStep = d.pad * dt;
       p.pos += clamp(p.aiTarget - p.pos, -maxStep, maxStep) * flip;
     }
     p.pos = clamp(p.pos, lo, hi);
@@ -2996,20 +2935,6 @@ function collide(b) {
         b.x += w.nx * push; b.y += w.ny * push;
         w.flash = 1;
         beep(190, 0.05, 'square', 0.035);
-      }
-      continue;
-    }
-
-    // Phase Rail: the wall is not there. Ball passes through and re-enters from the
-    // far side rather than scoring.
-    if (fxHas(p, 'phase')) {
-      if (s < -BALL.r * 1.5) {
-        const dx = b.x - CX, dy = b.y - CY, len = Math.hypot(dx, dy) || 1;
-        const rr = Math.max(BALL.r * 3, apothem() - BALL.r * 3);
-        b.x = CX - dx / len * rr; b.y = CY - dy / len * rr;
-        w.flash = 1;
-        beep(520, 0.09, 'sine', 0.045);
-        return false;
       }
       continue;
     }
@@ -3177,7 +3102,10 @@ function concede(p, b, w) {
       applyShake(12, 0.4); collapseFlash = 0.6;
       toast(p.name + ' RESPAWNED', p.col, 1.0);
       beep(140, 0.12, 'sawtooth', 0.05);
-      if (balls.length === 0) serve(p.wall >= 0 ? p.wall : null);
+      if (balls.length === 0) {
+        serve(p.wall >= 0 ? p.wall : null);
+        serveTimer += SERVE_DELAY_KNOCKOUT;
+      }
       return true;
     }
     p.place = players.filter(q => !q.out).length;      // 6 alive -> finishes 6th
@@ -3217,9 +3145,8 @@ function concede(p, b, w) {
     layout();          // fewer sides, tighter arena (R animates down)
     buildWalls();
     relocateModifiers();  // keep them, but pull any that fall outside the new shape
-    spin = 0; spinRate = 0;
     serve(null);
-    serveTimer = 1.7;
+    serveTimer = 1.7 + SERVE_DELAY_KNOCKOUT;
     const msg = alive.length === 2 ? 'DUEL // SQUARE ARENA'
                                    : 'ARENA COLLAPSE // ' + alive.length + ' WALLS';
     setTimeout(() => { if (running && !over) toast(msg, '#bfe9ff', 1.2); }, 1250);
@@ -3227,7 +3154,10 @@ function concede(p, b, w) {
   }
 
   toast(p.name + '  -1', p.col, 0.85);
-  if (balls.length === 0) serve(p.wall >= 0 ? p.wall : null);
+  if (balls.length === 0) {
+    serve(p.wall >= 0 ? p.wall : null);
+    serveTimer += SERVE_DELAY_LIFE_LOST;
+  }
   return true;
 }
 
@@ -3349,15 +3279,7 @@ function endGame(winner, eliminated) {
     if (firstWinToday) mul *= 2;
     const streakBonus = won ? Math.min(0.5, (progress.winStreak - 1) * 0.1) : 0;
     if (streakBonus > 0) mul *= (1 + streakBonus);
-    // mission bonus applied after
-    let missionBonus = 0;
-    try {
-      missionBonus = tickMissions({
-        returns: playerHits, survived: run.survived, Modifiers: career.ModifiersHit ? run.ModifiersThisRally || 0 : (run.bestModifiersInRally || 0),
-        diffIdx, won, rally: run.bestRally || 0
-      });
-    } catch (e) {}
-    const total = Math.round(sub * mul + missionBonus);
+    const total = Math.round(sub * mul);
     xpGain = awardXp(total);
     const lines = [];
     lines.push('<div>BASE (time) <b>' + commas(base) + '</b></div>');
@@ -3365,7 +3287,6 @@ function endGame(winner, eliminated) {
     lines.push('<div>' + DIFF[diffIdx].label + ' ×' + diffMul + '</div>');
     if (firstWinToday) lines.push('<div>FIRST WIN TODAY <b>×2</b></div>');
     if (streakBonus > 0) lines.push('<div>STREAK +' + Math.round(streakBonus * 100) + '%</div>');
-    if (missionBonus > 0) lines.push('<div>MISSIONS <b>+' + commas(missionBonus) + '</b></div>');
     lines.push('<div class="xptotal">TOTAL XP  ' + commas(total) +
       (xpGain && xpGain.leveled ? '  ·  LEVEL UP → ' + progress.level : '') +
       '</div>');
@@ -3630,7 +3551,6 @@ function drawWall(w) {
   const p = w.owner;
   ctx.save();
   ctx.lineCap = 'butt';
-  if (p && fxHas(p, 'phase')) ctx.globalAlpha = 0.30;   // Phase Rail: the wall is barely there
 
   if (!p) {                                   // inert bumper
     const bd = 0.16;   // rails sit dim by default now (previously the Blackout Modifier look)
@@ -4132,9 +4052,8 @@ const Modifier_ICON_DATA = {
   'overdrive': 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48cGF0aCBmaWxsPSIjZmZkOTdhIiBkPSJNNjQgNjR2MTI4bDQ4LTQ4IDQ4IDQ4IDMyLTMyLTQ4LTQ4IDQ4LTQ4SDY0em0yNTYgMCA0OCA0OC00OCA0OCAzMiAzMiA0OC00OCA0OCA0OFY2NEgzMjB6TTY0IDMyMHYxMjhoMTI4bC00OC00OCA0OC00OC0zMi0zMi00OCA0OC00OC00OHptMjg4IDAtMzIgMzIgNDggNDgtNDggNDhoMTI4VjMyMGwtNDggNDgtNDgtNDh6Ii8+PC9zdmc+',
   'repair': 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48cGF0aCBmaWxsPSIjZmZkOTdhIiBkPSJNNDMuMDMyIDQ5MWMtNC40MTYgMC04LjQ1NS0xLjQ5NC0xMS44OTctMy44MTktMS4wMjMtLjY5LTIuMDQxLTEuMzUtMi45MzgtMi4yMDMtLjIwNS0uMTg3LS4zODgtLjM5My0uNTg3LS41ODgtLjE5My0uMTk4LS40LS4zODItLjU4OC0uNTg3LS44NTctLjg5My0xLjUxMy0xLjkxNS0yLjIwMy0yLjkzOC0yLjMyNC0zLjQ0Mi0zLjgxOS03LjQ4LTMuODE5LTExLjg5N1YzMzIuMDgxYzAtMTAuODEzIDguMDUyLTE5LjgyIDE4LjgtMjEuNzM4djEzOC45NDRjMCAxMi42NjYgMTAuMjQ2IDIyLjkxMiAyMi45MTIgMjIuOTEyaDEzOC45NDRjLTEuOTE5IDEwLjc0OC0xMC45MjUgMTguOC0yMS43MzggMTguOEg0My4wMzF6TTI1NiA0OTFjLTE0Ljk5NSAwLTI3LjE3Mi0xMi4xNzgtMjcuMTcyLTI3LjE3MnMxMi4xNzgtMjcuMTcyIDI3LjE3Mi0yNy4xNzIgMjcuMTcyIDEyLjE3OCAyNy4xNzIgMjcuMTcyUzI3MC45OTQgNDkxIDI1NiA0OTF6bTc1LjkzNCAwYy0xMC44MTIgMC0xOS42OTgtOC4wNTItMjEuNTktMTguOGgxMzguOTQzYzEyLjY2NiAwIDIyLjkxMi0xMC4yNDcgMjIuOTEyLTIyLjkxM1YzMTAuMzQzYzEwLjc0OCAxLjkxOSAxOC44IDEwLjkyNSAxOC44IDIxLjczOHYxMzYuODg3YzAgNC40MTYtMS40OTQgOC40NTUtMy44MTkgMTEuODk3LS42OSAxLjAyMy0xLjM1IDIuMDQxLTIuMjAzIDIuOTM4LS4xNDUuMTUxLS4yOTIuMjkyLS40NC40NC0uNDM1LjQ0NC0xLjAwNC43NjYtMS40NyAxLjE3NS0uNjQ1LjU0MS0xLjIwNSAxLjE0Mi0xLjkwOSAxLjYxNS0uMDkuMDY1LS4yMDEuMDg2LS4yOTQuMTQ3YTIxLjYyNyAyMS42MjcgMCAwIDEtOC4yMjUgMy4zNzhjLTEuMjYyLjIzMy0yLjQ5NC40NC0zLjgxOC40NEgzMzEuOTMzem0tMjU4Ljk0LTMwLjI1NmMtMTEuOTk2IDAtMjEuNzM3LTkuNzQyLTIxLjczNy0yMS43MzhWMzA5LjkwM2g0Ny4xNDdjMTIuNzk2IDAgMjMuMDU5IDkuOTgzIDIzLjA2IDIyLjE3OGwtLjAwMSA1OC40NTZoNTguNDU2YzEyLjE5NSAwIDIyLjE3OCAxMC40MSAyMi4xNzggMjMuMjA2djQ3SDcyLjk5NHptMjM2LjkwOSAwdi00N2MwLTEyLjc5NyA5LjgzNi0yMy4yMDcgMjIuMDMxLTIzLjIwN2g1OC42MDNWMzMyLjA4YzAtMTIuMTk2IDEwLjQxLTIyLjE3OSAyMy4yMDYtMjIuMTc5aDQ3djEyOS4xMDRjMCAxMS45OTYtOS43NDEgMjEuNzM3LTIxLjczOCAyMS43MzdIMzA5LjkwNHpNMjU2IDQyNC42MTFjLTcuMTAzIDAtMTIuOTI1LTUuODIyLTEyLjkyNS0xMi45MjVTMjQ4Ljg5NyAzOTguOTEgMjU2IDM5OC45MXMxMi45MjUgNS42NzYgMTIuOTI1IDEyLjc3OC01LjgyMyAxMi45MjUtMTIuOTI1IDEyLjkyNXptMC00MC4wOTdjLTkuMjk4IDAtMTguNTc5LTMuNTk3LTI1LjcwMy0xMC43MjFsLTkyLjA5LTkyLjA5MWEzNi4yNTMgMzYuMjUzIDAgMCAxIDAtNTEuNDA2bDkyLjA5LTkyLjA5MWEzNi4yNTMgMzYuMjUzIDAgMCAxIDUxLjQwNiAwbDkyLjA5IDkyLjA5YTM2LjI1MyAzNi4yNTMgMCAwIDEgMCA1MS40MDdsLTkyLjA5IDkyLjA5Yy03LjEyNSA3LjEyNS0xNi40MDUgMTAuNzIyLTI1LjcwMyAxMC43MjJ6bS0yMy42NDctODIuODM3aDQ3LjI5NGEyMS45NDUgMjEuOTQ1IDAgMCAwIDIyLjAzMS0yMi4wMzF2LTQ3LjI5NGEyMS45NDUgMjEuOTQ1IDAgMCAwLTIyLjAzMS0yMi4wMzJoLTQ3LjI5NGEyMS45NDUgMjEuOTQ1IDAgMCAwLTIyLjAzIDIyLjAzMmwtLjAwMSA0Ny4yOTNhMjEuOTQ1IDIxLjk0NSAwIDAgMCAyMi4wMzEgMjIuMDMyem0tMTg0LjE4LTE4LjUwNkMzMy4xNzcgMjgzLjE3MiAyMSAyNzAuOTk0IDIxIDI1NnMxMi4xNzctMjcuMTcyIDI3LjE3Mi0yNy4xNzJTNzUuMzQ0IDI0MS4wMDYgNzUuMzQ0IDI1NnMtMTIuMTc3IDI3LjE3Mi0yNy4xNzIgMjcuMTcyem0yMDcuODI3IDBjLTE0Ljk5NCAwLTI3LjE3Mi0xMi4xNzgtMjcuMTcyLTI3LjE3MnMxMi4xNzgtMjcuMTcyIDI3LjE3Mi0yNy4xNzIgMjcuMTcyIDEyLjE3NyAyNy4xNzIgMjcuMTcyLTEyLjE3OCAyNy4xNzItMjcuMTcyIDI3LjE3MnptMjA3LjgyNyAwYy0xNC45OTQgMC0yNy4xNzEtMTIuMTc4LTI3LjE3MS0yNy4xNzJzMTIuMTc3LTI3LjE3MiAyNy4xNzItMjcuMTcyIDI3LjE3MSAxMi4xNzcgMjcuMTcxIDI3LjE3MS0xMi4xNzcgMjcuMTcyLTI3LjE3MiAyNy4xNzJ6bS0zNjMuNjYtMTQuMjQ3Yy03LjEwMyAwLTEyLjc3OS01LjgyMi0xMi43NzktMTIuOTI1czUuNjc2LTEyLjkyNSAxMi43NzgtMTIuOTI1IDEyLjkyNSA1LjgyMiAxMi45MjUgMTIuOTI1LTUuODIyIDEyLjkyNS0xMi45MjUgMTIuOTI1em0zMTEuNTIgMGMtNy4xMDIgMC0xMi43NzgtNS44MjMtMTIuNzc4LTEyLjkyNnM1LjY3Ni0xMi45MjUgMTIuNzc4LTEyLjkyNSAxMi45MjUgNS44MjMgMTIuOTI1IDEyLjkyNS01LjgyMiAxMi45MjUtMTIuOTI1IDEyLjkyNXptLTM2MC40My02Ni44MjhWNzIuOTk0YzAtMTEuOTk3IDkuNzQyLTIxLjczOCAyMS43MzgtMjEuNzM4aDEyOS4xMDJ2NDcuMTQ3YzAgMTIuNzk3LTkuOTgzIDIzLjA2LTIyLjE3OCAyMy4wNmgtNTguNDU2djU4LjYwM2MwIDEyLjE5NS0xMC4yNjIgMjIuMDMtMjMuMDYgMjIuMDNsLTQ3LjE0Ni4wMDF6bTM2Mi40ODYgMGMtMTIuNzk2IDAtMjMuMjA2LTkuODM3LTIzLjIwNi0yMi4wMzJ2LTU4LjYwM2gtNTguNjAzYy0xMi4xOTUgMC0yMi4wMy0xMC4yNjMtMjIuMDMtMjMuMDZWNTEuMjU3aDEyOS4xMDJjMTEuOTk2IDAgMjEuNzM4IDkuNzQgMjEuNzM4IDIxLjczN3YxMjkuMTAzaC00N3ptLTM3NC4zODMtLjQ0QzI4LjgyMyAxOTkuNjA2IDIxIDE5MC43MzYgMjEgMTgwLjA2NVY5OC40MDNsLjAwMS01NC4zNDN2LS44ODJjMC0xLjMyNS4yMS0yLjU1Ni40NC0zLjgxOWEyMS42MjMgMjEuNjIzIDAgMCAxIDMuMzc5LTguMjI1Yy41MjMtLjc3MiAxLjE0NS0xLjUgMS43NjItMi4yMDMuMzY0LS40MjguNjM1LS45MTggMS4wMjgtMS4zMjIuMTk4LS4xOTUuMzgzLS40LjU4OC0uNTg3Ljg5My0uODU3IDEuOTE1LTEuNTEgMi45MzgtMi4yMDNDMzQuNTc4IDIyLjQ5NyAzOC42MTcgMjEgNDMuMDMzIDIxSDE3OS45MmMxMC44MTIgMCAxOS44MTkgOC4wNTIgMjEuNzM3IDE4LjhINjIuNzE0QzUwLjA0OCAzOS44IDM5LjggNTAuMDQ2IDM5LjggNjIuNzEzdjEzOC45NDNjLS4xNC0uMDIzLS4zLjAyNC0uNDQgMHptNDMyLjg0LS4wMDFWNjIuNzEyYzAtMTIuNjY3LTEwLjI0Ny0yMi45MTItMjIuOTEzLTIyLjkxMkgzMTAuMzQ0YzEuODkyLTEwLjc0OCAxMC43NzgtMTguOCAyMS41OS0xOC44aDEzNi44ODhjMS4zMjUgMCAyLjU1Ni4yMDggMy44MTkuNDQgMi45ODUuNTUgNS43NzQgMS43MiA4LjIyNSAzLjM3OC4wOS4wNjQuMjAxLjA4Ny4yOTQuMTQ3IDEuMTI1Ljc4NyAyLjI2NSAxLjY2IDMuMjMgMi42NDNsLjE0OC4xNDdjMS4wMDYgMS4wNDMgMS44NDQgMi4xNTIgMi42NDQgMy4zNzlhMjEuNjI4IDIxLjYyOCAwIDAgMSAzLjM3OCA4LjIyNWMuMjMyIDEuMjYyLjQ0IDIuNDk0LjQ0IDMuODE4djEzNi44ODhjMCAxMC44MTMtOC4wNTIgMTkuNjk5LTE4LjggMjEuNTl6TTI1NiAxMTMuMDljLTcuMTAyIDAtMTIuOTI1LTUuODIzLTEyLjkyNS0xMi45MjZTMjQ4Ljg5OCA4Ny4zODggMjU2IDg3LjM4OHMxMi45MjUgNS42NzUgMTIuOTI1IDEyLjc3Ny01LjgyMiAxMi45MjYtMTIuOTI1IDEyLjkyNnptMC0zNy43NDhjLTE0Ljk5NCAwLTI3LjE3MS0xMi4xNzctMjcuMTcxLTI3LjE3MVMyNDEuMDA2IDIxIDI1NiAyMXMyNy4xNzIgMTIuMTc3IDI3LjE3MiAyNy4xNzJTMjcwLjk5NSA3NS4zNDMgMjU2IDc1LjM0M3oiLz48L3N2Zz4=',
   'choke': 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48cGF0aCBmaWxsPSIjZmY5YThmIiBkPSJNOTYgNjQgNjQgOTZsNDggNDgtNDggNDhoMTI4VjY0bC00OCA0OC00OC00OHptMjI0IDB2MTI4aDEyOGwtNDgtNDggNDgtNDgtMzItMzItNDggNDgtNDgtNDh6TTY0IDMyMGw0OCA0OC00OCA0OCAzMiAzMiA0OC00OCA0OCA0OFYzMjBINjR6bTI1NiAwdjEyOGw0OC00OCA0OCA0OCAzMi0zMi00OC00OCA0OC00OEgzMjB6Ii8+PC9zdmc+',
-  'invert': 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48cGF0aCBmaWxsPSIjZmY5YThmIiBkPSJNMTk1Ljc3NSAyMS4wNmMtNS45OS4xNTMtMTEuOTk2LjU2Ni0xOC4wNjcgMS4zMjFDNzkuNDk2IDM0LjYwNCA5Ljk4NSAxMjIuNTY0IDIyLjQ0NSAyMTguOTAxYzEuNzA5IDEzLjIxNCAzLjU2NiAyNi4wMiA2LjYxIDM4LjE4Ny0uMDIyLjg4NS0uMTQ3IDEuNzUyLS4xNDcgMi42NDMgMCAzMi4yNzMgMTYuNzU2IDYwLjU5MyA0Mi4wMSA3Ni45NjNMNDkuNjIgNDQyLjE1Yy00LjA3NyAyMC4yNCAxNi42OSAzOC4yMyAzNy4zMSAzNy4xNmwxNDMuNTEyLTcuNDkxYzMwLjk1IDE1LjQ4IDY2LjgwMyAyMi4zODIgMTAzLjg1MSAxNy43NzIgOTguMjEyLTEyLjIyMiAxNjcuNzIzLTEwMC4xODIgMTU1LjI2My0xOTYuNTE5LTEuMDA3LTcuNzg2LTIuMDc1LTE1LjQ2OC0zLjM3OC0yMi45MTIuMzg3LTMuNDIyLjczNC02LjkwNC43MzQtMTAuNDI5IDAtMzQuMjI5LTE4Ljg2My02NC4xMTctNDYuNzExLTc5LjlsMjIuMTgtMTEwLjAwOWM0LjA3OC0yMC4yNC0xNi42ODgtMzguMjMtMzcuMzEtMzcuMTZMMjgxLjU2IDQwLjE1NGExODEuNDY4IDE4MS40NjggMCAwIDAtODUuNzg0LTE5LjA5M3ptMTIwLjU5NyA0MS44NTloODEuNjdjMTQuNDQgMCAyNiAxMS41NiAyNiAyNS45OTd2ODMuNzE4Yy05LjE0OC0zLjA1Mi0xOC45MjMtNC43LTI5LjA4NC00LjctNi4wNzcgMC0xMS44ODIuNjM0LTE3LjYyNyAxLjc2My02Ljg0LTQzLjE4Mi0yOS4zMDYtODAuMzgyLTYwLjk2LTEwNi43Nzh6TTE1My4zMjQgNzAuODVjNTguODc5LTEuNjI2IDEyOC4zMDQgNDYuMzEzIDE3NC41MDUgMTIzLjY2OS0xOC4yMyAxNy40NzctMjguMjggNDIuOTA1LTI0LjgyNCA2OS42MTkuMjE4IDEuNjkuNTYzIDMuMzQuODgxIDQuOTkzLjAwNy4wNDQtLjAwNy4xIDAgLjE0NyA0Ljc1NiA0Ni4xOTggNDMuNjE2IDgyLjI1IDkxLjA3MiA4Mi4yNSAyMy41MjcgMCA0NS04LjkyOCA2MS4yNTMtMjMuNS0zLjc3NSA0Ny45NjUtMjMuNjQgODYuNDQ0LTU4Ljc1NiAxMDMuNjk0LTYzLjA0IDMwLjk2NS0xNTIuODA4LTE3LjM4OC0yMDkuOTA2LTEwOS4xMjkgMTUuNDM2LTE2LjQzNSAyNC45NzItMzguNTMzIDI0Ljk3Mi02Mi44NjIgMC01MC42NjgtNDAuOTg3LTkxLjc5Ny05MS42Ni05MS43OTctMjUuNzA4IDAtNDguOTg2IDEwLjU2My02NS42NiAyNy42MTMgMS4yOTktNTMuMzE4IDIxLjQ0LTk2LjY4IDU5LjM0NC0xMTUuMjk3IDguNTkyLTQuMjIgMTcuNzM5LTcuMDAyIDI3LjE3NS04LjM3MiAzLjgyMi0uNTU1IDcuNjc5LS45MiAxMS42MDQtMS4wMjh6bS00Ny44ODYgMTI0Ljg0NGMyMS42NCAwIDM5LjIyIDE3LjU3NyAzOS4yMiAzOS4yMTZzLTE3LjU4IDM5LjIxNS0zOS4yMiAzOS4yMTUtMzkuMjItMTcuNTc3LTM5LjIyLTM5LjIxNSAxNy41NzktMzkuMjE2IDM5LjIyLTM5LjIxNnptMjY4LjUxNSAwYzIxLjY0IDAgMzkuMjIgMTcuNTc3IDM5LjIyIDM5LjIxNnMtMTcuNTggMzkuMjE1LTM5LjIyIDM5LjIxNS0zOS4wNzMtMTcuNTc3LTM5LjA3My0zOS4yMTUgMTcuNDMyLTM5LjIxNiAzOS4wNzMtMzkuMjE2ek04Ny45NTggMzQ1LjM2YzEwLjI0MiAzLjk0IDIxLjI5IDYuMTY4IDMyLjkwMyA2LjE2OCA1LjIxNSAwIDEwLjE1NC0uNjMyIDE1LjEzLTEuNDY4IDguMiAzOS44NjYgMjkuODcgNzQuMTgzIDU5LjYzNyA5OC45OTNoLTgxLjY3Yy0xNC40NCAwLTI2LTExLjU2LTI2LTI1Ljk5N1YzNDUuMzZ6Ii8+PC9zdmc+',
+  'invert': 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48cGF0aCBmaWxsPSIjZmY5YThmIiBkPSJNMjUyLjMxNCAxOS45NTdjLTcyLjAzNi4zNjMtMTQyLjk5IDMzLjUzNC0xODkuMTggOTUuOTctNjkuODMgOTQuMzktNTkuMTI1IDIyMy4zMiAxOS44NSAzMDQuOTkzbC0zNy4yMzggNTAuMzMyIDE1MS4yMi0yMi42MTNMMTc0LjM1IDI5Ny40MmwtNDMuMTM3IDU4LjMwOGMtNDQuMDgtNTQuMzgyLTQ3LjcyMy0xMzMuNjQ2LTQuMTYtMTkyLjUzIDMwLjY3Ni00MS40NjYgNzcuODYzLTYzLjUwNCAxMjUuNzU4LTYzLjc1M2ExNTYuODA4IDE1Ni44MDggMCAwIDEgNDguNjQ1IDcuNDY3bC02Ljk2My00Ni41NWExOTEuMDU0IDE5MS4wNTQgMCAwIDAtNzEuMDE3LS45OTdjLTU5LjIzMiA3LjMyMi0xMTMuOTk0IDM5LjkxOC0xNDguMTU3IDkxLjIxNSAzNS42NS02NS44OSAxMDMuNzc0LTEwNS45MTggMTc2LjA0My0xMDcuNzQ0YTIwNC4zMjIgMjA0LjMyMiAwIDAgMSA0OS42MiA0Ljg0bDQ4LjYwOC03LjI2OGMtMzEuMTQtMTMuOTA2LTY0LjMyLTIwLjYyLTk3LjI3NC0yMC40NTN6bTIxMi45MyAyMi4wNTUtMTUxLjIxNyAyMi42MSAyMi42MTQgMTUxLjIyIDQxLjEyNi01NS41ODhjNDIuMjA0IDU0LjI5IDQ1LjA5MiAxMzIuMDQ4IDIuMTg3IDE5MC4wNDMtNDAuMjIgNTQuMzY3LTEwOC44MiA3NS4zMi0xNzAuMTkgNTcuNTY2bDYuNTIyIDQzLjU5OGExOTIuNjk5IDE5Mi42OTkgMCAwIDAgODYuMjAzLTMuMDdjMzcuNDQ4LTUuOTU3IDczLjM0LTIyLjA1IDEwMy4xNi00Ny43MjgtNDkuMTk2IDU0LjY1LTEyMi42MTUgNzcuNTE0LTE5MS43NDQgNjQuMzRsLTU1LjggOC4zNDRjOTkuMDMgNDMuNyAyMTguNDAyIDE0Ljc3IDI4NS41MS03NS45MzggNjkuMTMtOTMuNDQ1IDU5LjM0LTIyMC43NDMtMTcuNDgzLTMwMi41M2wzOS4xMTQtNTIuODY2eiIvPjwvc3ZnPg==',
   'split': 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48cGF0aCBmaWxsPSIjZGNhYWZmIiBkPSJNMzA0LjgzMyAxNmMtMjYxLjY5IDAtMzIwLjcxIDM4Ny42NTctNjIuMzQzIDM4Ny42NTcgODYuMjg0IDAgODYuOTU1LTEyOS4zNzUgMC0xMjkuMzc1LTEzOS45NDcgMC05OS4xMzQtMjAyLjg5NiA2Mi4zNDMtMjU4LjI4MnptLTMwLjkzOCA5Mi4zNDNjLTg2LjI4MyAwLTg2Ljk1NSAxMjkuMzc1IDAgMTI5LjM3NSAxMzkuOTUgMCA4OC4zNTMgMjAyLjg5Ni03My4xMjUgMjU4LjI4MiAyNjEuNjkgMCAzMzEuNDktMzg3LjY1NyA3My4xMjUtMzg3LjY1N3oiLz48L3N2Zz4=',
-  'rotate': 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48cGF0aCBmaWxsPSIjZGNhYWZmIiBkPSJNMTc2LjUzIDE5LjQ3Yy0uNTMtLjAwNC0xLjA1OC4wMTQtMS41OTMuMDMtLjU3LjAxNy0xLjE0NS4wNTUtMS43MTguMDk0LTE1LjI5MyAxLjAzOC0zMS42NTYgOS45ODYtNDUuMjgyIDMxLjc1LTI3LjQ3NyA0My44ODUtMjguNTI1IDk3LjY4LTUuODQ0IDEzNi4yOCAxNS4wOTMgMjUuNjkgNDAuNDE3IDQ1LjE4OCA3Ni44NzUgNTEuMTU3YTY0LjA5OSA2NC4wOTkgMCAwIDEgNS40NjgtMTguNTkzYy0xMS40MDUtMTIuMzI3LTE4LjAxLTI2LjI0Mi0yMC4yNS00MS4wNjItNC43NDYtMzEuMzggOC43ODQtNjQuMzIgMjkuMDMtOTUuMDMgOC40OTQtMTIuODg0IDkuNDUtMjQuNTIgNi4zNDUtMzQuNjU3LTMuMTA2LTEwLjE0LTEwLjczLTE4LjkyNS0yMC44MTMtMjQuMjUtNi42NDctMy41MS0xNC4yNDctNS42NzQtMjIuMjItNS43MnptMTk4LjA2NCAyOS43NWMtMzcuMDcuMDUtNzEuODQyIDE0LjU1Ny05NC41MyAzOS4zMS0yMS4yODggMjMuMjI1LTMyLjYzNSA1NS4zNTYtMjUuMzc3IDk0Ljg3NmE2NC41NjQgNjQuNTY0IDAgMCAxIDguMzQ0LS41NjJjMi4yNDggMCA0LjQ2OC4xMTggNi42NTguMzQ0IDguNjc4LTE3Ljg4IDIxLjI4Mi0zMC4zODMgMzYuNjg3LTM3Ljc4MiAyOC42MDgtMTMuNzQgNjQuMDc4LTEwLjQ0NSA5OS4zNzUtLjA5NCAxNC44MDYgNC4zNDMgMjYuMjE4IDEuODUgMzUtNC4wOTMgOC43ODItNS45NDQgMTQuOTI4LTE1LjgzIDE3LjA2My0yNy4wMzIgNC4yNjgtMjIuNDA3LTYuMDctNDkuNC00NS43NS02MC4wMzItMTIuNTAzLTMuMzUtMjUuMTEzLTQuOTU0LTM3LjQ3LTQuOTM3ek0yNjEuNjg4IDc3LjgxMmMtOC42NjMgMC0xNy4xOTUuNjkzLTI1LjUgMS45NjgtMS43NjQgNC45MDItNC4xODUgOS44MDMtNy4zNDQgMTQuNTk1LTE4LjkxNSAyOC42OS0yOS44MiA1Ny45MTQtMjYuMTg4IDgxLjkzOCAxLjQ5NyA5LjkgNS4yOSAxOS4zMiAxMi4yOCAyOC4wNjJhNjUuMTkzIDY1LjE5MyAwIDAgMSAyMS45MDgtMTUuOTM4Yy04LjMzLTQ0LjU2IDMuNTQzLTgzLjA3IDI3LjcyLTExMC41OTMtLjk2Mi0uMDE3LTEuOTEyLS4wMy0yLjg3Ny0uMDN6bTg5LjI1IDc3LjMxMmMtMS4wMi0uMDA2LTIuMDI3LjAxLTMuMDMyLjAzLTEyLjUwMi4yNS0yMy44NTYgMi40OTMtMzMuNDM3IDcuMDk1LTEwLjc0NSA1LjE2LTE5Ljg5NCAxMy4xOTctMjYuNjU4IDI1LjU2M2E2NC45NDkgNjQuOTQ5IDAgMCAxIDE5LjE4OCAxMi4zNzVjMjMuMzcyLTEzLjM4MiA0Ny4yOTgtMTkuMTIgNzAuMDk0LTE4LjQwNyAxMy40My40MjIgMjYuNDYyIDMuMDk1IDM4Ljc1IDcuNzIgMS4xOS40NDggMi4zNTYuOTI0IDMuNTMgMS40MDZhMTY1LjE0IDE2NS4xNCAwIDAgMC0xMS4zMTItMjUuODc1IDcxLjYgNzEuNiAwIDAgMS03LjU2Mi0xLjc4Yy0xNy4zOS01LjEtMzQuMjc2LTguMDQtNDkuNTYzLTguMTI1em0tMjQ3LjUgMzcuNDM4YTE2NS4zNjUgMTY1LjM2NSAwIDAgMC02Ljc1IDI5LjUzIDY5LjQyMyA2OS40MjMgMCAwIDEgMTAuOTM3IDEwLjQ3YzIyLjEzIDI2LjI5IDQ3LjA2MiA0NS4wMyA3MS4xMjUgNDguMzc1IDguOTcyIDEuMjQ2IDE4LjEuNiAyNy40MzgtMi42NTdhNjQuMTkzIDY0LjE5MyAwIDAgMS03LjA2My0yMC43OGMtNDMuMTYyLTYuNDY4LTc0Ljk2NS0yOS40NDUtOTMuMTU2LTYwLjQwNmExMjYuNDcxIDEyNi40NzEgMCAwIDEtMi41MzItNC41M3ptMjY2Ljk2OCA3LjU2MmMtLjkuMDE2LTEuODEzLjA1My0yLjcyLjA5NC0xNS45MTcuNzEtMzIuNDM0IDUuMjUtNDguOTk4IDE0LjQzNmE2NC4zNDMgNjQuMzQzIDAgMCAxIDcuNDY4IDE4Ljk3YzE1Ljk5NSAyLjU5OCAyOS40MTYgOS4xNyA0MC4xNTYgMTkgMjMuNDEzIDIxLjQyNSAzMy41NzUgNTUuNTczIDM3LjEyNSA5Mi4xODYgMS40OSAxNS4zNiA4LjA1OCAyNS4wMDQgMTYuODQ0IDMwLjkzOCA4Ljc4OCA1LjkzNCAyMC4yNSA3Ljk0NiAzMS40NCA1Ljc1IDIyLjM4LTQuMzkgNDMuNTgtMjQuMDU3IDM4LjY1NS02NC44NDQtNi4yMDYtNTEuNDAzLTM5LjE5NS05My45MTgtODEuMDk0LTEwOS42ODctMTIuMjc0LTQuNjItMjUuMzUtNy4wOS0zOC44NzQtNi44NDV6TTI2My4wMyAyMDEuNTNjLTI1LjUxIDAtNDYgMjAuNDktNDYgNDYgMCAyNS41MTMgMjAuNDkgNDYgNDYgNDYgMjUuNTEzIDAgNDUuOTctMjAuNDg3IDQ1Ljk3LTQ2IDAtMjUuNTEtMjAuNDU3LTQ2LTQ1Ljk3LTQ2ek02MS45MDcgMjI4LjY1N2MtMTAuNjAyLjA5Ny0yMS4xODQgNC45NC0yOS4xNTYgMTMuMDk0LTE1Ljk0NCAxNi4zMS0yMi4yNDggNDQuNTE0IDQuOTM4IDc1LjMxMyAzNC4yNjIgMzguODE1IDg1LjU0NiA1NS4xMiAxMjkgNDQuMzQzIDI3Ljc4Ni02Ljg5IDUyLjgwNy0yNC40NDIgNjktNTUuMzEyYTY1LjAwMiA2NS4wMDIgMCAwIDEtMTguMDk0LTEyLjY1NmMtMTMuODQ0IDYuMDU0LTI3Ljc4NSA3LjkyMy00MS40MDYgNi4wMy0zMS40MzUtNC4zNjctNTkuMTg3LTI2LjczMy04Mi44NzUtNTQuODc0LTkuOTM3LTExLjgwNC0yMC44MDUtMTYuMDM0LTMxLjQwNy0xNS45Mzh6TTMyNy40NyAyNTIuNDdjLS42MTcgOC4wNzUtMi43MDUgMTUuNzYtNi4wMzMgMjIuNzUgMzEuMzEzIDI4LjYzNiA0NC45MDQgNjQuNDY2IDQzLjM0NCA5OS42MjQgMCAuMDMuMDAzLjA2MiAwIC4wOTRhMTY3LjI3OSAxNjcuMjc5IDAgMCAwIDIxLjM0NS0yMC4xNTcgNzEuNjMyIDcxLjYzMiAwIDAgMS0xLjI4LTguMTg2Yy0zLjMxOC0zNC4yMDUtMTMuMjM1LTYzLjc4Ni0zMS4xNTgtODAuMTg4LTcuMTctNi41NjMtMTUuNzIyLTExLjQ1LTI2LjIxOC0xMy45Mzd6bS0xNi40MDggMzguMjVhNjUuMTYgNjUuMTYgMCAwIDEtMTYgMTIuOTM2YzIuNCAxNS44NjMuMjc0IDMwLjUzMi01LjY4NyA0My42ODgtMTMuMSAyOC45MS00Mi4zOTMgNDkuMTk0LTc2LjA5NCA2My45MzctMTQuMTM1IDYuMTg2LTIxLjI0MiAxNS40LTI0LjE1NSAyNS41OTUtMi45MTMgMTAuMTk2LTEuMzEgMjEuNzMgNC4yNSAzMS42ODggMTEuMTIgMTkuOTEyIDM2LjQxNSAzMy45NyA3My42NTYgMTYuNjI1IDQ2LjkzNS0yMS44NiA3Ny4wOC02Ni40MjggNzkuMDY0LTExMS4xNTcgMS4yOTQtMjkuMTgtOC44OC01OC43MzctMzUuMDMtODMuMzF6bS0zMy41OTIgMTkuODRhNjQuMjczIDY0LjI3MyAwIDAgMS0xNC40NCAxLjY1N2MtMy4yMiAwLTYuMzctLjI2LTkuNDY3LS43Mi0xOC42NjggMzcuMDk3LTQ4Ljc1IDU5LjcyMy04Mi4zNzUgNjguMDYzLTEuNjI1LjQwMi0zLjI3Ljc4Ni00LjkwNyAxLjEyNWExNjYuMTk5IDE2Ni4xOTkgMCAwIDAgMzEuODE0IDE3LjQzNyA3MS42OTUgNzEuNjk1IDAgMCAxIDcuNzItMy45N2MzMS40OC0xMy43NzIgNTYuNTMzLTMyLjM2OCA2Ni41Ni01NC41IDMuOTk0LTguODEgNS45NjUtMTguNDA2IDUuMDk1LTI5LjA5MnoiLz48L3N2Zz4=',
   'pulse': 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48cGF0aCBmaWxsPSIjZGNhYWZmIiBkPSJNMjU2IDIxQzEyNi4yMTMgMjEgMjEgMTI2LjIxMyAyMSAyNTZzMTA1LjIxMyAyMzUgMjM1IDIzNSAyMzUtMTA1LjIxMyAyMzUtMjM1UzM4NS43ODcgMjEgMjU2IDIxem0wIDM4LjYyOGM0NC42NzIgMCA4NS44MzIgMTQuOTg4IDExOC44MjIgNDAuMDk3bC0zMy42MzQgMzMuNjM1Yy0yNC4xNS0xNi44MS01My41MjMtMjYuNTg1LTg1LjE4OC0yNi41ODVzLTYxLjAzOCA5Ljc3NC04NS4xODggMjYuNTg0bC0zMy42MzQtMzMuNjM0YzMyLjk5LTI1LjExIDc0LjE1LTQwLjA5NyAxMTguODIyLTQwLjA5N3ptLTE1Ni4yNzUgNzcuNTUgMzMuNjM0IDMzLjYzNWMtMTYuODEgMjQuMTQ5LTI2LjU4NCA1My41MjItMjYuNTg0IDg1LjE4N3M5Ljc3NCA2MS4wMzkgMjYuNTg0IDg1LjE4N2wtMzMuNjM0IDMzLjYzNUM3NC42MTUgMzQxLjgwMyA1OS42MjggMzAwLjY3MiA1OS42MjggMjU2czE0Ljk4OC04NS44MzIgNDAuMDk3LTExOC44MjJ6bTMxMi41NSAwYzI1LjExIDMyLjk5IDQwLjA5NyA3NC4xNSA0MC4wOTcgMTE4LjgyMnMtMTQuOTg4IDg1LjgwMy00MC4wOTcgMTE4LjgyMmwtMzMuNjM0LTMzLjYzNWMxNi44MS0yNC4xNDkgMjYuNTg0LTUzLjUyMiAyNi41ODQtODUuMTg3cy05Ljc3NC02MS4wMzgtMjYuNTg0LTg1LjE4OGwzMy42MzQtMzMuNjM0ek0yNTYgMTUwLjM5N2M1OC4zNDkgMCAxMDUuNjAzIDQ3LjI1NCAxMDUuNjAzIDEwNS42MDNTMzE0LjM1IDM2MS43NSAyNTYgMzYxLjc1IDE1MC4zOTcgMzE0LjM0OSAxNTAuMzk3IDI1NiAxOTcuNjUgMTUwLjM5NyAyNTYgMTUwLjM5N3ptMCA1MS4yNmMtMjkuOTg5IDAtNTQuMzQ0IDI0LjM1NS01NC4zNDQgNTQuMzQzczI0LjM1NSA1NC4zNDQgNTQuMzQ0IDU0LjM0NCA1NC4zNDQtMjQuMzU1IDU0LjM0NC01NC4zNDQtMjQuMzU2LTU0LjM0NC01NC4zNDQtNTQuMzQ0ek0xNzAuODEyIDM3OC42NGMyNC4xNSAxNi44MSA1My41MjMgMjYuNTg0IDg1LjE4OCAyNi41ODRzNjEuMDM4LTkuNzc0IDg1LjE4Ny0yNi41ODRsMzMuNzgyIDMzLjc4MWMtMzMuMDAzIDI1LjE3NS03NC4yNjIgNDAuMDk3LTExOC45NjkgNDAuMDk3cy04NS45NjYtMTQuOTIyLTExOC45NjktNDAuMDk3bDMzLjc4MS0zMy43ODF6Ii8+PC9zdmc+',
   'gravity': 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48cGF0aCBmaWxsPSIjZGNhYWZmIiBkPSJNMjEgMjEuMDAyYTExNTAuMTE5IDExNTAuMTE5IDAgMCAxIDcuMzQ2IDU1LjY4M2MxMS43OC00LjE1MyAyNC40LTYuNDY1IDM3LjYxMi02LjQ2NSA2Mi4zNjQgMCAxMTIuODM1IDUwLjQ3IDExMi44MzUgMTEyLjgzNXMtNTAuNDcxIDExMi45OC0xMTIuODM1IDExMi45OGMtMTAuMDQgMC0xOS44My0xLjIzLTI5LjA5LTMuNjczLS41MDkgMjYuNjE0LTEuNTMzIDUyLjI3Mi0zLjA4NiA3Ni45ODYgMjEuOTAyLTQuNDk2IDQ0LjU0My02Ljg4NCA2Ni45OTYtNi45MDUgMjIuODk0IDAgNDUuNjYgMi4zMjggNjcuNDM2IDcuMDUyIDIzLjczNyA1LjIxNyA0NS4zMzcgMTIuNzQyIDY2LjcwMyAxOS42ODggMjEuMjcyIDYuODUyIDQyLjQ5NSAxMy4zNTEgNjQuNzkxIDE2LjE2IDM0LjkzIDQuNDY1IDcyLjU3OC0uMDUgMTA0Ljc1NC0xMy4wNzUtMzAuMzEgMTUuMjczLTY4LjEwMyAyMi45MTYtMTA1LjkzIDIwLjg2Mi0yNC4wNzgtMS4zNDQtNDcuNDEzLTYuMzAyLTY5Ljc4Ny0xMS43NTMtMjIuNTItNS40MjYtNDQuNTI0LTExLjM0OS02Ni40MDgtMTQuMzk4LTQ0LjM1My02LjMtOTAuODMxLTEuMjczLTEzMC42MTIgMTIuNDg4LS4zNTcgNC4zNi0uNzg2IDguNzk4LTEuMTc1IDEzLjA3NiAzMC42MS05LjQ2NSA2My4zNzItMTQuMzY4IDk1LjkzOS0xNC4zOTggMjIuODk0IDAgNDUuNTEzIDIuMzI4IDY3LjI5IDcuMDUyIDIzLjczNiA1LjIxNyA0NS40ODMgMTIuODg4IDY2Ljg0OCAxOS44MzQgMjEuMjcyIDYuODUyIDQyLjQ5NiAxMy4yMDUgNjQuNzkyIDE2LjAxNCAzNC45MyA0LjQ2NSA3Mi41NzgtLjA1IDEwNC43NTQtMTMuMDc2LTMwLjMxIDE1LjI3My02OC4xMDQgMjIuOTE2LTEwNS45MyAyMC44NjMtMjQuMDc4LTEuMzQ1LTQ3LjQxMy02LjMwMy02OS43ODYtMTEuNzU0LTIyLjUyMi01LjQyNS00NC41MjUtMTEuMjAyLTY2LjQwOC0xNC4yNTEtNTYuNDA4LTguMDEyLTExNi4yMTUgMi4zNjItMTYxLjMxOSAyNS43MTEtMS43NDIgMTQuNzQ5LTMuNjIxIDI5LjA0Ny01LjczIDQyLjQ2IDY0Ljg0Ny0xMC4xNzQgMTQ2LjI4Ni0xNi4zMDggMjM1LjA3My0xNi4zMDggODguNzIyIDAgMTcwLjEgNi4xNDcgMjM0LjkyNSAxNi4zMDgtNi44My00My41NzItMTEuNjk2LTk0LjcxMi0xNC4yNS0xNTAuNDQ2LTIwLjc3NiA3LjUxNC00My4xODMgMTEuNjA3LTY2LjU1NiAxMS42MDctMTA4LjE1IDAtMTk1Ljg0NS04Ny42OTUtMTk1Ljg0NS0xOTUuODQ0IDAtNDQuODI0IDE1LjE4My04Ni4wMiA0MC41NS0xMTkuMDA1QzE2Ni41NzIgMzcuMjUzIDg1LjU1OCAzMS4xNiAyMSAyMS4wMDJ6bTQ2OS45OTggMGMtNTQuNTM4IDguNTc0LTEyMC44NTkgMTQuMTMtMTkzLjM0NyAxNS43Mi0zMS44NjQgMjkuOTU3LTUxLjg2MyA3Mi40MDgtNTEuODYzIDExOS41OTMgMCA5MC43ODIgNzMuNjIxIDE2NC40MDMgMTY0LjQwNSAxNjQuNDAzIDIzLjIxOSAwIDQ1LjIxNS00LjgzMiA2NS4yMzItMTMuNTE3LS40MTQtMTUuMTYyLS42OTUtMzAuNTkyLS43MzUtNDYuMjc5LTMuNCAyLjEwNC02LjgxIDQuMTAzLTEwLjQzIDUuODc3LS4yNC4xMTctLjQ5Ny4xNzktLjczNS4yOTYtMS40MDIuNjc1LTIuODMgMS40MzQtNC4yNjEgMi4wNTctLjM4Ni4xNjQtLjc5MS4yNzctMS4xNzYuNDQyLTEuMjk4LjU1LTIuNjQ2IDEuMTEtMy45NjcgMS42MTUtLjMzMy4xMjctLjY5NS4xNy0xLjAyOC4yOTdhMTIwLjgwNSAxMjAuODA1IDAgMCAxLTkuNDAzIDMuMDg1Yy0xLjYwOC40NTYtMy4yMTUuOTMyLTQuODQ4IDEuMzIyLS4xNTUuMDQzLS4yODcuMTEzLS40NDIuMTQ2LS41OTguMTQxLTEuMTYyLjMxLTEuNzYzLjQ0Mi0xLjI0LjI3Mi0yLjU2Ny41LTMuODIuNzM0LTEuMjkuMjQtMi42NjMuMzktMy45NjcuNTg4LS41MDUuMDc1LS45NjIuMjItMS40Ny4yOTctLjU5Mi4wODQtMS4xNjcuMDcyLTEuNzYyLjE0NS0zLjAwNS4zNzYtNi4wNDIuNzI2LTkuMTEuODgxaC0uNTg3Yy0xLjkwMy4wOS0zLjgwNS4xNDYtNS43My4xNDYtNjcuODkgMC0xMjIuODI1LTU1LjA4Mi0xMjIuODI1LTEyMi45NzEgMC0yLjEyMi4wNDMtNC4yMjMuMTQ2LTYuMzE4IDEuMTY2LTIzLjA0NSA4LjcyOC00NC40NzMgMjAuODYyLTYyLjQ0IDEuMTAzLTEuNjM0IDIuMi0zLjEyNiAzLjM4LTQuNzAyIDIyLjM4OC0yOS45NDcgNTguMTI3LTQ5LjM2NSA5OC40MzYtNDkuMzY1IDIuMTM1IDAgNC4yMDkuMDUgNi4zMTguMTQ1IDMuMDY4LjE1NSA2LjEwNC41MDYgOS4xMDkuODgyLjU3NS4wNzIgMS4xOS4wNjUgMS43NjMuMTQ1LjUwMi4wNzMuOTcuMjE3IDEuNDcuMjk3IDEuMzUyLjIwNiAyLjYyNy4zMzggMy45NjYuNTg3LjUyOS4wOTkgMS4wOS4xODggMS42MTYuMjk2IDEuMzAzLjI1OSAyLjY3OS41OCAzLjk2Ny44ODIuMTUuMDUuMjkxLjExMi40NDIuMTQ1IDEuNjM0LjM5IDMuMjQuODcgNC44NDggMS4zMjMgMy41NTQgMS4wMDUgNy4wMTcgMi4wNyAxMC40MzIgMy4zNzkgMS4zMzQuNTEgMi42NTQgMS4wNjIgMy45NjYgMS42MTYuMzguMTYuNzk3LjI3NyAxLjE3Ni40NDIuNjA3LjI2MyAxLjE2LjYwOCAxLjc2My44ODEgNi4wMzIgMi43NDQgMTEuODczIDUuOTA3IDE3LjMzNiA5LjU1LjIwMi4xMzYuMzg2LjMwNi41ODguNDQyIDEuMjkuODcxIDIuNTY2IDEuNzI2IDMuODIgMi42NDQuMDkuMDY1LjIwNy4wODUuMjk2LjE0Ni45MDguNjY4IDEuNzcyIDEuMzY2IDIuNjQ1IDIuMDU3IDEuNjEtMTMuMjY1IDMuMzgyLTI2LjE4NyA1LjI5LTM4LjM0NnptLTgwLjgwNSA2OS42NGMtMzYuMzE0IDAtNjUuNjc0IDI5LjM2LTY1LjY3NCA2NS42NzNzMjkuMzYgNjUuODIgNjUuNjc0IDY1LjgyIDY1LjgyLTI5LjUwNyA2NS44Mi02NS44Mi0yOS41MDctNjUuNjczLTY1LjgyLTY1LjY3M3pNNjUuOTU4IDEwMy4xM2E3OS40OTYgNzkuNDk2IDAgMCAwLTM0LjM4IDcuNzg3YzMuNzE4IDQ0Ljc1OSA1LjczIDkzLjY0NiA1LjczIDE0NS4xNTZ2MS45MWE3OS45ODcgNzkuOTg3IDAgMCAwIDI4LjY1IDUuMjljNDQuMjA3IDAgNzkuOTI0LTM1Ljg2NSA3OS45MjQtODAuMDcycy0zNS43MTctODAuMDctNzkuOTI0LTgwLjA3eiIvPjwvc3ZnPg==',
   'eclipse': 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48cGF0aCBmaWxsPSIjZGNhYWZmIiBkPSJNMjg1LjM3NSAyMWMyMS4xODMgMi43NDEgNDEuNiA4LjEyIDYwLjY2IDE2LjAxbC0zNi44NjYgOTcuNjcxYTEzNS4zMSAxMzUuMzEgMCAwIDEgMjMuNzkzIDEzLjY2bDY2LjUzNS04MC42MzVjMTYuNyAxMi43MzEgMzEuNTU3IDI3LjYgNDQuMzU2IDQ0LjIxbC04MC45MjggNjYuMjRhMTMyLjY0IDEzMi42NCAwIDAgMSAxMy42NiAyMy41bDk4LjExMi0zNi41NzFjNy45NzggMTkuMDQ3IDEzLjU2IDM5LjE4OCAxNi4zMDMgNjAuMzY1bC0xMDMuNCAxNi44OWMuNDcgNC41MTguNTg3IDkuMDIuNTg3IDEzLjY2IDAgNC41OS0uMTI3IDkuMTkyLS41ODcgMTMuNjZMNDkxIDI4Ni42OTdjLTIuNzQzIDIxLjE3OC04LjMyNSA0MS4zMi0xNi4zMDMgNjAuMzY2bC05OC4xMTItMzYuNzJjLTMuNzY4IDguMzctOC4zMTIgMTYuMy0xMy42NiAyMy42NDhsODAuOTI4IDY2LjI0Yy0xMi44MDUgMTYuNjA1LTI3LjY1NiAzMS40NzgtNDQuMzU2IDQ0LjIxbC02Ni41MzUtODAuNjM1YTEzNS40NTggMTM1LjQ1OCAwIDAgMS0yMy43OTMgMTMuNjZsMzYuODY2IDk3LjY3MmMtMTkuMDYgNy44ODktMzkuNDc3IDEzLjEyMS02MC42NiAxNS44NjJsLTE3LjAzOC0xMDIuNTE5Yy00LjA2Mi40MTQtOC4xODguNTYyLTEyLjMzNy41ODgtNC4xNDgtLjA1LTguMjc1LS4xNzQtMTIuMzM4LS41ODhsLTE3LjAzNyAxMDIuNTJjLTIxLjE4My0yLjc0Mi00MS42LTcuOTc0LTYwLjY2LTE1Ljg2M2wzNi44NjYtOTcuNjcyYTEzNS40NzYgMTM1LjQ3NiAwIDAgMS0yMy43OTQtMTMuNjZsLTY2LjUzNCA4MC42MzVjLTE2LjcwMS0xMi43MzItMzEuNTUyLTI3LjYwNS00NC4zNTYtNDQuMjFsODAuOTI4LTY2LjI0Yy01LjM0OC03LjM0Ny05Ljg5My0xNS4yNzktMTMuNjYtMjMuNjQ3bC05OC4xMTIgMzYuNzE5Yy03Ljk3OC0xOS4wNDctMTMuNTYtMzkuMTg4LTE2LjMwMy02MC4zNjZsMTAzLjQtMTcuMDM3Yy0uNDYtNC40NjgtLjU4Ny05LjA3MS0uNTg3LTEzLjY2IDAtNC42NC4xMTctOS4xNDIuNTg3LTEzLjY2TDIxIDIyNS40NWMyLjc0Mi0yMS4xNzcgOC4zMjUtNDEuMzE4IDE2LjMwMy02MC4zNjVsOTguMTEyIDM2LjU3MWExMzIuNjQgMTMyLjY0IDAgMCAxIDEzLjY2LTIzLjVsLTgwLjkyOC02Ni4yNGMxMi43OTgtMTYuNjEgMjcuNjU1LTMxLjQ3OSA0NC4zNTYtNDQuMjFsNjYuNTM0IDgwLjYzNWExMzUuMzM5IDEzNS4zMzkgMCAwIDEgMjMuNzk0LTEzLjY2TDE2NS45NjUgMzcuMDFjMTkuMDYtNy44OSAzOS40NzctMTMuMjY4IDYwLjY2LTE2LjAxbDE3LjAzNyAxMDIuNjY3YzQuMDYyLS40MTggOC4xODktLjU2NSAxMi4zMzgtLjU4OCA0LjE1LjA0MyA4LjI3NS4xNyAxMi4zMzcuNTg4TDI4NS4zNzUgMjF6TTI1NiAxNDAuMTE2Yy02My43MjcuNzgyLTExNS4wMDQgNTIuMzQ3LTExNS4wMDMgMTE1Ljg4NGwzMy45MjgtMi40OTdjMCA0NC44NTggMzYuMTQ5IDc3LjU1OCA4MS4wNzUgNzguNDMxIDQ0LjkyNy0uODczIDgxLjA3NS0zMy41NzQgODEuMDc1LTc4LjQzTDM3MS4wMDMgMjU2YzAtNjMuNTM3LTUxLjI3NS0xMTUuMTAyLTExNS4wMDMtMTE1Ljg4NHptMjIuOTEzIDE4LjA2NWMzNS4zMTYgMCA0Ni41NiA2NS43MTkgNDYuNTYgOTcuNTI1IDAgNDAuMjMtMzAuODk0IDYxLjUzNS02OS40NzMgNjIuNDIyLTM4LjU3OC0uODg3LTY5LjQ3Mi0yMi4xOTMtNjkuNDcyLTYyLjQyMiAwLTMxLjgwNiAxMS4yNDMtOTcuNTI1IDQ2LjU2LTk3LjUyNXY1My42MWMwIDEzLjU0NCAxMC4wNzIgMjQuNTM2IDIyLjkxMiAyNS40MDkgMTIuODQtLjg3MyAyMi45MTItMTEuODY1IDIyLjkxMi0yNS40MXYtNTMuNjA5eiIvPjwvc3ZnPg=='
@@ -4161,6 +4080,8 @@ const EFFECTS = [
     list:[
       { id:'choke',  name:'Shrink',      dur:10, durTxt:'10s',
         desc:'Next player to hit the ball has their paddle shrink 40%.' },
+      { id:'invert', name:'Invert',      dur:5,  durTxt:'5s',
+        desc:'Next player to hit the ball has their controls reversed: swipe right, the paddle goes left.' },
     ]},
   { key:'w', title:'Wildcards', col:'#dcaaff',
     blurb:'',
@@ -4907,7 +4828,7 @@ window.__hex = {
     balls: balls.length,
     Modifiers: Modifiers.map(t => t.fx.id), ModifiersOn, ModifierRate, mode: gameMode,
     ModifierPos: Modifiers.map(t => ({ x: +t.x.toFixed(1), y: +t.y.toFixed(1), r: +t.r.toFixed(1) })),
-    ModifierTimer: +ModifierTimer.toFixed(2), spinRate, dR: +(R - Rtarget).toFixed(2), serveTimer: +serveTimer.toFixed(2),
+    ModifierTimer: +ModifierTimer.toFixed(2), dR: +(R - Rtarget).toFixed(2), serveTimer: +serveTimer.toFixed(2),
     fx: players.map(p => Object.keys(p.fx || {})),
     gfx: Object.keys(gfx),
     vel: players.map(p => Math.round(p.vel || 0)),
