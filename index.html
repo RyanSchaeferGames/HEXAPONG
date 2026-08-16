@@ -1026,7 +1026,7 @@ const DIFF = [
 let diffIdx = 1;
 let startLives = 3;
 let displayName = 'RHYNOCK';
-const VERSION = '0.7.3';
+const VERSION = '0.7.4';
 /* Online leaderboard (Cloudflare Worker + D1).
    Leave empty to keep the game fully offline.
    After you deploy the Worker, set this to your workers.dev URL, e.g.:
@@ -1062,6 +1062,7 @@ Optional online leaderboard (Cloudflare Worker + D1) via LEADERBOARD_URL — lea
   - Gold (buff) → last hitter only
   - Red (nerf) → next player to hit (pending on the ball)
   - Violet (wildcard) → arena-wide
+- Aiming (0.7.4): outgoing direction comes from contact point, NOT angle of incidence (a mirror bounce would leave a stationary paddle unable to aim). ang = sign(off) * AIM_MAX_ANGLE * |off|^AIM_CURVE, with AIM_MAX_ANGLE 62\u00b0 and AIM_CURVE 1.35. Paddle motion (PADDLE_CARRY) adds fine steering on top, clamped by MAX_DEFLECT. Tune AIM_MAX_ANGLE/AIM_CURVE to change how much control the player has.
 - Spawn odds are FLAT as of 0.7.3 (pickEffect): one combined pool, every modifier equally likely, no category weighting. Ineligible entries are excluded so another modifier takes the slot: Repair while all walls are full, Split at 3+ balls, and any id already on the field.
 - Nerf roster: choke (Shrink, 10s) and invert (Invert, fixed 5s \u2014 exempt from fxDur arena scaling).
 - Concede pacing (SERVE_DELAY_LIFE_LOST 1s / SERVE_DELAY_KNOCKOUT 2s): hidden holds added to serveTimer after a concede. serveTimer freezes the ball only; paddles and arena animation keep running and no countdown UI appears.
@@ -1097,6 +1098,12 @@ ${VERSION} — Triple-click main-menu version opens this project context panel f
    Append a new entry and bump the patch digit of VERSION on every change set.
    The in-game Changelog panel reads this array directly. */
 const CHANGELOG = [
+  { v: '0.7.4', date: '2026-08-16', notes: [
+    'Aiming reworked for deliberate play. The ball is still aimed by where it strikes the paddle (Pong-style), but the mapping changed: max deflection is now 62\u00b0 instead of ~87\u00b0, and the curve eases so the paddle centre is precise while the tips reach full angle. Small corrections near the middle are ~4x finer than before, and the outer half of the paddle now produces useful angles instead of near-parallel wall-skimmers.',
+    'Practical effect: 62\u00b0 covers every opponent wall in a hexagon, so lining up a Modifier or picking a rival is a real decision. Swiping through the ball still adds roughly 10-25\u00b0 of fine adjustment on top, keeping a skill ceiling without making the ball fully obedient.',
+    'Aim tunables exposed as AIM_MAX_ANGLE and AIM_CURVE for further playtesting.',
+    'Briefing now explains aiming, which was previously undocumented despite being the core skill.',
+  ]},
   { v: '0.7.3', date: '2026-08-16', notes: [
     'New nerf: Invert. The next player to return the ball has their controls reversed for 5 seconds \u2014 swipe right and the paddle goes left. Fixed 5s regardless of arena size.',
     'Modifier spawn odds are now flat: every modifier has an equal chance, with no buff/nerf/wildcard category weighting. Repair still sits out while every wall is at full lives, and another modifier takes its slot instead.',
@@ -2911,8 +2918,24 @@ function hitModifiers(b) {
   }
 }
 
+/* ── aiming model (Pong-style: contact point aims the ball) ────────────────
+   The ball's outgoing direction is set by WHERE it hits the paddle, not by the
+   angle it arrived at. That is what makes aiming possible at all: a mirror-style
+   bounce would leave a stationary paddle with no say in where the ball goes.
+
+   Two tunables shape how strategic that aim feels:
+     AIM_MAX_ANGLE — widest deflection from straight-out. Opponents in a hexagon
+       sit ~60° apart, so ~62° reaches any of them while stopping short of the
+       near-parallel angles that just skim your own wall and waste paddle width.
+     AIM_CURVE — >1 makes the paddle centre gentle and the tips strong. Small
+       corrections near the middle stay precise; committing to a tip is a
+       deliberate, readable choice. 1.0 would be a straight linear mapping. */
+const AIM_MAX_ANGLE = 62 * Math.PI / 180;
+const AIM_CURVE     = 1.35;
+
 // How much of the paddle's own motion is carried into the ball, and the hard ceiling on
 // the deflection angle so a fast swipe can never send the ball skimming along the wall.
+// Contact point gives coarse aim; swiping through the ball is the fine adjustment on top.
 const BASE_CARRY = 0.34; const MAX_DEFLECT = 1.28;
 const PADDLE_CARRY = BASE_CARRY;
 
@@ -2951,11 +2974,12 @@ function collide(b) {
 
       if (dist < BALL.r + PAD.thick * 0.5 && vn < 0) {
         const off = clamp((tc - c) / hs, -1, 1);
-        // Trapezoid ends: mild in the flat middle, stronger on the angled tips so
-        // corner hits deliberately steer left/right.
+        // Contact point aims the ball. AIM_CURVE keeps the paddle centre precise for
+        // small corrections while the tips still reach the full AIM_MAX_ANGLE, so the
+        // whole paddle is usable aim instead of the outer half being wasted on
+        // near-parallel angles.
+        const ang = Math.sign(off || 1) * AIM_MAX_ANGLE * Math.pow(Math.abs(off), AIM_CURVE);
         const aOff = Math.abs(off);
-        const tipBoost = aOff < 0.45 ? (aOff / 0.45) * 0.7 : 0.7 + (aOff - 0.45) / 0.55 * 0.55;
-        const ang = Math.sign(off || 1) * tipBoost * 1.22;   // up to ~70deg at the tip
         let sp = Math.min(Math.hypot(b.vx, b.vy) * 1.03,
                           R * d.ballMax * (1 + 0.45 * pressure));
 
@@ -4031,6 +4055,9 @@ const BRIEF_ROWS = [
     : 'Move the mouse, or use <span class="k">&larr;</span><span class="k">&rarr;</span> / ' +
       '<span class="k">A</span><span class="k">D</span>. Your paddle is on the bottom wall.'],
   ['Your wall', 'Your wall has one glowing block per life. Miss the ball and a block burns away.'],
+  ['Aim', 'Where the ball hits your paddle decides where it goes. Centre sends it straight out; ' +
+    'further toward a tip angles it further that way. Swiping <b>through</b> the ball as you make ' +
+    'contact bends it a little further still. Use it to line up Modifiers or pick a rival\u2019s wall.'],
   ['Collapse', 'When a wall runs out of lives it is removed and the arena shrinks. Last one alive wins.'],
   ['Decay', 'The longer you last, the faster the ball and the smaller every paddle.'],
   ['Modifiers', 'Hit a Modifier and the effect depends on colour. ' +
