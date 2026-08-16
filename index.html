@@ -1026,7 +1026,7 @@ const DIFF = [
 let diffIdx = 1;
 let startLives = 3;
 let displayName = 'RHYNOCK';
-const VERSION = '0.7.4';
+const VERSION = '0.7.6';
 /* Online leaderboard (Cloudflare Worker + D1).
    Leave empty to keep the game fully offline.
    After you deploy the Worker, set this to your workers.dev URL, e.g.:
@@ -1039,7 +1039,7 @@ const LEADERBOARD_URL = 'https://hexapong-leaderboard.hexapong.workers.dev';
 const PROJECT_CONTEXT = `PROJECT: HEXAPONG
 Single self-contained file: index.html (no build step, no external assets beyond embedded SVG data-URIs).
 Open in a browser; fully offline-capable.
-Optional online leaderboard (Cloudflare Worker + D1) via LEADERBOARD_URL — leave empty or unreachable for offline-only play. Scores submit automatically on match end when online. Recent matches load from /api/recent.
+Optional online leaderboard (Cloudflare Worker + D1) via LEADERBOARD_URL — leave empty or unreachable for offline-only play. Scores submit automatically on match end when online. Recent matches load from /api/recent. LB_CUTOFF hides any row older than a fixed instant from BOTH boards (client-side display filter only; rows remain in D1). Loaders over-fetch and then filter, so raise the fetch limits if the hidden backlog ever grows large.
 
 === VERSION & CHANGELOG (MANDATORY ON EVERY CHANGE SET) ===
 - Constant: const VERSION = 'x.y.z';
@@ -1065,6 +1065,8 @@ Optional online leaderboard (Cloudflare Worker + D1) via LEADERBOARD_URL — lea
 - Aiming (0.7.4): outgoing direction comes from contact point, NOT angle of incidence (a mirror bounce would leave a stationary paddle unable to aim). ang = sign(off) * AIM_MAX_ANGLE * |off|^AIM_CURVE, with AIM_MAX_ANGLE 62\u00b0 and AIM_CURVE 1.35. Paddle motion (PADDLE_CARRY) adds fine steering on top, clamped by MAX_DEFLECT. Tune AIM_MAX_ANGLE/AIM_CURVE to change how much control the player has.
 - Spawn odds are FLAT as of 0.7.3 (pickEffect): one combined pool, every modifier equally likely, no category weighting. Ineligible entries are excluded so another modifier takes the slot: Repair while all walls are full, Split at 3+ balls, and any id already on the field.
 - Nerf roster: choke (Shrink, 10s) and invert (Invert, fixed 5s \u2014 exempt from fxDur arena scaling).
+- Eclipse fairness: after each rotation giveEclipseRunway() backs the ball along its velocity until the nearest wall is >= ECLIPSE_MIN_REACT seconds away, capped so it never leaves the arena. Without it the ball can unfreeze inches from a player who had no way to see it coming.
+- reanchorDrag() runs every frame while eclipseT > 0: the touch anchor is wall-relative, so a rotating wall invalidates it and the paddle stops answering the finger.
 - Concede pacing (SERVE_DELAY_LIFE_LOST 1s / SERVE_DELAY_KNOCKOUT 2s): hidden holds added to serveTimer after a concede. serveTimer freezes the ball only; paddles and arena animation keep running and no countdown UI appears.
 - Main menu has a Modifiers On/Off toggle (ModifiersOn, remembered). Play button (#mPlay / startSimplePlay()) starts Normal difficulty, 3 lives, mid spawn rate, endless off; mode is modifier or vanilla based on the toggle.
 - Custom mode still exists in code (#customPanel) with lives, spawn rate, per-modifier toggles (ModifierToggles), endless, difficulty — but is not exposed on the simplified main menu.
@@ -1098,6 +1100,13 @@ ${VERSION} — Triple-click main-menu version opens this project context panel f
    Append a new entry and bump the patch digit of VERSION on every change set.
    The in-game Changelog panel reads this array directly. */
 const CHANGELOG = [
+  { v: '0.7.6', date: '2026-08-16', notes: [
+    'Disabled Gravity Well wildcard — removed from the modifier pool so it no longer spawns.',
+  ]},
+  { v: '0.7.5', date: '2026-08-16', notes: [
+    'Fixed Eclipse Drift leaving a player with an undefendable ball. The ball freezes wherever it is, so if it was already deep in the arena, whoever rotated into its path inherited a full-speed ball a fraction of a second from their wall. The ball is now walked back along its own path after each rotation so the new defender gets at least 0.85s of runway. Direction and speed are unchanged, so Eclipse still redirects the ball at a new victim \u2014 they just get a fair look at it.',
+    'Fixed the paddle going unresponsive during an Eclipse rotation on touch. The finger anchor is measured along your wall, and the wall was rotating out from under a resting finger without the anchor being updated, so drags drifted or stopped registering until you lifted off (pausing and resuming also cleared it). The anchor now re-syncs every frame while the arena turns.',
+  ]},
   { v: '0.7.4', date: '2026-08-16', notes: [
     'Aiming reworked for deliberate play. The ball is still aimed by where it strikes the paddle (Pong-style), but the mapping changed: max deflection is now 62\u00b0 instead of ~87\u00b0, and the curve eases so the paddle centre is precise while the tips reach full angle. Small corrections near the middle are ~4x finer than before, and the outer half of the paddle now produces useful angles instead of near-parallel wall-skimmers.',
     'Practical effect: 62\u00b0 covers every opponent wall in a hexagon, so lining up a Modifier or picking a rival is a real decision. Swiping through the ball still adds roughly 10-25\u00b0 of fine adjustment on top, keeping a skill ceiling without making the ball fully obedient.',
@@ -1239,6 +1248,34 @@ try {
   if (sc) { const a = JSON.parse(sc); if (Array.isArray(a)) scoreBoard = a; }
 } catch (e) { /* private mode / blocked storage */ }
 
+/* ── leaderboard cutoff ────────────────────────────────────────────────────
+   Everything submitted before this instant is hidden from the leaderboard and
+   the Recent Matches feed, so the public boards start from a clean slate.
+
+   NOTE: this is a DISPLAY filter only. The rows still exist in the D1 database
+   and the Worker still returns them; the client just refuses to render them.
+   To purge them for real, delete them server-side.
+
+   2026-08-16 10:00 Central. Central is on daylight time (UTC-5) in August, so
+   that is 15:00 UTC. If you meant standard time (UTC-6), use T16:00:00Z. */
+const LB_CUTOFF = Date.parse('2026-08-16T15:00:00Z');
+
+// Rows with no readable timestamp are treated as pre-cutoff: anything that old
+// predates the boards we want to show, and guessing "keep" would leak them back in.
+function afterLbCutoff(r) {
+  if (!LB_CUTOFF) return true;
+  const d = parseLbTimestamp(r && (r.at || r.created || r.ts || r.time || r.date || r.submitted) || null);
+  return !!d && d.getTime() >= LB_CUTOFF;
+}
+
+// Filter, then renumber so ranks read 1,2,3… instead of inheriting server ranks
+// with holes punched in them. `limit` trims back to the size the panel wants.
+function applyLbCutoff(rows, limit) {
+  const kept = (rows || []).filter(afterLbCutoff);
+  const out = limit ? kept.slice(0, limit) : kept;
+  return out.map((r, i) => Object.assign({}, r, { rank: i + 1 }));
+}
+
 /* Recent matches: online feed from GET /api/recent (newest first). */
 function recentRowHtml(r) {
   const nm = String(r.name || 'PLAYER').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -1259,8 +1296,11 @@ function recentRowHtml(r) {
 }
 async function fetchRecentScores(limit) {
   if (!LEADERBOARD_URL) return null;
+  // Over-fetch: the cutoff filter runs client-side, so ask for far more than we
+  // need or a wall of old rows would leave the panel looking empty.
+  const want = Math.max(100, (limit || 25) * 4);
   const url = LEADERBOARD_URL.replace(/\/+$/, '') +
-    '/api/recent?limit=' + encodeURIComponent(limit || 25);
+    '/api/recent?limit=' + encodeURIComponent(want);
   const res = await fetch(url, { method: 'GET', cache: 'no-store' });
   if (!res.ok) throw new Error('HTTP ' + res.status);
   const data = await res.json();
@@ -1277,8 +1317,8 @@ async function loadMiniRecent() {
   body.className = 'minilb-body lbstatus';
   body.textContent = 'Loading…';
   try {
-    const rows = await fetchRecentScores(5);
-    if (!rows || !rows.length) {
+    const rows = applyLbCutoff(await fetchRecentScores(5), 5);
+    if (!rows.length) {
       body.textContent = 'No matches yet';
       return;
     }
@@ -1300,8 +1340,8 @@ async function loadRecentPanel() {
   body.className = 'lbstatus';
   body.textContent = 'Loading…';
   try {
-    const rows = await fetchRecentScores(25);
-    if (!rows || !rows.length) {
+    const rows = applyLbCutoff(await fetchRecentScores(25), 25);
+    if (!rows.length) {
       body.textContent = 'No matches yet';
       return;
     }
@@ -1769,12 +1809,13 @@ async function loadLeaderboard() {
   body.className = 'lbstatus';
   body.textContent = 'Loading…';
   try {
+    // Over-fetch so the cutoff filter can still fill a top 25
     const url = LEADERBOARD_URL.replace(/\/+$/, '') +
-      '/api/top?limit=25&period=' + encodeURIComponent(lbPeriod || 'all');
+      '/api/top?limit=200&period=' + encodeURIComponent(lbPeriod || 'all');
     const res = await fetch(url, { method: 'GET', cache: 'no-store' });
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const data = await res.json();
-    const rows = data.scores || [];
+    const rows = applyLbCutoff(data.scores || [], 25);
     if (!rows.length) {
       body.textContent = emptyLbMsg();
       return;
@@ -1798,12 +1839,13 @@ async function loadMiniLeaderboard() {
   body.className = 'minilb-body lbstatus';
   body.textContent = 'Loading…';
   try {
+    // Over-fetch so the cutoff filter can still fill a top 5
     const url = LEADERBOARD_URL.replace(/\/+$/, '') +
-      '/api/top?limit=5&period=' + encodeURIComponent(lbPeriod || 'all');
+      '/api/top?limit=200&period=' + encodeURIComponent(lbPeriod || 'all');
     const res = await fetch(url, { method: 'GET', cache: 'no-store' });
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const data = await res.json();
-    const rows = data.scores || [];
+    const rows = applyLbCutoff(data.scores || [], 5);
     if (!rows.length) {
       body.textContent = emptyLbMsg();
       return;
@@ -2512,6 +2554,18 @@ function dragMove(x, y) {
   if (want < lo || want > hi) { drag.proj = projOnWall(x, y, w); drag.pos = p.pos; }
 }
 
+// The drag anchor is measured along the player's wall. Eclipse rotates that wall out
+// from under a resting finger, so the stored anchor stops describing where the finger
+// actually is and the paddle drifts or stops answering until the player lifts off.
+// Re-anchor every frame while the arena is turning to keep the grip honest.
+function reanchorDrag() {
+  if (!drag.active) return;
+  const p = players[PLAYER], w = playerWall();
+  if (!p || !w) return;
+  drag.proj = projOnWall(drag.lastX, drag.lastY, w);
+  drag.pos = p.pos;
+}
+
 cv.addEventListener('touchstart', e => {
   touchOwns = true; unlockAudio();
   const t = e.changedTouches[0];
@@ -2660,11 +2714,15 @@ function update(dt) {
     eclipseT -= dt;
     eclipseSpin += eclipseRate * dt;
     buildWalls();
+    reanchorDrag();   // wall is moving under the finger; keep the drag anchor current
     if (eclipseT <= 0) {
       eclipseT = 0;
       eclipseRate = 0;
       for (const b of balls) {
         if (b._fvx !== undefined) { b.vx = b._fvx; b.vy = b._fvy; delete b._fvx; delete b._fvy; }
+        // The walls moved while the ball sat still: make sure whoever is now in its
+        // path actually has time to reach it before it scores on them.
+        giveEclipseRunway(b);
       }
       // Orientation shock: AI aim is briefly less reliable right after a spin ends.
       postEclipseMissT = POST_ECLIPSE_MISS_DUR;
@@ -3502,6 +3560,60 @@ function draw() {
 
 /* Dotted drag guide: midway between the bottom of the arena and the screen edge,
    roughly the width of the player's paddle — shows where to rest a finger on touch. */
+/* Eclipse rotates the walls but leaves the ball's stored velocity untouched, which is
+   the whole point: play resumes pointed at a different seat. The catch is that the ball
+   freezes wherever it happened to be. If it was already deep in the arena, whoever spins
+   into its path inherits a full-speed ball a fraction of a second from their wall and
+   cannot possibly defend it.
+
+   So after each rotation, walk the ball back along its own travel direction until the
+   nearest wall is at least ECLIPSE_MIN_REACT seconds away. Direction and speed are kept,
+   so the eclipse still redirects the ball at a new victim — they just get a fair look at
+   it. Backing off is capped so the ball can never be pushed out through the far side. */
+const ECLIPSE_MIN_REACT = 0.85;   // seconds of runway the new defender is guaranteed
+
+// Soonest time (seconds) until this ball reaches any wall's paddle face. null = none inbound.
+function timeToImpact(b) {
+  let best = null;
+  for (const w of walls) {
+    const vn = b.vx * w.nx + b.vy * w.ny;
+    if (vn >= -0.001) continue;                       // moving away from this wall
+    const s = (b.x - w.ax) * w.nx + (b.y - w.ay) * w.ny;
+    if (s <= 0) continue;                             // already past it
+    const t = (s - padFaceS()) / (-vn);
+    if (t >= 0 && (best === null || t < best)) best = t;
+  }
+  return best;
+}
+
+// Is this position comfortably inside every wall?
+function insideArena(x, y, margin) {
+  for (const w of walls) {
+    if ((x - w.ax) * w.nx + (y - w.ay) * w.ny < margin) return false;
+  }
+  return true;
+}
+
+function giveEclipseRunway(b) {
+  const sp = Math.hypot(b.vx, b.vy);
+  if (sp < 1e-6) return;
+  const t = timeToImpact(b);
+  if (t === null || t >= ECLIPSE_MIN_REACT) return;   // already has room
+  const ux = b.vx / sp, uy = b.vy / sp;
+  const need = (ECLIPSE_MIN_REACT - t) * sp;          // distance to give back
+  const margin = padFaceS() + BALL.r;
+  // Step backwards, keeping the last position that still sits inside the arena
+  const STEPS = 12;
+  let bx = b.x, by = b.y;
+  for (let i = 1; i <= STEPS; i++) {
+    const d = need * (i / STEPS);
+    const nx = b.x - ux * d, ny = b.y - uy * d;
+    if (!insideArena(nx, ny, margin)) break;
+    bx = nx; by = ny;
+  }
+  b.x = bx; b.y = by;
+}
+
 function drawTouchGuide() {
   if (!TOUCH || !running || over || ending) return;
   const me = players[PLAYER];
@@ -4117,8 +4229,6 @@ const EFFECTS = [
         desc:'A second ball enters play. Either one can score on anybody.' },
       { id:'pulse',    name:'Pulse Contract', dur:0, durTxt:'1.5–3.5s',
         desc:'The whole arena squeezes inward and snaps back over a random 1.5–3.5 seconds.' },
-      { id:'gravity',  name:'Gravity Well', dur:8, durTxt:'8s', global:true,
-        desc:'A hard pull toward the centre of the arena bends every ball\u2019s path. Lead your shots.' },
       { id:'eclipse',  name:'Eclipse Drift', dur:0,  durTxt:'2–5s', global:true,
         desc:'The ball freezes while the arena spins for a random 2–5 seconds, then play resumes at once. 15 seconds later it spins back to the original angle the same way.' },
     ]},
