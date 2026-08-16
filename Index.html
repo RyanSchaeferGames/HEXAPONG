@@ -1026,7 +1026,7 @@ const DIFF = [
 let diffIdx = 1;
 let startLives = 3;
 let displayName = 'RHYNOCK';
-const VERSION = '0.7.5';
+const VERSION = '0.7.6';
 /* Online leaderboard (Cloudflare Worker + D1).
    Leave empty to keep the game fully offline.
    After you deploy the Worker, set this to your workers.dev URL, e.g.:
@@ -1100,6 +1100,9 @@ ${VERSION} — Triple-click main-menu version opens this project context panel f
    Append a new entry and bump the patch digit of VERSION on every change set.
    The in-game Changelog panel reads this array directly. */
 const CHANGELOG = [
+  { v: '0.7.6', date: '2026-08-16', notes: [
+    'Disabled Gravity Well wildcard — removed from the modifier pool so it no longer spawns.',
+  ]},
   { v: '0.7.5', date: '2026-08-16', notes: [
     'Fixed Eclipse Drift leaving a player with an undefendable ball. The ball freezes wherever it is, so if it was already deep in the arena, whoever rotated into its path inherited a full-speed ball a fraction of a second from their wall. The ball is now walked back along its own path after each rotation so the new defender gets at least 0.85s of runway. Direction and speed are unchanged, so Eclipse still redirects the ball at a new victim \u2014 they just get a fair look at it.',
     'Fixed the paddle going unresponsive during an Eclipse rotation on touch. The finger anchor is measured along your wall, and the wall was rotating out from under a resting finger without the anchor being updated, so drags drifted or stopped registering until you lifted off (pausing and resuming also cleared it). The anchor now re-syncs every frame while the arena turns.',
@@ -4226,8 +4229,6 @@ const EFFECTS = [
         desc:'A second ball enters play. Either one can score on anybody.' },
       { id:'pulse',    name:'Pulse Contract', dur:0, durTxt:'1.5–3.5s',
         desc:'The whole arena squeezes inward and snaps back over a random 1.5–3.5 seconds.' },
-      { id:'gravity',  name:'Gravity Well', dur:8, durTxt:'8s', global:true,
-        desc:'A hard pull toward the centre of the arena bends every ball\u2019s path. Lead your shots.' },
       { id:'eclipse',  name:'Eclipse Drift', dur:0,  durTxt:'2–5s', global:true,
         desc:'The ball freezes while the arena spins for a random 2–5 seconds, then play resumes at once. 15 seconds later it spins back to the original angle the same way.' },
     ]},
