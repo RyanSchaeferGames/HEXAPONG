@@ -1043,7 +1043,7 @@ const DIFF = [
 let diffIdx = 1;
 let startLives = 3;
 let displayName = 'RHYNOCK';
-const VERSION = '0.6.19';
+const VERSION = '0.7.0';
 /* Online leaderboard (Cloudflare Worker + D1).
    Leave empty to keep the game fully offline.
    After you deploy the Worker, set this to your workers.dev URL, e.g.:
@@ -1108,112 +1108,28 @@ ${VERSION} — Triple-click main-menu version opens this project context panel f
    Append a new entry and bump the patch digit of VERSION on every change set.
    The in-game Changelog panel reads this array directly. */
 const CHANGELOG = [
-  { v: '0.6.19', date: '2026-08-16', notes: [
-    'Survival duration scale uses √(time/150) instead of /180.',
-    'Paddle hits escalate: first return +500, each later return +100 more (600, 700, …).',
-    'Removed difficulty/mode multiplier from score (always was ×1.5 on main-menu runs).',
-    'Scoring help panel updated to match.',
+  { v: '0.7.0', date: '2026-08-16', notes: [
+    'Modifier targeting: gold buffs the last hitter, red nerfs the next return, violet stays arena-wide.',
+    'Scoring overhaul: survival = seconds × 100 × (1 + √(time/150)); paddle returns escalate (+500, +600, …); buff +5000 / nerf −5000 / wild +2500; placement multiplies the subtotal (6th ×1 → 1st ×3). No difficulty/mode score multiplier.',
+    'Results: score breakdown under the final total; Modified / Vanilla labels; leaderboard rows show place (e.g. 5th of 6).',
+    'Main menu: Scoring help panel; High Score band opens Stats; Recent Matches (online /api/recent); compact leaderboard + full top 25.',
+    'AI: blunder/aim soft-scale with pressure²; Pulse/Gravity raise blunder +25%; post-Eclipse shock +20% for 2.5s.',
+    'Settings trimmed (removed Paddle Spin, Haptics, Screen Shake, colour-blind shapes). Stats: single high-score board (top 10).',
+    'Project Context panel via silent triple-click on the version credit; living architecture brief for maintainers.',
+    'Local High Scores mode label fixed (Modifier vs Vanilla case match).',
   ]},
-  { v: '0.6.18', date: '2026-08-16', notes: [
-    'Main menu: replaced bottom Stats button with Scoring (how score is calculated). High Score band still opens Stats.',
-  ]},
-  { v: '0.6.17', date: '2026-08-16', notes: [
-    'Scoring: placement is a multiplier (6th 1× → 1st 3×) applied to earned total before difficulty.',
-    'Scoring: every paddle hit is +500; buff +5000, nerf −5000, wildcard +2500 (flat, then × placement × difficulty).',
-    'Results breakdown shows Modified / Vanilla instead of difficulty name; leaderboard rows show place (e.g. 5th of 6).',
-    'AI: blunder chance and aim error soft-scale with pressure² (natural late-game fray; Expert barely moves).',
-  ]},
-  { v: '0.6.16', date: '2026-08-16', notes: [
-    'Main-menu version text: silent triple-click opens a Project Context panel (for AI agents / maintainers). Appearance unchanged.',
-    'PROJECT_CONTEXT constant holds the living architecture brief; update it when modes, scoring, or UI wiring change.',
-  ]},
-  { v: '0.6.15', date: '2026-08-16', notes: [
-    'Results screen: score breakdown under the final score (survival, paddle hits, modifiers, placement, difficulty).',
-  ]},
-  { v: '0.6.14', date: '2026-08-15', notes: [
-    'AI only: Pulse Contract and Gravity Well raise blunder chance by +25% while active.',
-    'AI only: after Eclipse Drift ends, blunder chance is raised by +20% for 2.5s (orientation shock).',
-    'Boost is additive on the difficulty’s base blunder rate; human aim is unchanged.',
-  ]},
-  { v: '0.6.13', date: '2026-08-15', notes: [
-    'Leaderboard/Recent timestamps include local military time (machine timezone).',
-    'Modifier play icon is a hexagon with M (matches Vanilla V style).',
-    'Mode labels: Modified vs Vanilla on leaderboard and recent matches.',
-  ]},
-  { v: '0.6.12', date: '2026-08-15', notes: [
-    'Recent Matches now loads from the online leaderboard (/api/recent) — global newest scores.',
-  ]},
-  { v: '0.6.11', date: '2026-08-15', notes: [
-    'Settings: removed Paddle Spin, Haptics, Screen Shake, and Colour-blind shapes.',
-    'Stats page: removed difficulty tabs; High Scores sit below Last Run and Career (top 10).',
-    'Career and Last Run stats retuned (modifiers tracked by buff / nerf / wildcard).',
-    'Vanilla play icon now shows a V inside the hexagon.',
-    'Main menu Recent Matches (top 5); full list of last 25 on tap.',
-  ]},
-  { v: '0.6.10', date: '2026-08-15', notes: [
-    'Buffs (gold) now apply only to the last player who hit the ball.',
-    'Nerfs (red) now apply only to the next player who hits the ball (pending on the ball).',
-    'Wildcards remain arena-wide.',
-    'Main-menu ENTER ARENA icon fixed to M when Modifiers are on (MODES.modifier.icon).',
-    'Codex note, briefing, and effect descriptions updated to match new targeting.',
-    'Fixed relocateModifiers dropping modifiers mid-loop when the arena shrinks.',
-  ]},
-  { v: '0.6.9', date: '2026-08-15', notes: [
-    'Complete scoring redesign: survival scales with match duration (100 base → 200 at 3 min), plus earned points for paddle positions, modifier Modifiers, and placement.',
-    'Renamed to "Modifier" (was "Modifiers") throughout UI, menu, and leaderboard tags.',
-    'Play button text changed from CLICK TO PLAY to ENTER ARENA; icon changed from T to M.',
-  ]},
-  { v: '0.6.8', date: '2026-08-15', notes: [
-    'Ball speed no longer reduced on tip hits; speed is preserved while direction changes based on paddle contact position.',
-  ]},
-  { v: '0.6.7', date: '2026-08-15', notes: [
-    'Paddle flipped: wide edge now anchors against the wall, tapering to a point toward the ball.',
-    'Modifiers on/off toggle on the main menu, above CLICK TO PLAY. Defaults on; your choice is remembered.',
-    'CLICK TO PLAY reflects the toggle: green/circle for Modifiers, blue/hexagon for Vanilla.',
-    'The center-hit flash now also fires on clean tip hits, positioned at the actual contact point.',
-    'Leaderboard rows show whether that run had Modifiers on.',
-  ]},
-  { v: '0.6.6', date: '2026-08-15', notes: [
-    'Dropped the Simple label from the version string.',
-    'Match countdown text is 3× larger.',
-    'In-match HUD line removed; score and active-Modifier pills enlarged for glanceability.',
-    'Touch guide line is 3× wider with Place finger here label.',
-    'CLICK TO PLAY button slightly larger.',
-    'Default paddle is now a trapezoid: flat middle, angled ends steer the ball.',
-  ]},
-  { v: '0.6.5', date: '2026-08-15', notes: [
-    'Modifier spawn rate halved vs previous double rate; max 3 Modifiers on field; no duplicate Modifiers at once.',
-    'Match start countdown is now 5–4–3–2–1–GO.',
-    'Choke renamed Shrink (10s); Overdrive renamed Growth.',
-    'Main menu Play button reads CLICK TO PLAY.',
-    'Touch guide: dotted line under the arena shows where to drag the paddle.',
-  ]},
-  { v: '0.6.4', date: '2026-08-15', notes: [
-    'Removed Reversal and Rotation Modifiers.',
-    'Eclipse Drift reworked: ball freezes while the arena rotates for a random 3–10s, then play resumes from the new orientation.',
-    'Play button moved above High Score and enlarged.',
-  ]},
-  { v: '0.6.3', date: '2026-08-14', notes: [
-    'One Play button — Modifier Mode on Normal, double Modifier spawn rate.',
-    'Vanilla and Custom modes removed from the menu. Endless removed.',
-    'All Modifiers (buff, nerf, wildcard) now affect every living player.',
-    'Repair will not spawn when everyone already has full lives — another Modifier is chosen instead.',
-    'Leaderboard shows top 25 (top 5 on the main menu) with date (YYYY.MM.DD); mode and difficulty hidden.',
-  ]},
-  { v: '0.6.2', date: '2026-08-14', notes: [
-    'Difficulty retuned: Easy / Normal / Hard are beatable; Hard is genuinely tough; Expert is near-impossible.',
-    'AI aim and blunder rates no longer degrade with pressure — bots stay consistent the whole match.',
-    'Fewer random multi-misses early on Easy and Normal.',
-  ]},
-  { v: '0.6.1', date: '2026-08-14', notes: [
-    'Main menu: compact Leaderboard (top 3) sits under High Score with All Time / 7 Days / Today tabs. Tap to open the full top-10 board.',
-    'Removed Daily Missions band from the main menu.',
-    'Removed Achievements Score band from the main menu (Achievements screen still available).',
+  { v: '0.6.1', date: '2026-08-15', notes: [
+    'Main menu simplified: one ENTER ARENA button, Modifiers on/off toggle (remembered), play above High Score.',
+    'Paddle is a wall-anchored trapezoid; tip hits keep ball speed and steer by contact point.',
+    'Modifier pool: removed Reversal/Rotation; Eclipse Drift freezes the ball while the arena rotates 3–10s; Shrink/Growth renames; spawn rate mid, max 3, no duplicates.',
+    'Scoring redesign baseline (survival scale, paddle/modifier points, placement) and “Modifier” naming throughout.',
+    'Match UX: 5–4–3–2–1–GO countdown, larger score/active-modifier HUD, touch drag guide under the arena.',
   ]},
   { v: '0.6.0', date: '2026-08-14', notes: [
-    'Online leaderboard: top scores from all players (Vanilla and Modifier).',
-    'Leaderboard boards: All Time, Last 7 Days, and Today.',
-    'Scores submit automatically when a match ends if you are online.',
+    'Online leaderboard (All Time / 7 Days / Today); scores submit on match end when online.',
+    'Main-menu compact leaderboard; Daily Missions and Achievements Score bands removed from the home screen.',
+    'Difficulty retuned (Easy–Hard beatable; Expert near-impossible); AI consistency held through pressure.',
+    'Simplified play path: one Play button on Normal with Modifiers; menu Vanilla/Custom/Endless trimmed.',
   ]},
   { v: '0.5.1', date: '2026-08-14', notes: [
     'Achievement thresholds retuned for long-term play.',
@@ -1245,18 +1161,12 @@ const CHANGELOG = [
     'Score band shifts color as you near or pass your high score.',
     'Retry on the results screen is a true rematch with the same mode and settings.',
   ]},
-  { v: '0.2.5', date: '2026-08-14', notes: [
-    'In-match score is now a prominent top band showing live score, high score, and how far you are from (or ahead of) your best.',
-    'Changelog moved to its own main-menu button next to Settings; version number is plain text again.',
-  ]},
-  { v: '0.2.4', date: '2026-08-14', notes: [
-    'Difficulty-scaled subtle bias: higher difficulties send the ball toward the player more often while staying natural.',
-    'Live score integrated into the top HUD (score bar removed from the bottom).',
-    'Arena shifted lower to reclaim empty black space below and free more room above for HUD.',
-    'Version number is now a tappable Changelog button showing a reverse-chronological change log.',
-  ]},
-  { v: '0.2.3', date: '2026-08', notes: [
-    'Prior release baseline (pre-changelog tracking).',
+  { v: '0.2.0', date: '2026-08-14', notes: [
+    'Prior release baseline through early score HUD work.',
+    'Live score integrated into the top HUD; arena shifted lower for more HUD room.',
+    'In-match score band shows live score, high score, and gap vs best.',
+    'Difficulty-scaled subtle bias toward the player at higher tiers.',
+    'Changelog panel on the main menu; version credit as plain text.',
   ]},
 ];
 
@@ -4522,8 +4432,11 @@ function boardHtml() {
   if (!rows.length)
     return '<div class="sl"><span>No scores yet</span><span>&mdash;</span></div>';
   return rows.map((e, i) => {
+    // gameMode is stored as 'Modifier' or 'vanilla'; accept either casing.
+    const modeRaw = String(e.m || '').toLowerCase();
+    const modeLabel = (modeRaw === 'modifier' || modeRaw === 'token') ? 'Modifier' : 'Vanilla';
     const meta = [
-      e.m === 'modifier' ? 'Modifier' : 'Vanilla',
+      modeLabel,
       ordinal(e.p || 6) + ' of 6',
       fmtTime(e.t || 0)
     ].filter(Boolean).join(' · ');
