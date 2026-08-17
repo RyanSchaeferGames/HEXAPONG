@@ -256,6 +256,33 @@
   .mode.vanilla{border-color:rgba(95,184,238,.5)} .mode.vanilla .mi{color:#5fb8ee}
   .mode.Modifier{border-color:rgba(93,226,168,.5)} .mode.Modifier .mi{color:#5de2a8}
   .mode.custom{border-color:rgba(178,120,255,.5)} .mode.custom .mi{color:#b278ff}
+
+  /* ── difficulty colour scheme: Easy=gold, Medium=purple, Hard=red ───────
+     Applied to the main-menu difficulty picker and the Enter Arena button
+     (border glow + M icon). The leaderboard shows the active difficulty
+     via a small .difftag label instead of its own tab row (0.8.5). */
+  #mDiff button.opt[data-d="0"].on{background:rgba(255,205,110,.2);color:#fff;
+    border-color:rgba(255,217,140,.9);box-shadow:0 0 14px rgba(255,205,110,.45), inset 0 0 14px rgba(255,205,110,.15)}
+  #mDiff button.opt[data-d="1"].on{background:rgba(150,90,255,.25);color:#fff;
+    border-color:rgba(190,140,255,.9);box-shadow:0 0 14px rgba(178,120,255,.45), inset 0 0 14px rgba(178,120,255,.15)}
+  #mDiff button.opt[data-d="2"].on{background:rgba(255,80,80,.22);color:#fff;
+    border-color:rgba(255,140,140,.9);box-shadow:0 0 14px rgba(255,90,90,.45), inset 0 0 14px rgba(255,90,90,.15)}
+
+  .difftag{display:inline-block;margin-left:8px;padding:2px 9px;font-size:9px;letter-spacing:.16em;
+    border:1px solid;border-radius:2px;vertical-align:middle;text-transform:uppercase}
+  .difftag.easy{color:#ffd97a;border-color:rgba(255,217,140,.6);background:rgba(255,205,110,.12)}
+  .difftag.medium{color:#b278ff;border-color:rgba(190,140,255,.6);background:rgba(150,90,255,.12)}
+  .difftag.hard{color:#ff6a6a;border-color:rgba(255,140,140,.6);background:rgba(255,80,80,.12)}
+
+  button.mode.playbig.diff-easy{border-color:rgba(255,217,140,.9);box-shadow:0 0 28px rgba(255,205,110,.4)}
+  button.mode.playbig.diff-easy:hover{box-shadow:0 0 36px rgba(255,205,110,.55)}
+  button.mode.playbig.diff-easy .mi{color:#ffd97a}
+  button.mode.playbig.diff-medium{border-color:rgba(190,140,255,.9);box-shadow:0 0 28px rgba(178,120,255,.4)}
+  button.mode.playbig.diff-medium:hover{box-shadow:0 0 36px rgba(178,120,255,.55)}
+  button.mode.playbig.diff-medium .mi{color:#b278ff}
+  button.mode.playbig.diff-hard{border-color:rgba(255,140,140,.9);box-shadow:0 0 28px rgba(255,90,90,.4)}
+  button.mode.playbig.diff-hard:hover{box-shadow:0 0 36px rgba(255,90,90,.55)}
+  button.mode.playbig.diff-hard .mi{color:#ff6a6a}
   .minigrid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
   .minigrid .go{margin-top:0;width:100%;font-size:11px;letter-spacing:.16em;padding:12px 8px}
   .minigrid .go:last-child:nth-child(odd){grid-column:1 / -1}
@@ -300,8 +327,6 @@
     margin-bottom:8px}
   .minilb-head .mlabel{font-size:9.5px;letter-spacing:.2em;color:#5f87a8;text-transform:uppercase}
   .minilb-head .mview{font-size:9px;letter-spacing:.12em;color:#4f7999;text-transform:uppercase}
-  .minilb-tabs{margin-bottom:6px;gap:4px}
-  .minilb-tabs .opt{font-size:10px;padding:6px 8px;min-height:0;flex:1}
   .minilb-body{min-height:118px}
   .minilb .lbrow{padding:5px 0}
   .minilb .lbrow .lbr{flex:0 0 18px;font-size:12px}
@@ -666,13 +691,8 @@
 
     <div class="minilb" id="miniLb">
       <div class="minilb-head">
-        <span class="mlabel">Leaderboard</span>
+        <span class="mlabel">Leaderboard<span class="difftag" id="miniLbDiffTag"></span></span>
         <span class="mview">Tap for top 25</span>
-      </div>
-      <div class="row tabs minilb-tabs" id="miniLbTabs">
-        <button class="opt" data-diff="0">Easy</button>
-        <button class="opt on" data-diff="1">Medium</button>
-        <button class="opt" data-diff="2">Hard</button>
       </div>
       <div id="miniLbBody" class="minilb-body lbstatus">Loading…</div>
     </div>
@@ -711,12 +731,7 @@
   <div class="card wide">
     <div class="pbar"><button class="backlink" id="bLbBack">&#10094; Back</button></div>
     <h1 style="font-size:22px">LEADERBOARD</h1>
-    <div class="sub">Top scores</div>
-    <div class="row tabs" id="lbTabs" style="margin-bottom:12px">
-      <button class="opt" data-diff="0">Easy</button>
-      <button class="opt on" data-diff="1">Medium</button>
-      <button class="opt" data-diff="2">Hard</button>
-    </div>
+    <div class="sub">Top scores<span class="difftag" id="lbDiffTag"></span></div>
     <div id="lbBody" class="lbstatus">Loading…</div>
   </div>
 </div>
@@ -1053,7 +1068,7 @@ const DIFF = [
 let diffIdx = 1;
 let startLives = 3;
 let displayName = 'RHYNOCK';
-const VERSION = '0.8.3';
+const VERSION = '0.8.5';
 /* Online leaderboard (Cloudflare Worker + D1).
    Leave empty to keep the game fully offline.
    After you deploy the Worker, set this to your workers.dev URL, e.g.:
@@ -1115,6 +1130,8 @@ Optional online leaderboard (Cloudflare Worker + D1) via LEADERBOARD_URL — lea
 - Main menu High Score band shows the best for the currently selected difficulty (tiers[diffIdx].bestScore) and opens Stats; bottom "Scoring" button opens scoreHelpPanel (formula explanation).
 - Compact mini-leaderboard (top 5, Easy / Medium / Hard tabs) on main menu under High Score; tap opens full top-25 #lbPanel with the same difficulty tabs. Time filters (7 Days / Today) removed; all-time only, split by difficulty. Missing difficulty on old rows is backfilled as Medium.
 - Mini Recent Matches (top 5) under that; tap opens full list #recentPanel.
+- Difficulty colour scheme (0.8.4): Easy=gold, Medium=purple, Hard=red. Applied via CSS attribute selectors keyed on data-d to #mDiff, and via diff-easy/diff-medium/diff-hard classes toggled on #mPlay by syncDiffToggle(). #mPlay's border/icon colour now follows difficulty, not the Modifiers on/off state (Modifier vs vanilla class still controls the M/V icon shape and scoring mode).
+- Leaderboard difficulty filtering (0.8.5): the separate Easy/Medium/Hard tab rows on the mini leaderboard and full #lbPanel were removed. Both now filter by the shared diffIdx (main-menu difficulty picker) instead of a standalone lbDiffIdx; syncLbTabs() just updates a small #miniLbDiffTag / #lbDiffTag label to show the active filter. Changing difficulty on the main menu (#mDiff click handler) calls loadMiniLeaderboard() to refresh immediately. filterLbByDiff()/emptyLbMsg() key off diffIdx now.
 - Safe-area insets via #safe + env(). Touch vs mouse via TOUCH flag.
 - Quality: fxLevel 0/1/2 (Off / Low / High). glow() zeros expensive shadowBlur on lower settings. Battery saver = 30 fps (fpsCap).
 
@@ -1131,6 +1148,15 @@ ${VERSION} — Triple-click main-menu version opens this project context panel f
    Append a new entry and bump the patch digit of VERSION on every change set.
    The in-game Changelog panel reads this array directly. */
 const CHANGELOG = [
+  { v: '0.8.5', date: '2026-08-16', notes: [
+    'Removed the separate Easy/Medium/Hard tabs from the mini leaderboard and full leaderboard panel.',
+    'Leaderboard filtering now follows the main-menu difficulty picker (diffIdx) directly \u2014 changing difficulty on the main menu refreshes the mini leaderboard automatically.',
+    'Added a small colour-coded difficulty tag next to the leaderboard headers so the active filter is still visible.',
+  ]},
+  { v: '0.8.4', date: '2026-08-16', notes: [
+    'Difficulty colour scheme: Easy = gold, Medium = purple, Hard = red.',
+    'Applied to the main-menu difficulty picker, the leaderboard Easy/Medium/Hard tabs (mini + full panel), and the Enter Arena button (border glow + M icon), which now follows difficulty instead of the Modifiers on/off state.',
+  ]},
   { v: '0.8.3', date: '2026-08-16', notes: [
     'High Score banner meta: difficulty + place only (no mode tag; place is “1st” not “1st of 6”).',
     'Stats → High Scores: Easy / Medium / Hard tabs; local board stores top 10 per difficulty.',
@@ -1921,15 +1947,17 @@ function formatLbDuration(s) {
   if (s >= 60) return Math.floor(s / 60) + 'm ' + Math.floor(s % 60) + 's';
   return s.toFixed(1) + 's';
 }
-let lbDiffIdx = 1; // 0=Easy 1=Medium 2=Hard (default Medium)
 function syncLbTabs() {
-  const mark = (id) => {
-    const tabs = document.getElementById(id);
-    if (!tabs) return;
-    [...tabs.children].forEach(b => b.classList.toggle('on', +b.dataset.diff === lbDiffIdx));
+  const cls = ['easy', 'medium', 'hard'][diffIdx] || 'medium';
+  const label = (DIFF[diffIdx] ? DIFF[diffIdx].label : 'MEDIUM');
+  const setTag = (id) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.className = 'difftag ' + cls;
+    el.textContent = label;
   };
-  mark('lbTabs');
-  mark('miniLbTabs');
+  setTag('miniLbDiffTag');
+  setTag('lbDiffTag');
 }
 function parseLbTimestamp(raw) {
   if (raw == null || raw === '') return null;
@@ -1966,7 +1994,7 @@ function normalizeLbDiff(r) {
   return 1;
 }
 function filterLbByDiff(rows) {
-  return (rows || []).filter(r => normalizeLbDiff(r) === lbDiffIdx);
+  return (rows || []).filter(r => normalizeLbDiff(r) === diffIdx);
 }
 
 function lbRowHtml(r, opts) {
@@ -1997,7 +2025,7 @@ function lbRowHtml(r, opts) {
 }
 function emptyLbMsg() {
   const labels = ['Easy', 'Medium', 'Hard'];
-  return 'No ' + (labels[lbDiffIdx] || 'Medium') + ' scores yet — be the first.';
+  return 'No ' + (labels[diffIdx] || 'Medium') + ' scores yet — be the first.';
 }
 async function loadLeaderboard() {
   const body = document.getElementById('lbBody');
@@ -5019,6 +5047,11 @@ if (mPlayBtn) mPlayBtn.addEventListener('click', startSimplePlay);
 function syncDiffToggle() {
   const seg = document.getElementById('mDiff');
   if (seg) [...seg.children].forEach(b => b.classList.toggle('on', +b.dataset.d === diffIdx));
+  const play = document.getElementById('mPlay');
+  if (play) {
+    play.classList.remove('diff-easy', 'diff-medium', 'diff-hard');
+    play.classList.add(['diff-easy', 'diff-medium', 'diff-hard'][diffIdx] || 'diff-medium');
+  }
 }
 const mDiffSeg = document.getElementById('mDiff');
 if (mDiffSeg) mDiffSeg.addEventListener('click', e => {
@@ -5029,6 +5062,8 @@ if (mDiffSeg) mDiffSeg.addEventListener('click', e => {
   ModifierRate = diffIdx;
   saveSettings();
   refreshHiScore();
+  // Leaderboard now filters by the same difficulty selection, so refresh it here.
+  loadMiniLeaderboard();
 });
 
 function syncModifiersToggle() {
@@ -5441,25 +5476,11 @@ document.getElementById('bLogBack').addEventListener('click', hideChangelog);
 const bCtxBack = document.getElementById('bCtxBack');
 if (bCtxBack) bCtxBack.addEventListener('click', hideProjectContext);
 document.getElementById('bLbBack').addEventListener('click', hideLeaderboard);
-document.getElementById('lbTabs').addEventListener('click', e => {
-  const b = e.target.closest('button'); if (!b || b.dataset.diff == null) return;
-  lbDiffIdx = clamp(+b.dataset.diff, 0, 2);
-  loadLeaderboard();
-});
-// Compact leaderboard on main menu: tabs switch period; rest of the card opens full top-10
+// Compact leaderboard on main menu: entire card opens the full top-25 panel.
+// Difficulty filtering now follows the main-menu difficulty picker (diffIdx)
+// directly, so there's no separate tab control here anymore.
 const miniLbEl = document.getElementById('miniLb');
-if (miniLbEl) {
-  miniLbEl.addEventListener('click', e => {
-    if (e.target.closest('#miniLbTabs')) return;
-    showLeaderboard();
-  });
-}
-document.getElementById('miniLbTabs').addEventListener('click', e => {
-  const b = e.target.closest('button'); if (!b || b.dataset.diff == null) return;
-  e.stopPropagation();
-  lbDiffIdx = clamp(+b.dataset.diff, 0, 2);
-  loadMiniLeaderboard();
-});
+if (miniLbEl) miniLbEl.addEventListener('click', showLeaderboard);
 const miniRecentEl = document.getElementById('miniRecent');
 if (miniRecentEl) miniRecentEl.addEventListener('click', showRecentMatches);
 const bRecentBack = document.getElementById('bRecentBack');
