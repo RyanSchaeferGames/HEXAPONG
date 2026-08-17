@@ -1068,7 +1068,7 @@ const DIFF = [
 let diffIdx = 1;
 let startLives = 3;
 let displayName = 'RHYNOCK';
-const VERSION = '0.8.5';
+const VERSION = '0.8.7';
 /* Online leaderboard (Cloudflare Worker + D1).
    Leave empty to keep the game fully offline.
    After you deploy the Worker, set this to your workers.dev URL, e.g.:
@@ -1132,6 +1132,8 @@ Optional online leaderboard (Cloudflare Worker + D1) via LEADERBOARD_URL — lea
 - Mini Recent Matches (top 5) under that; tap opens full list #recentPanel.
 - Difficulty colour scheme (0.8.4): Easy=gold, Medium=purple, Hard=red. Applied via CSS attribute selectors keyed on data-d to #mDiff, and via diff-easy/diff-medium/diff-hard classes toggled on #mPlay by syncDiffToggle(). #mPlay's border/icon colour now follows difficulty, not the Modifiers on/off state (Modifier vs vanilla class still controls the M/V icon shape and scoring mode).
 - Leaderboard difficulty filtering (0.8.5): the separate Easy/Medium/Hard tab rows on the mini leaderboard and full #lbPanel were removed. Both now filter by the shared diffIdx (main-menu difficulty picker) instead of a standalone lbDiffIdx; syncLbTabs() just updates a small #miniLbDiffTag / #lbDiffTag label to show the active filter. Changing difficulty on the main menu (#mDiff click handler) calls loadMiniLeaderboard() to refresh immediately. filterLbByDiff()/emptyLbMsg() key off diffIdx now.
+- Medium submission fix (0.8.6 → 0.8.7): the Worker/D1 API originally only recognized the legacy Easy/Normal/Hard/Expert difficulty enum, so a run scored on 'Medium' got silently 400'd and never reached D1 — invisible on both the leaderboard and Recent Matches. 0.8.6 worked around this client-side by relabeling Medium → Normal on the way out. 0.8.7 fixed it at the source instead: worker.js's DIFFS set now includes 'Medium' directly (alongside 'Normal', kept for old rows/cached clients), and the client-side relabel in submitOnlineScore() was reverted — it just titleCases and sends the difficulty as-is again. Deploying the updated worker.js (npx wrangler deploy) is required for this to take effect; scores lost before either fix was live (never inserted) cannot be recovered.
+- STALL_RESET_SECS (0.8.6): named constant (was an inline 0.45) controlling the anti-stall nudge in update()'s per-ball loop — a ball that hasn't moved more than ~2 ball-widths within this window gets redirected. Currently 5s.
 - Safe-area insets via #safe + env(). Touch vs mouse via TOUCH flag.
 - Quality: fxLevel 0/1/2 (Off / Low / High). glow() zeros expensive shadowBlur on lower settings. Battery saver = 30 fps (fpsCap).
 
@@ -1148,6 +1150,13 @@ ${VERSION} — Triple-click main-menu version opens this project context panel f
    Append a new entry and bump the patch digit of VERSION on every change set.
    The in-game Changelog panel reads this array directly. */
 const CHANGELOG = [
+  { v: '0.8.7', date: '2026-08-17', notes: [
+    'Fixed the Medium-difficulty submission issue at the source: worker.js\u2019s difficulty allowlist now includes \u2019Medium\u2019 directly (deploy the updated worker.js for this to take effect). Reverted the 0.8.6 client-side Medium\u2192Normal workaround since it\u2019s no longer needed.',
+  ]},
+  { v: '0.8.6', date: '2026-08-17', notes: [
+    'Fixed: Medium-difficulty runs were not appearing on the online leaderboard or Recent Matches. The Worker API still validates against its original Easy/Normal/Hard/Expert difficulty enum, but the client titleCased its renamed \u2019Medium\u2019 tier straight through, and the API silently rejected it. Score submission now translates Medium -> Normal on the way out only; everything client-side still reads/writes Medium.',
+    'Anti-stall reset window increased from 0.45s to 5s (STALL_RESET_SECS), so a ball that slows down (most visible near arena centre) has more time before it gets redirected.',
+  ]},
   { v: '0.8.5', date: '2026-08-16', notes: [
     'Removed the separate Easy/Medium/Hard tabs from the mini leaderboard and full leaderboard panel.',
     'Leaderboard filtering now follows the main-menu difficulty picker (diffIdx) directly \u2014 changing difficulty on the main menu refreshes the mini leaderboard automatically.',
@@ -1930,7 +1939,10 @@ function submitOnlineScore(payload) {
   if (!LEADERBOARD_URL) return;
   if (typeof navigator !== 'undefined' && navigator.onLine === false) return;
   try {
-    // API expects title-case difficulty (Easy/Normal/Hard/Expert); game stores UPPERCASE labels
+    // API title-cases the difficulty server-side and validates it against an enum.
+    // That enum now includes 'Medium' directly (worker.js 0.8.7) alongside the
+    // legacy 'Normal', so no client-side relabeling is needed here anymore —
+    // just make sure the case matches what the client actually uses.
     const body = Object.assign({}, payload);
     if (body.difficulty) body.difficulty = titleCase(String(body.difficulty));
     if (body.mode) body.mode = String(body.mode).toLowerCase();
@@ -2335,6 +2347,10 @@ let eclipseReturning = false;  // true while the return (unwind) spin is in prog
 let eclipseOutSecs = 0;        // outbound spin duration, reused verbatim for the return spin
 let eclipseOutRate = 0;        // outbound spin rate, reused (reversed) for the return spin
 const ECLIPSE_HOLD_DUR = 15;
+// A ball that hasn't traveled more than ~2 ball-widths within this window gets a
+// gentle nudge back toward play. Most visible when a ball settles near the arena
+// centre, since that's where velocity most often nets out close to zero.
+const STALL_RESET_SECS = 5;
 const PULSE_MIN = 1.5, PULSE_MAX = 3.5;
 let pulseT = 0, pulseBaseR = 0, pulseDur = PULSE_MIN;   // Pulse Contract: temporary radius squeeze-and-release
 // After Eclipse ends, AI aim is briefly unreliable (orientation shock). Pulse/Gravity also
@@ -2343,6 +2359,7 @@ let postEclipseMissT = 0;
 const POST_ECLIPSE_MISS_DUR = 2.5;
 const AI_WILD_MISS_PULSE_GRAV = 0.25;   // extra blunder probability while Pulse or Gravity active
 const AI_WILD_MISS_POST_ECLIPSE = 0.20; // extra blunder probability after Eclipse ends
+const AI_WILD_MISS_INVERT = 0.20;       // extra blunder probability while this AI is holding Invert
 
 const Modifier_FIRST = 10;   // no Modifiers in the opening seconds; learn the base game first
 const Modifier_MIN = 10, Modifier_MAX = 15;   // Mid rate base interval (seconds)
@@ -3087,10 +3104,13 @@ function update(dt) {
         // Soft pressure curve: late-game fray scales with base blunder/err so Easy wobbles
         // more than Expert. pressure² keeps the early match clean.
         // Wildcard disorientation (AI only): Pulse/Gravity raise blunder while active;
-        // a short window after Eclipse ends does the same (orientation shock).
+        // a short window after Eclipse ends does the same (orientation shock). Invert on
+        // an AI paddle doesn't flip its movement (it aims at an absolute target, not a
+        // directional input) — it just adds the same kind of blunder bump instead.
         let wildMiss = 0;
         if (gHas('gravity') || pulseT > 0) wildMiss = AI_WILD_MISS_PULSE_GRAV;
         else if (postEclipseMissT > 0) wildMiss = AI_WILD_MISS_POST_ECLIPSE;
+        if (fxHas(p, 'invert')) wildMiss += AI_WILD_MISS_INVERT;
         const p2 = pressure * pressure;
         const pressureMiss = d.blunder * p2 * 1.6;           // proportional to tier skill
         const blunder = Math.random() < d.blunder + wildMiss + pressureMiss;
@@ -3116,7 +3136,7 @@ function update(dt) {
       }
       p.aiTarget += (want - p.aiTarget) * Math.min(1, dt * 12);
       const maxStep = d.pad * dt;
-      p.pos += clamp(p.aiTarget - p.pos, -maxStep, maxStep) * flip;
+      p.pos += clamp(p.aiTarget - p.pos, -maxStep, maxStep);
     }
     p.pos = clamp(p.pos, lo, hi);
   }
@@ -3180,7 +3200,7 @@ function update(dt) {
   // anti-stall, per ball (Split must not let one moving ball mask a stuck one)
   for (const b of balls) {
     b.stallT = (b.stallT || 0) + dt;
-    if (b.stallT > 0.45) {
+    if (b.stallT > STALL_RESET_SECS) {
       if (Math.hypot(b.x - b.stallX, b.y - b.stallY) < BALL.r * 2.2) {
         const a = Math.atan2(CY - b.y, CX - b.x) + (Math.random() - .5) * 0.7;
         const sp = Math.hypot(b.vx, b.vy) || R * 0.6;
