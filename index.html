@@ -1060,15 +1060,18 @@ const DIFF = [
   // Base AI skill is per-tier. Late-game pressure² softly raises blunder chance and
   // aim error (proportional to the tier’s base rates). Arena pressure also speeds the
   // ball and shrinks paddles. Three tiers: Easy / Medium / Hard.
-  { label:'EASY',   err:0.09,  blunder:0.05,  react:0.12,  pad:1.65, look:0.85, ballBase:0.65, ballMax:1.30, crack:0 },
-  { label:'MEDIUM', err:0.07,  blunder:0.03,  react:0.08,  pad:2.10, look:0.92, ballBase:0.82, ballMax:1.65, crack:0 },
-  { label:'HARD',   err:0.04,  blunder:0.015, react:0.05,  pad:2.55, look:0.96, ballBase:1.00, ballMax:2.00, crack:0 },
+  // Balance pass 0.8.8: Hard's err/blunder eased from 0.04/0.015 so the Easy->Medium
+  // and Medium->Hard steps are comparable (previously Hard's accuracy jump was much
+  // bigger than Easy->Medium's, while paddle/ball speed stepped up evenly).
+  { label:'EASY',   err:0.09,   blunder:0.05,   react:0.12,  pad:1.65, look:0.85, ballBase:0.65, ballMax:1.30, crack:0 },
+  { label:'MEDIUM', err:0.07,   blunder:0.03,   react:0.08,  pad:2.10, look:0.92, ballBase:0.82, ballMax:1.65, crack:0 },
+  { label:'HARD',   err:0.057,  blunder:0.021,  react:0.05,  pad:2.55, look:0.96, ballBase:1.00, ballMax:2.00, crack:0 },
 ];
 
 let diffIdx = 1;
 let startLives = 3;
 let displayName = 'RHYNOCK';
-const VERSION = '0.8.7';
+const VERSION = '0.8.9';
 /* Online leaderboard (Cloudflare Worker + D1).
    Leave empty to keep the game fully offline.
    After you deploy the Worker, set this to your workers.dev URL, e.g.:
@@ -1113,7 +1116,7 @@ Optional online leaderboard (Cloudflare Worker + D1) via LEADERBOARD_URL — lea
 - Main menu has a Modifiers On/Off toggle and Easy/Medium/Hard difficulty selector (both remembered). Play button (#mPlay / startSimplePlay()) uses the selected difficulty, 3 lives, ModifierRate locked to difficulty (0/1/2), endless off; mode is modifier or vanilla based on the Modifiers toggle.
 - Custom mode still exists in code (#customPanel) with lives, spawn rate, per-modifier toggles (ModifierToggles), endless, difficulty — but is not exposed on the simplified main menu.
 - Scoring only for vanilla + modifier (scoredMode()). Custom is deliberately unscored.
-- Score formula: survival = seconds × 100 × (1 + √(seconds/150)); paddle hits escalate 500, 600, 700…; modifiers: buff +5000, nerf collect +5000, wild +2500, nerfed −5000; then × SCORE_PLACE_MUL[place]; then × SCORE_DIFF_MUL[diffIdx] (Easy 0.75 / Medium 1.0 / Hard 1.25). Difficulty multiplier is applied AFTER placement.
+- Score formula (0.8.9): survival = seconds × 100 × (1 + √(seconds/150)); paddle hits escalate 500, 600, 700… via escalatingFlatTotal(); modifiers (buff/nerf/wild, base 5000/5000/2500) now ALSO escalate per type via the same escalatingFlatTotal() helper, +SCORE_MODIFIER_STEP (1000) per consecutive hit of that type; nerfed (base −5000) escalates the same way but worse (−5000, −6000, −7000…). Rally kills (opponent concedes a life off your last hit, not eliminated) and eliminations (opponent's wall shatters off your last hit) are new bounties credited via creditKill()/concede()'s b.hitter, tallied in run.rallyKills/run.eliminationKills, and summed via killTotal()/killValue() — a TRIANGULAR step (the gap between consecutive kills grows by one more step each time: 25k/50k base, jumps of 1k/5k that themselves grow), not a flat step like paddle/modifiers. All five (survival, paddle, modifier, rallyBounty, eliminationBounty) sum into subtotal; then × SCORE_PLACE_MUL[place]; then × SCORE_DIFF_MUL[diffIdx] (Easy 0.65 / Medium 1.0 / Hard 1.55, widened 0.8.8 — the scoreHelpPanel text had gone stale after that change until 0.8.9 fixed it). Difficulty multiplier is applied AFTER placement. worker.js's serializeBreakdown() keys allowlist was updated to include rallyBounty/eliminationBounty/rallyKills/eliminationKills — requires redeploy for submitted breakdowns to retain them.
 - Bounty modifier removed as of 0.7.1 (was a wildcard, arena-wide, doubled the next concede cost).
 - Eclipse Drift (0.7.1): outbound spin 2-5s random (CW/CCW), ball frozen only while actively spinning, no countdown on resume. After a 15s hold, spins back to the original orientation mirroring the outbound duration/rate exactly (reversed), ball frozen again for that return leg. State: eclipseT/eclipseRate/eclipseSpin (active spin), eclipseHoldT (post-spin hold countdown), eclipseReturning (true during the return leg), eclipseOutSecs (outbound duration, reused for the return).
 - Pulse Contract (0.7.1): squeeze-and-release duration now randomized 1.5-3.5s per activation (PULSE_MIN/PULSE_MAX, stored per-activation in pulseDur) instead of a fixed 1.6s.
@@ -1133,6 +1136,7 @@ Optional online leaderboard (Cloudflare Worker + D1) via LEADERBOARD_URL — lea
 - Difficulty colour scheme (0.8.4): Easy=gold, Medium=purple, Hard=red. Applied via CSS attribute selectors keyed on data-d to #mDiff, and via diff-easy/diff-medium/diff-hard classes toggled on #mPlay by syncDiffToggle(). #mPlay's border/icon colour now follows difficulty, not the Modifiers on/off state (Modifier vs vanilla class still controls the M/V icon shape and scoring mode).
 - Leaderboard difficulty filtering (0.8.5): the separate Easy/Medium/Hard tab rows on the mini leaderboard and full #lbPanel were removed. Both now filter by the shared diffIdx (main-menu difficulty picker) instead of a standalone lbDiffIdx; syncLbTabs() just updates a small #miniLbDiffTag / #lbDiffTag label to show the active filter. Changing difficulty on the main menu (#mDiff click handler) calls loadMiniLeaderboard() to refresh immediately. filterLbByDiff()/emptyLbMsg() key off diffIdx now.
 - Medium submission fix (0.8.6 → 0.8.7): the Worker/D1 API originally only recognized the legacy Easy/Normal/Hard/Expert difficulty enum, so a run scored on 'Medium' got silently 400'd and never reached D1 — invisible on both the leaderboard and Recent Matches. 0.8.6 worked around this client-side by relabeling Medium → Normal on the way out. 0.8.7 fixed it at the source instead: worker.js's DIFFS set now includes 'Medium' directly (alongside 'Normal', kept for old rows/cached clients), and the client-side relabel in submitOnlineScore() was reverted — it just titleCases and sends the difficulty as-is again. Deploying the updated worker.js (npx wrangler deploy) is required for this to take effect; scores lost before either fix was live (never inserted) cannot be recovered.
+- Difficulty/scoring balance pass (0.8.8): triggered by real leaderboard data (~98 matches, 08-15 to 08-17) showing Medium — the default tier, ~85 of those matches — had a 3.5% win rate and 69% last-place rate across 6 distinct repeat players (some 0/N wins over a dozen-plus tries), while the DIFF array's Hard tier stepped err/blunder down much harder than Easy→Medium did, compounding with SCORE_DIFF_MUL's narrow 0.75/1.0/1.25 spread to make a mediocre Easy run competitive with a strong Hard run on the shared leaderboard. This pass only touched Hard's err (0.04→0.057) and blunder (0.015→0.021) plus SCORE_DIFF_MUL (0.75/1.0/1.25 → 0.65/1.0/1.55); Medium/Easy AI knobs and the XP-only SCORE_DIFF array were deliberately left untouched pending user playtest feedback — if Medium's high loss rate turns out to be an AI-tuning problem rather than a scoring-math problem, that's the next thing to revisit.
 - STALL_RESET_SECS (0.8.6): named constant (was an inline 0.45) controlling the anti-stall nudge in update()'s per-ball loop — a ball that hasn't moved more than ~2 ball-widths within this window gets redirected. Currently 5s.
 - Safe-area insets via #safe + env(). Touch vs mouse via TOUCH flag.
 - Quality: fxLevel 0/1/2 (Off / Low / High). glow() zeros expensive shadowBlur on lower settings. Battery saver = 30 fps (fpsCap).
@@ -1150,6 +1154,17 @@ ${VERSION} — Triple-click main-menu version opens this project context panel f
    Append a new entry and bump the patch digit of VERSION on every change set.
    The in-game Changelog panel reads this array directly. */
 const CHANGELOG = [
+  { v: '0.8.9', date: '2026-08-17', notes: [
+    'New: Rally kills. If the next player to touch the ball after your return concedes a life (without being eliminated), you\u2019re credited a bounty: 25,000 for the 1st this match, escalating on a growing curve (26,000 \u2192 28,000 \u2192 31,000\u2026).',
+    'New: Eliminations. Same idea for a kill that removes an opponent\u2019s wall entirely: 50,000 for the 1st, then 55,000 \u2192 65,000 \u2192 80,000\u2026',
+    'Modifier hits (Buff/Nerf/Wildcard, and the negative Nerfed penalty) now escalate per type, +1,000 per consecutive hit \u2014 same shape paddle hits already used.',
+    'Fixed: the Scoring help page still showed the pre-0.8.8 difficulty multipliers (\u00d70.75/1.0/1.25 instead of \u00d70.65/1.0/1.55) and didn\u2019t mention any of the above. Updated to match.',
+    'worker.js: breakdown allowlist extended so rally-kill/elimination bounties persist on submitted scores (redeploy required).',
+  ]},
+  { v: '0.8.8', date: '2026-08-17', notes: [
+    'Difficulty balance pass: Hard\u2019s AI aim error and blunder chance eased (err 0.04\u21920.057, blunder 0.015\u21920.021) so the Easy\u2192Medium and Medium\u2192Hard skill steps are comparable, instead of Hard being disproportionately more accurate than the physical speed step alone suggested.',
+    'Score difficulty multiplier widened: Easy/Medium/Hard now \u00d70.65 / \u00d71.0 / \u00d71.55 (was \u00d70.75 / \u00d71.0 / \u00d71.25), so Hard\u2019s reduced paddle-hit opportunity is better offset on the leaderboard.',
+  ]},
   { v: '0.8.7', date: '2026-08-17', notes: [
     'Fixed the Medium-difficulty submission issue at the source: worker.js\u2019s difficulty allowlist now includes \u2019Medium\u2019 directly (deploy the updated worker.js for this to take effect). Reverted the 0.8.6 client-side Medium\u2192Normal workaround since it\u2019s no longer needed.',
   ]},
@@ -1554,59 +1569,102 @@ function saveCareer() {
 }
 
 /* ── score ────────────────────────────────────────────────────────────────
-   Earned points (survival + paddles + modifiers) form a subtotal. Placement
-   multiplies that subtotal (6th=1× … 1st=3×), then difficulty multiplies
-   again (Easy ×0.75 / Medium ×1 / Hard ×1.25). Custom matches are unscored. */
+   Earned points (survival + paddles + modifiers + bounties) form a subtotal.
+   Placement multiplies that subtotal (6th=1× … 1st=3×), then difficulty
+   multiplies again (Easy ×0.65 / Medium ×1 / Hard ×1.55, widened 0.8.8).
+   Custom matches are unscored.
+
+   0.8.9: two new bounty types, both credited to whoever's b.hitter is (the
+   last player to touch the ball) when an opponent concedes off their return:
+     - Rally kill: opponent loses a life but isn't eliminated.
+     - Elimination kill: opponent's last life, wall shatters.
+   Both escalate per occurrence THIS MATCH, and the escalation itself grows
+   (triangular, not flat): kill #1 = base, #2 = base+step, #3 = base+3×step,
+   #4 = base+6×step … (the gap between kills grows by one more `step` each
+   time). Modifier hits (buff/nerf/wild, and the negative nerfed penalty)
+   also now escalate, but with a flat step per hit — same shape as paddle
+   hits already use. */
 const SCORE_PER_SEC = 100;
 const SCORE_PADDLE_BASE = 500;                               // first human return
 const SCORE_PADDLE_STEP = 100;                               // each later return adds this much more
-const SCORE_BUFF    = 5000;    // hitting a Buff token
-const SCORE_NERF    = 5000;    // hitting a Nerf token
-const SCORE_WILD    = 2500;    // hitting a Wildcard token
-const SCORE_NERFED  = -5000;   // being the one who gets nerfed after someone else hits it
+const SCORE_BUFF    = 5000;    // hitting a Buff token (1st hit; escalates, see SCORE_MODIFIER_STEP)
+const SCORE_NERF    = 5000;    // hitting a Nerf token (1st hit; escalates)
+const SCORE_WILD    = 2500;    // hitting a Wildcard token (1st hit; escalates)
+const SCORE_NERFED  = -5000;   // being the one who gets nerfed after someone else hits it (1st time; escalates worse)
+const SCORE_MODIFIER_STEP = 1000; // flat increase per consecutive hit of the SAME modifier type this match
+const SCORE_RALLY_KILL_BASE = 25000;  // 1st opponent life-loss credited to your last hit
+const SCORE_RALLY_KILL_STEP = 1000;   // triangular step — see header note above
+const SCORE_ELIM_KILL_BASE  = 50000;  // 1st opponent elimination credited to your last hit
+const SCORE_ELIM_KILL_STEP  = 5000;   // triangular step — see header note above
 const SCORE_PLACE_MUL = [0, 3, 2.5, 2, 1.5, 1.25, 1];         // index = finishing place 1..6
-const SCORE_DIFF_MUL  = [0.75, 1.0, 1.25];                    // Easy / Medium / Hard — applied AFTER placement
+const SCORE_DIFF_MUL  = [0.65, 1.0, 1.55];                    // Easy / Medium / Hard — applied AFTER placement (widened 0.8.8)
 const SCORE_PLACE   = [0, 3000, 1500, 750, 250, 100, 50];    // legacy flat place XP (progress system)
 const SCORE_DIFF    = [1, 1.5, 2.25];                        // Easy / Medium / Hard (XP only)
-/** Sum of escalating paddle points: 500 + 600 + 700 + … for n hits */
-function paddlePoints(n) {
+/** Sum of a flat-step escalating series: base + (base+step) + (base+2*step) + … for n occurrences.
+ *  Same shape paddle hits already use (500+600+700+…); now shared with modifier hits. */
+function escalatingFlatTotal(n, base, step) {
   n = n | 0;
   if (n <= 0) return 0;
   // n/2 * (2*base + (n-1)*step)
-  return Math.round(n * (2 * SCORE_PADDLE_BASE + (n - 1) * SCORE_PADDLE_STEP) / 2);
+  return Math.round(n * (2 * base + (n - 1) * step) / 2);
 }
-function scoreParts(place, survivedS, dIdx, paddleHits = 0, buffHits = 0, nerfHits = 0, wildHits = 0, nerfedHits = 0) {
+/** Sum of escalating paddle points: 500 + 600 + 700 + … for n hits */
+function paddlePoints(n) {
+  return escalatingFlatTotal(n, SCORE_PADDLE_BASE, SCORE_PADDLE_STEP);
+}
+/** Value of the k-th kill in a triangular-step series (k is 1-indexed): base, base+step,
+ *  base+3*step, base+6*step … the gap between consecutive kills grows by one more step. */
+function killValue(k, base, step) {
+  k = Math.max(1, k | 0);
+  return base + step * ((k - 1) * k / 2);
+}
+/** Sum of killValue(1..n) — total bounty earned from n kills of this type this match. */
+function killTotal(n, base, step) {
+  n = n | 0;
+  let total = 0;
+  for (let k = 1; k <= n; k++) total += killValue(k, base, step);
+  return total;
+}
+function scoreParts(place, survivedS, dIdx, paddleHits = 0, buffHits = 0, nerfHits = 0, wildHits = 0, nerfedHits = 0, rallyKills = 0, eliminationKills = 0) {
   // Survival: duration scale 1 + sqrt(seconds / 150)
   const mult = 1 + Math.sqrt((survivedS || 0) / 150);
   const survival = Math.round((survivedS || 0) * SCORE_PER_SEC * mult);
 
-  // Paddle: escalating series; modifiers flat (then × placement, then × difficulty)
+  // Paddle: escalating series; modifiers now escalate per type too (0.8.9); bounties
+  // (rally kills / elimination kills) escalate on a steeper triangular curve — see
+  // killTotal(). All feed the same subtotal before placement/difficulty multiply it.
   const paddle = paddlePoints(paddleHits);
-  const modifier = (buffHits | 0) * SCORE_BUFF + (nerfHits | 0) * SCORE_NERF
-    + (wildHits | 0) * SCORE_WILD + (nerfedHits | 0) * SCORE_NERFED;
+  const modifier = escalatingFlatTotal(buffHits | 0, SCORE_BUFF, SCORE_MODIFIER_STEP)
+    + escalatingFlatTotal(nerfHits | 0, SCORE_NERF, SCORE_MODIFIER_STEP)
+    + escalatingFlatTotal(wildHits | 0, SCORE_WILD, SCORE_MODIFIER_STEP)
+    - escalatingFlatTotal(nerfedHits | 0, -SCORE_NERFED, SCORE_MODIFIER_STEP);
+  const rallyBounty = killTotal(rallyKills | 0, SCORE_RALLY_KILL_BASE, SCORE_RALLY_KILL_STEP);
+  const eliminationBounty = killTotal(eliminationKills | 0, SCORE_ELIM_KILL_BASE, SCORE_ELIM_KILL_STEP);
 
-  const subtotal = survival + paddle + modifier;
+  const subtotal = survival + paddle + modifier + rallyBounty + eliminationBounty;
   // Placement multiplies the earned total; live score uses current place so the bar jumps when walls fall
   const placeMul = SCORE_PLACE_MUL[clamp(place | 0, 1, 6)] || 1;
   const afterPlace = Math.round(subtotal * placeMul);
-  // Difficulty multiplier is applied AFTER placement (Easy ×0.75 / Medium ×1 / Hard ×1.25)
+  // Difficulty multiplier is applied AFTER placement (Easy ×0.65 / Medium ×1 / Hard ×1.55)
   const diffMul = SCORE_DIFF_MUL[clamp(dIdx | 0, 0, SCORE_DIFF_MUL.length - 1)] || 1;
   const total = Math.round(afterPlace * diffMul);
   return {
-    survival, paddle, modifier, subtotal, afterPlace, total,
+    survival, paddle, modifier, rallyBounty, eliminationBounty, subtotal, afterPlace, total,
     mult, placeMul, diffMul,
     paddleHits: paddleHits | 0,
     buffHits: buffHits | 0,
     nerfHits: nerfHits | 0,
     wildHits: wildHits | 0,
     nerfedHits: nerfedHits | 0,
+    rallyKills: rallyKills | 0,
+    eliminationKills: eliminationKills | 0,
     place: place | 0,
     survivedS: survivedS || 0,
     dIdx: dIdx | 0,
   };
 }
-function matchScore(place, survivedS, dIdx, paddleHits = 0, buffHits = 0, nerfHits = 0, wildHits = 0, nerfedHits = 0) {
-  return scoreParts(place, survivedS, dIdx, paddleHits, buffHits, nerfHits, wildHits, nerfedHits).total;
+function matchScore(place, survivedS, dIdx, paddleHits = 0, buffHits = 0, nerfHits = 0, wildHits = 0, nerfedHits = 0, rallyKills = 0, eliminationKills = 0) {
+  return scoreParts(place, survivedS, dIdx, paddleHits, buffHits, nerfHits, wildHits, nerfedHits, rallyKills, eliminationKills).total;
 }
 function scoredMode() { return gameMode === 'vanilla' || gameMode === 'Modifier'; }
 const commas = v => Math.round(v || 0).toLocaleString('en-US');
@@ -1620,11 +1678,15 @@ function breakdownHtml(parts) {
   if (parts.wildHits) modBits.push(parts.wildHits + ' wild');
   if (parts.nerfedHits) modBits.push(parts.nerfedHits + ' nerfed');
   const modNote = modBits.length ? ' (' + modBits.join(', ') + ')' : '';
+  const rallyNote = parts.rallyKills ? ' (' + parts.rallyKills + ')' : '';
+  const elimNote = parts.eliminationKills ? ' (' + parts.eliminationKills + ')' : '';
   const dLabel = (DIFF[parts.dIdx] && DIFF[parts.dIdx].label) || 'MEDIUM';
   const diffMul = parts.diffMul != null ? parts.diffMul : 1;
   return '<div class="srow"><span>Survival · ' + fmtTime(parts.survivedS || 0) + '</span><span>' + commas(parts.survival) + '</span></div>' +
     '<div class="srow' + (parts.paddle ? '' : ' muted') + '"><span>Paddle hits' + padNote + '</span><span>' + commas(parts.paddle) + '</span></div>' +
     '<div class="srow' + (parts.modifier ? '' : ' muted') + '"><span>Modifiers' + modNote + '</span><span>' + commas(parts.modifier) + '</span></div>' +
+    '<div class="srow' + (parts.rallyBounty ? '' : ' muted') + '"><span>Rally kills' + rallyNote + '</span><span>' + commas(parts.rallyBounty) + '</span></div>' +
+    '<div class="srow' + (parts.eliminationBounty ? '' : ' muted') + '"><span>Eliminations' + elimNote + '</span><span>' + commas(parts.eliminationBounty) + '</span></div>' +
     '<div class="srow muted"><span>Subtotal</span><span>' + commas(parts.subtotal) + '</span></div>' +
     '<div class="srow muted"><span>Placement · ' + ordinal(parts.place || 6) + '</span><span>×' + (parts.placeMul || 1) + '</span></div>' +
     '<div class="srow muted"><span>Difficulty · ' + titleCase(dLabel) + '</span><span>×' + diffMul + '</span></div>' +
@@ -1722,7 +1784,8 @@ function newRun() {
     hitTimes: [], ModifierUsedByPlayer: false, ModifiersThisRally: 0, bestModifiersInRally: 0,
     wallsRepairedThisMatch: 0, passedBest: false,
     paddleHitsCenter: 0, paddleHitsSide: 0, modifierHits: 0,
-    buffHits: 0, nerfHits: 0, wildHits: 0, nerfedHits: 0 };
+    buffHits: 0, nerfHits: 0, wildHits: 0, nerfedHits: 0,
+    rallyKills: 0, eliminationKills: 0 };
 }
 // Stagnation tracking: if the player is left out of the rally, bias ramps up so two
 // bots cannot trade forever while the human watches.
@@ -3474,6 +3537,15 @@ function collide(b) {
   return false;
 }
 
+// Bounty credit for concede()/elimination: awarded to whoever last touched the ball
+// (b.hitter), never to the conceding player themselves. Only the human side of this
+// is ever scored (matchScore only ever runs for the human's run), so non-human
+// hitters are skipped here rather than tracked and discarded later.
+function creditKill(hitter, receiver, type) {
+  if (!run || !hitter || !hitter.human || hitter === receiver) return;
+  if (type === 'rally') run.rallyKills = (run.rallyKills || 0) + 1;
+  else if (type === 'elim') run.eliminationKills = (run.eliminationKills || 0) + 1;
+}
 // Returns true when the ball is gone (scored) so the caller stops integrating it.
 function concede(p, b, w) {
   // the out-of-bounds safety net has no wall to hand, so fall back to the player's own
@@ -3497,6 +3569,7 @@ function concede(p, b, w) {
       p.fx = {};
       p.hurtFlash = 1;
       knockouts++;
+      creditKill(b.hitter, p, 'rally');
       applyShake(12, 0.4); collapseFlash = 0.6;
       // Removed toast: player respawned
       beep(140, 0.12, 'sawtooth', 0.05);
@@ -3516,6 +3589,7 @@ function concede(p, b, w) {
     p.wall = -1;
     p.fx = {};
     knockouts++;
+    creditKill(b.hitter, p, 'elim');
     // Stronger elimination beat: bigger shake, longer flash, layered tone
     applyShake(22, 0.72); collapseFlash = 1.35;
     // elimination toast suppressed (0.7.7) — shake/flash/SFX still fire
@@ -3552,6 +3626,7 @@ function concede(p, b, w) {
   }
 
   // life-loss toast suppressed (0.7.7)
+  creditKill(b.hitter, p, 'rally');
   if (balls.length === 0) {
     serve(p.wall >= 0 ? p.wall : null);
     serveTimer += SERVE_DELAY_LIFE_LOST;
@@ -3602,7 +3677,7 @@ function endGame(winner, eliminated) {
   // Only the two preset modes are scored (see matchScore).
   const scored   = scoredMode();
   const parts    = scored
-    ? scoreParts(me.place, run.survived, diffIdx, playerHits, run.buffHits || 0, run.nerfHits || 0, run.wildHits || 0, run.nerfedHits || 0)
+    ? scoreParts(me.place, run.survived, diffIdx, playerHits, run.buffHits || 0, run.nerfHits || 0, run.wildHits || 0, run.nerfedHits || 0, run.rallyKills || 0, run.eliminationKills || 0)
     : null;
   const score    = parts ? parts.total : 0;
   // Per-difficulty high score (tiers[diffIdx]); overall career.bestScore still tracks the global max
@@ -3658,11 +3733,13 @@ function endGame(winner, eliminated) {
       place: me.place || 6,
       breakdown: parts ? {
         survival: parts.survival, paddle: parts.paddle, modifier: parts.modifier,
+        rallyBounty: parts.rallyBounty, eliminationBounty: parts.eliminationBounty,
         subtotal: parts.subtotal, afterPlace: parts.afterPlace, total: parts.total,
         placeMul: parts.placeMul, diffMul: parts.diffMul, dIdx: parts.dIdx,
         place: parts.place, survivedS: parts.survivedS,
         paddleHits: parts.paddleHits, buffHits: parts.buffHits,
-        nerfHits: parts.nerfHits, wildHits: parts.wildHits, nerfedHits: parts.nerfedHits
+        nerfHits: parts.nerfHits, wildHits: parts.wildHits, nerfedHits: parts.nerfedHits,
+        rallyKills: parts.rallyKills, eliminationKills: parts.eliminationKills
       } : null,
     });
   }
@@ -4391,7 +4468,7 @@ function renderScoreBar() {
   const me = players[PLAYER];
   const place = me && me.out ? (me.place || 6) : players.filter(q => !q.out).length;
   // live uses current place so the total jumps when rivals fall (placement multiplier)
-  const live = matchScore(place, me && me.out ? (run.survived || elapsed) : elapsed, diffIdx, playerHits, (run && run.buffHits) || 0, (run && run.nerfHits) || 0, (run && run.wildHits) || 0, (run && run.nerfedHits) || 0);
+  const live = matchScore(place, me && me.out ? (run.survived || elapsed) : elapsed, diffIdx, playerHits, (run && run.buffHits) || 0, (run && run.nerfHits) || 0, (run && run.wildHits) || 0, (run && run.nerfedHits) || 0, (run && run.rallyKills) || 0, (run && run.eliminationKills) || 0);
   const best = bestForDiff(diffIdx);
   const ahead = best > 0 && live > best;
   if (ahead && run && !run.passedBest) {
@@ -5172,20 +5249,29 @@ if (hsTabsEl) hsTabsEl.addEventListener('click', e => {
 
 
 const SCORE_HELP_ROWS = [
-  ['Earn', 'Points come from three sources while you play.'],
+  ['Earn', 'Points come from five sources while you play.'],
   ['Survival', '100 points per second alive, scaled up the longer the match lasts ' +
     '(multiplier = 1 + √(time / 150s)). Longer runs earn more per second.'],
   ['Paddle', 'Returns escalate: first hit <b>+500</b>, then <b>+600</b>, <b>+700</b>, and so on ' +
     '(+100 more each time). Any part of the paddle counts.'],
-  ['Modifiers', '<b style="color:#ffd97a">Buff</b> you collect: <b>+5,000</b>. ' +
-    '<b style="color:#ff9a8f">Nerf</b> you collect: <b>+5,000</b>. ' +
-    '<b style="color:#dcaaff">Wildcard</b> you collect: <b>+2,500</b>. ' +
-    'Getting hit by a nerf someone else collected: <b>−5,000</b>.'],
-  ['Subtotal', 'Survival + paddle + modifiers. This is your earned total before placement.'],
+  ['Modifiers', 'Each type escalates on its own the same way paddle hits do — value goes up ' +
+    '<b>+1,000</b> per consecutive hit of that type this match:<br>' +
+    '<b style="color:#ffd97a">Buff</b> you collect: <b>+5,000</b>, then +6,000, +7,000…<br>' +
+    '<b style="color:#ff9a8f">Nerf</b> you collect: <b>+5,000</b>, then +6,000, +7,000…<br>' +
+    '<b style="color:#dcaaff">Wildcard</b> you collect: <b>+2,500</b>, then +3,500, +4,500…<br>' +
+    'Getting hit by a nerf someone else collected: <b>−5,000</b>, then −6,000, −7,000… (this one escalates worse, not better).'],
+  ['Rally kills', 'When the next player to touch the ball after your return concedes a life ' +
+    '(but isn\u2019t eliminated), you\u2019re credited the kill: <b>+25,000</b> for the 1st this match. ' +
+    'Each further one jumps by a growing gap \u2014 +1,000 more than the last jump \u2014 so it\u2019s ' +
+    '<b>25,000 → 26,000 → 28,000 → 31,000…</b> Getting on a roll is worth chasing.'],
+  ['Eliminations', 'Same idea, but for a kill that removes an opponent\u2019s wall entirely: ' +
+    '<b>+50,000</b> for the 1st this match, then <b>50,000 → 55,000 → 65,000 → 80,000…</b> ' +
+    '(each jump +5,000 bigger than the last).'],
+  ['Subtotal', 'Survival + paddle + modifiers + rally kills + eliminations. This is your earned total before placement.'],
   ['Placement', 'Your finish multiplies the subtotal:<br>' +
     '6th ×1 · 5th ×1.25 · 4th ×1.5 · 3rd ×2 · 2nd ×2.5 · <b>1st ×3</b>.'],
   ['Difficulty', 'Difficulty multiplies the post-placement total:<br>' +
-    '<b>Easy ×0.75</b> · <b>Medium ×1.0</b> · <b>Hard ×1.25</b>.'],
+    '<b>Easy ×0.65</b> · <b>Medium ×1.0</b> · <b>Hard ×1.55</b>.'],
   ['Final', 'Subtotal × placement × difficulty. The live score bar uses your <b>current</b> place ' +
     'and the selected difficulty, so it jumps when rivals fall.'],
   ['Stats', 'Tap the High Score band on the main menu to open career stats and local top scores.'],
