@@ -70,9 +70,6 @@
   .keys{margin-top:18px;font-size:10.5px;line-height:1.85;color:#5a819e;letter-spacing:.09em}
   .keys b{color:#a8cfe8;font-weight:600}
   .ver{display:inline-block;margin-top:6px;font-size:9px;letter-spacing:.22em;color:#39586e}
-  button.verbtn{font:inherit;background:none;border:1px solid transparent;cursor:pointer;
-    color:#5f87a8;padding:4px 10px;border-radius:2px;transition:.15s}
-  button.verbtn:hover{color:#dff1ff;border-color:rgba(110,180,240,.4)}
   .logentry{text-align:left;margin:0 0 18px;padding-bottom:14px;
     border-bottom:1px solid rgba(90,150,200,.14)}
   .logentry:last-child{border-bottom:none;margin-bottom:0}
@@ -137,13 +134,6 @@
   .fxd{font-size:10.5px;color:#7ba3c0;letter-spacing:.04em;line-height:1.55;margin-top:2px}
   .fxt{flex:0 0 54px;text-align:right;font-size:9.5px;letter-spacing:.12em;color:#4f7999;
     text-transform:uppercase;padding-top:2px}
-  .fxToggle{flex:0 0 34px;height:18px;margin-top:3px;border-radius:10px;position:relative;
-    cursor:pointer;background:rgba(120,150,180,.22);border:1px solid rgba(140,180,220,.35);
-    transition:background .15s,border-color .15s}
-  .fxToggle::after{content:'';position:absolute;top:1px;left:1px;width:14px;height:14px;
-    border-radius:50%;background:#7d93a8;transition:transform .15s,background .15s}
-  .fxToggle.on{background:rgba(120,220,150,.32);border-color:rgba(140,230,170,.55)}
-  .fxToggle.on::after{transform:translateX(16px);background:#8ff0ab}
   /* Prominent chase score: top band under HUD so current vs best is always glanceable */
   #scorebar{position:fixed;left:0;right:0;
     top:calc(52px + env(safe-area-inset-top,0px));
@@ -211,8 +201,6 @@
     background:linear-gradient(180deg,#dff2ff,#7fc8f5);box-shadow:0 0 12px rgba(110,200,255,.7)}
 
   /* ── main menu: three game modes ─────────────────────────────────────── */
-  .modelabel{font-size:12px;letter-spacing:.3em;color:#5fb8ee;text-transform:uppercase;
-    margin:6px 0 12px;text-align:center}
   .modes{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
   button.mode{display:flex;align-items:center;gap:12px;padding:10px 14px;cursor:pointer;
     font:inherit;text-align:left;background:rgba(10,22,38,.55);color:#eaf6ff;
@@ -230,14 +218,6 @@
     border-radius:50%;border:1px solid currentColor}
   .mi svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.7;
     stroke-linecap:round;stroke-linejoin:round}
-  .achband{display:flex;align-items:center;justify-content:center;gap:11px;flex-wrap:wrap;
-    width:100%;font:inherit;cursor:pointer;margin:0 0 14px;padding:11px 12px;
-    border:1px solid rgba(200,140,90,.45);background:rgba(36,22,12,.55)}
-  .achband:hover{border-color:rgba(220,160,110,.7)}
-  .achband .al{font-size:9.5px;letter-spacing:.18em;color:#a87850;text-transform:uppercase}
-  .achband .av{font-size:23px;font-weight:800;color:#e8b878;letter-spacing:.05em;
-    text-shadow:0 0 12px rgba(220,160,90,.45);font-variant-numeric:tabular-nums}
-  .achband .am{font-size:9.5px;letter-spacing:.14em;color:#9a6e4a;text-transform:uppercase}
   .achTierMarks{font-size:9px;letter-spacing:.08em;color:#7a5a3a;margin-top:4px}
   .achTierMarks .got{color:#e8b878}
   .achCard{position:relative}
@@ -251,11 +231,8 @@
   .achDetail.open{display:block}
   .achDetail .rowt{display:flex;justify-content:space-between;gap:8px;padding:2px 0}
   .achDetail .rowt.got{color:#e8b878}
-  .mi.big{flex:0 0 54px;height:54px}
-  .mi.big svg{width:30px;height:30px}
   .mode.vanilla{border-color:rgba(95,184,238,.5)} .mode.vanilla .mi{color:#5fb8ee}
   .mode.Modifier{border-color:rgba(93,226,168,.5)} .mode.Modifier .mi{color:#5de2a8}
-  .mode.custom{border-color:rgba(178,120,255,.5)} .mode.custom .mi{color:#b278ff}
 
   /* ── difficulty colour scheme: Easy=gold, Medium=purple, Hard=red ───────
      Applied to the main-menu difficulty picker and the Enter Arena button
@@ -358,24 +335,10 @@
     min-height:40px;background:rgba(6,14,24,.96)}
   .backlink:hover{color:#dff1ff}
   .card{position:relative}
-  .modehead{display:flex;justify-content:center;margin-bottom:10px}
   h1.ruled{font-size:26px;letter-spacing:.2em;position:relative;margin-bottom:14px}
   h1.ruled::before,h1.ruled::after{content:'';position:absolute;top:50%;width:15%;height:1px;
     background:rgba(110,180,240,.4)}
   h1.ruled::before{left:0} h1.ruled::after{right:0}
-  h1.ruled.custom{color:#e6d4ff;text-shadow:0 0 12px rgba(178,120,255,.8)}
-  h1.ruled.custom::before,h1.ruled.custom::after{background:rgba(178,120,255,.45)}
-  .chips{display:flex;justify-content:center;border:1px solid rgba(110,180,240,.3);
-    background:rgba(10,24,40,.5)}
-  .chips span{flex:1;padding:13px 6px;font-size:11px;letter-spacing:.12em;color:#a8cfe8;
-    text-transform:uppercase;border-left:1px solid rgba(110,180,240,.2)}
-  .chips span:first-child{border-left:none}
-  .difflist{display:flex;flex-direction:column;gap:10px}
-  button.dbtn{font:inherit;font-size:15px;letter-spacing:.18em;text-transform:uppercase;
-    padding:16px;cursor:pointer;min-height:52px;color:#cfe8ff;
-    background:rgba(12,26,44,.5);border:1px solid rgba(110,180,240,.3);transition:.15s}
-  button.dbtn:hover{background:rgba(28,60,96,.75);color:#fff;
-    border-color:rgba(150,220,255,.85);box-shadow:0 0 18px rgba(110,200,255,.35)}
 
   /* ── custom screen ───────────────────────────────────────────────────── */
   .crow{display:flex;align-items:center;gap:10px;margin-bottom:9px;
@@ -396,28 +359,6 @@
     box-shadow:0 0 12px rgba(93,226,168,.35)}
   #mModifiers button[data-t="0"].on{background:rgba(95,184,238,.22);border-color:rgba(95,184,238,.9);
     box-shadow:0 0 12px rgba(95,184,238,.35)}
-  .grouplabel.Modifiersel{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:14px}
-  .mini2{font:inherit;font-size:9px;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;
-    padding:5px 9px;color:#9dc4e0;background:rgba(20,40,64,.5);
-    border:1px solid rgba(110,180,240,.3)}
-  .mini2:hover{color:#fff;border-color:rgba(190,140,255,.8)}
-  .tokgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
-  .tokrow{display:flex;align-items:center;gap:9px;padding:8px 9px;
-    border:1px solid rgba(110,180,240,.18);background:rgba(8,18,32,.5);cursor:pointer}
-  .tokrow .tok{flex:0 0 24px;height:24px}
-  .tokrow .tn{flex:1;min-width:0;font-size:10px;letter-spacing:.06em;color:#cfe8ff;
-    text-align:left;text-transform:uppercase;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .sw2{flex:0 0 34px;height:19px;border-radius:10px;position:relative;
-    background:rgba(90,150,200,.25);border:1px solid rgba(110,180,240,.3);transition:.15s}
-  .sw2::after{content:'';position:absolute;top:2px;left:2px;width:13px;height:13px;
-    border-radius:50%;background:#8fbcd8;transition:.15s}
-  .tokrow.on .sw2{background:rgba(150,90,255,.45);border-color:rgba(190,140,255,.9)}
-  .tokrow.on .sw2::after{left:18px;background:#fff}
-  .tokrow.on{border-color:rgba(178,120,255,.4)}
-  #cDiff .opt.on{background:rgba(150,90,255,.25);border-color:rgba(190,140,255,.9);
-    box-shadow:0 0 14px rgba(160,100,255,.45), inset 0 0 14px rgba(160,100,255,.15)}
-  .go.custom{background:linear-gradient(180deg,#c9a4ff,#8b5cf6);color:#12021f;
-    box-shadow:0 0 26px rgba(160,100,255,.55)}
 
   /* paddle colour swatches — neat 2×4 grid (8 neon colours) */
   .swatches{
@@ -470,14 +411,6 @@
     border-top:1px solid rgba(255,205,110,.28);margin-top:6px;padding-top:7px;
     display:flex;justify-content:space-between;gap:12px}
   .scorebreak .stotal span:last-child{color:#ffd97a}
-  body.cb .tok.b, body.cb .tok.n, body.cb .tok.w{position:relative}
-  .cb-shape{display:none;width:10px;height:10px;margin:0 auto 2px;border:1.5px solid currentColor}
-  body.cb .cb-shape{display:block}
-  body.cb .cb-shape.circle{border-radius:50%}
-  body.cb .cb-shape.triangle{width:0;height:0;border-left:6px solid transparent;
-    border-right:6px solid transparent;border-bottom:10px solid currentColor;border-top:none;
-    background:transparent}
-  body.cb .cb-shape.diamond{transform:rotate(45deg);width:8px;height:8px}
 
   .achGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));
     gap:12px;margin-top:14px}
@@ -571,11 +504,8 @@
     .minigrid .go{font-size:10px;padding:13px 4px;letter-spacing:.1em}
     h1.ruled{font-size:20px;letter-spacing:.14em}
     h1.ruled::before,h1.ruled::after{width:9%}
-    .chips span{font-size:9.5px;letter-spacing:.05em;padding:12px 2px}
     .clab{font-size:10px;letter-spacing:.1em}
     .cseg .opt{padding:9px 10px;font-size:10px}
-    .tokrow .tn{font-size:9px}
-    .tokgrid{gap:6px}
     #toast{font-size:54px;letter-spacing:.12em}
     #toast.small{font-size:18px;letter-spacing:.1em}
   }
@@ -763,73 +693,6 @@
   </div>
 </div>
 
-<div class="panel hidden" id="modePanel">
-  <div class="card">
-    <div class="pbar"><button class="backlink" id="bModeBack">&#10094; Back</button></div>
-    <div class="modehead"><span class="mi big" id="modeIcon"></span></div>
-    <h1 class="ruled" id="modeTitle">VANILLA MODE</h1>
-    <div class="chips" id="modeChips"></div>
-    <div class="grouplabel" style="margin-top:16px">Endless</div>
-    <div class="row" id="modeEndless">
-      <button class="opt" data-e="1">On</button>
-      <button class="opt on" data-e="0">Off</button>
-    </div>
-    <div class="grouplabel" style="margin-top:16px">Difficulty</div>
-    <div class="row" id="modeDiff">
-      <button class="opt" data-d="0">Easy</button>
-      <button class="opt on" data-d="1">Medium</button>
-      <button class="opt" data-d="2">Hard</button>
-    </div>
-    <div class="btnrow"><button class="go" id="bModeStart">Start</button></div>
-  </div>
-</div>
-
-<div class="panel hidden" id="customPanel">
-  <div class="card">
-    <div class="pbar"><button class="backlink" id="bCustomBack">&#10094; Back</button></div>
-    <div class="modehead"><span class="mi big custom" id="customIcon"></span></div>
-    <h1 class="ruled custom">CUSTOM</h1>
-
-    <div class="crow"><span class="clab">Lives</span>
-      <span class="row cseg" id="cLives">
-        <button class="opt" data-l="1">1</button>
-        <button class="opt on" data-l="3">3</button>
-        <button class="opt" data-l="5">5</button>
-      </span></div>
-    <div class="crow"><span class="clab">Modifier</span>
-      <span class="row cseg" id="cModifiers">
-        <button class="opt on" data-t="1">On</button>
-        <button class="opt" data-t="0">Off</button>
-      </span></div>
-    <div class="crow"><span class="clab">Spawn rate</span>
-      <span class="row cseg" id="cRate">
-        <button class="opt" data-tr="0">Min</button>
-        <button class="opt on" data-tr="1">Mid</button>
-        <button class="opt" data-tr="2">Max</button>
-      </span></div>
-
-    <div class="grouplabel Modifiersel">Modifier selection
-      <button class="mini2" id="cAll">All</button><button class="mini2" id="cNone">None</button>
-    </div>
-    <div class="tokgrid" id="cModifierGrid"></div>
-
-    <div class="crow"><span class="clab">Endless</span>
-      <span class="row cseg" id="cEndless">
-        <button class="opt" data-e="1">On</button>
-        <button class="opt on" data-e="0">Off</button>
-      </span></div>
-
-    <div class="grouplabel" style="margin-top:14px">Difficulty</div>
-    <div class="row" id="cDiff">
-      <button class="opt" data-d="0">Easy</button>
-      <button class="opt on" data-d="1">Medium</button>
-      <button class="opt" data-d="2">Hard</button>
-    </div>
-
-    <div class="btnrow"><button class="go custom" id="bCustomStart">Start</button></div>
-  </div>
-</div>
-
 <div class="panel hidden" id="brief">
   <div class="card">
     <div class="pbar"><button class="backlink" id="bBackMenu">&#10094; Back</button></div>
@@ -917,7 +780,44 @@
     <div class="row"><input class="vol" id="sfxVol" type="range" min="0" max="100" step="5" value="80"
            aria-label="Sound effect volume"></div>
 
-    <div class="grouplabel">Battery saver (30 fps)</div>
+    <div class="grouplabel" style="margin-top:16px">Paddle color</div>
+    <div class="swatches" id="colorSwatches"></div>
+
+    <div class="grouplabel" style="margin-top:16px">Colorblind shapes</div>
+    <div class="note">Adds a shape code to Modifier tokens (circle/triangle/diamond) alongside their color.</div>
+    <div class="row" id="cbOpts">
+      <button class="opt" data-cb="1">On</button>
+      <button class="opt on" data-cb="0">Off</button>
+    </div>
+
+    <div class="grouplabel" style="margin-top:16px">Visual effects</div>
+    <div class="row" id="fxOpts">
+      <button class="opt" data-fx="0">Off</button>
+      <button class="opt" data-fx="1">Low</button>
+      <button class="opt on" data-fx="2">High</button>
+    </div>
+
+    <div class="grouplabel" style="margin-top:16px">CRT effects</div>
+    <div class="row" id="crtOpts">
+      <button class="opt" data-c="0">Off</button>
+      <button class="opt on" data-c="1">On</button>
+    </div>
+
+    <div class="grouplabel" style="margin-top:16px">Screen shake</div>
+    <div class="row" id="shakeOpts">
+      <button class="opt" data-sh="0">Off</button>
+      <button class="opt" data-sh="1">Low</button>
+      <button class="opt on" data-sh="2">Full</button>
+    </div>
+
+    <div class="grouplabel" style="margin-top:16px">Haptics</div>
+    <div class="row" id="hapticsOpts">
+      <button class="opt" data-hp="0">Off</button>
+      <button class="opt" data-hp="1">Light</button>
+      <button class="opt on" data-hp="2">Full</button>
+    </div>
+
+    <div class="grouplabel" style="margin-top:16px">Battery saver (30 fps)</div>
     <div class="row" id="fpsOpts">
       <button class="opt" data-f="1">On</button>
       <button class="opt on" data-f="0">Off</button>
@@ -1063,15 +963,15 @@ const DIFF = [
   // Balance pass 0.8.8: Hard's err/blunder eased from 0.04/0.015 so the Easy->Medium
   // and Medium->Hard steps are comparable (previously Hard's accuracy jump was much
   // bigger than Easy->Medium's, while paddle/ball speed stepped up evenly).
-  { label:'EASY',   err:0.09,   blunder:0.05,   react:0.12,  pad:1.65, look:0.85, ballBase:0.65, ballMax:1.30, crack:0 },
-  { label:'MEDIUM', err:0.07,   blunder:0.03,   react:0.08,  pad:2.10, look:0.92, ballBase:0.82, ballMax:1.65, crack:0 },
-  { label:'HARD',   err:0.057,  blunder:0.021,  react:0.05,  pad:2.55, look:0.96, ballBase:1.00, ballMax:2.00, crack:0 },
+  { label:'EASY',   err:0.09,   blunder:0.05,   react:0.12,  pad:1.65, look:0.85, ballBase:0.65, ballMax:1.30 },
+  { label:'MEDIUM', err:0.07,   blunder:0.03,   react:0.08,  pad:2.10, look:0.92, ballBase:0.82, ballMax:1.65 },
+  { label:'HARD',   err:0.057,  blunder:0.021,  react:0.05,  pad:2.55, look:0.96, ballBase:1.00, ballMax:2.00 },
 ];
 
 let diffIdx = 1;
 let startLives = 3;
 let displayName = 'RHYNOCK';
-const VERSION = '0.8.9';
+const VERSION = '0.8.13';
 /* Online leaderboard (Cloudflare Worker + D1).
    Leave empty to keep the game fully offline.
    After you deploy the Worker, set this to your workers.dev URL, e.g.:
@@ -1114,7 +1014,7 @@ Optional online leaderboard (Cloudflare Worker + D1) via LEADERBOARD_URL — lea
 - reanchorDrag() runs every frame while eclipseT > 0: the touch anchor is wall-relative, so a rotating wall invalidates it and the paddle stops answering the finger.
 - Concede pacing (SERVE_DELAY_LIFE_LOST 1s / SERVE_DELAY_KNOCKOUT 2s): hidden holds added to serveTimer after a concede. serveTimer freezes the ball only; paddles and arena animation keep running and no countdown UI appears.
 - Main menu has a Modifiers On/Off toggle and Easy/Medium/Hard difficulty selector (both remembered). Play button (#mPlay / startSimplePlay()) uses the selected difficulty, 3 lives, ModifierRate locked to difficulty (0/1/2), endless off; mode is modifier or vanilla based on the Modifiers toggle.
-- Custom mode still exists in code (#customPanel) with lives, spawn rate, per-modifier toggles (ModifierToggles), endless, difficulty — but is not exposed on the simplified main menu.
+- Custom mode and its panel (#customPanel, #modePanel, ModifierToggles, showMode/showCustom/applyMode/buildModifierGrid/syncCustomUI) were fully removed in 0.8.10 — they'd been unreachable dead code since the simplified main menu shipped (nothing ever called showMode/showCustom), confirmed by a full audit. Endless mode's only two toggles (modeEndless/cEndless) lived inside those same panels and were removed with them; the endlessMode variable and all its gameplay logic (concede(), XP, achievements) are untouched and still work, but there is currently no UI path to ever set it true. If Endless is wanted back, it needs a new toggle somewhere reachable (e.g. Settings) — ask before assuming where.
 - Scoring only for vanilla + modifier (scoredMode()). Custom is deliberately unscored.
 - Score formula (0.8.9): survival = seconds × 100 × (1 + √(seconds/150)); paddle hits escalate 500, 600, 700… via escalatingFlatTotal(); modifiers (buff/nerf/wild, base 5000/5000/2500) now ALSO escalate per type via the same escalatingFlatTotal() helper, +SCORE_MODIFIER_STEP (1000) per consecutive hit of that type; nerfed (base −5000) escalates the same way but worse (−5000, −6000, −7000…). Rally kills (opponent concedes a life off your last hit, not eliminated) and eliminations (opponent's wall shatters off your last hit) are new bounties credited via creditKill()/concede()'s b.hitter, tallied in run.rallyKills/run.eliminationKills, and summed via killTotal()/killValue() — a TRIANGULAR step (the gap between consecutive kills grows by one more step each time: 25k/50k base, jumps of 1k/5k that themselves grow), not a flat step like paddle/modifiers. All five (survival, paddle, modifier, rallyBounty, eliminationBounty) sum into subtotal; then × SCORE_PLACE_MUL[place]; then × SCORE_DIFF_MUL[diffIdx] (Easy 0.65 / Medium 1.0 / Hard 1.55, widened 0.8.8 — the scoreHelpPanel text had gone stale after that change until 0.8.9 fixed it). Difficulty multiplier is applied AFTER placement. worker.js's serializeBreakdown() keys allowlist was updated to include rallyBounty/eliminationBounty/rallyKills/eliminationKills — requires redeploy for submitted breakdowns to retain them.
 - Bounty modifier removed as of 0.7.1 (was a wildcard, arena-wide, doubled the next concede cost).
@@ -1126,10 +1026,11 @@ Optional online leaderboard (Cloudflare Worker + D1) via LEADERBOARD_URL — lea
 - Score breakdown (0.7.7): submitOnlineScore and local scoreBoard rows may include a 'breakdown' object (survival/paddle/modifier/subtotal/placeMul/total + hit counts). Leaderboard/Recent name clicks open a breakdown panel when data exists.
 - Persistence: localStorage keys (career, scores, settings, modifier toggles, progress, name, etc.). Never remove keys without a migration.
 - Progression systems (level/XP, prestige, achievements) exist in code; Level/XP band on main menu is currently hidden (#lvlBand display:none). Daily Missions were removed in 0.7.3.
+- Ball visuals (0.8.11): ball.hitCol (set on every paddle hit, cleared fresh in newBall()) drives the glow/trail/core color — falls back to BALL_DEFAULT_COL before the first hit. Bloom sprite is cached per-color in bloomCache (Map), not the old single shared bloomCv, since Split can have multiple balls with different hitters on screen at once. ball.spawnT (1→0 over BALL_SPAWN_DUR) drives the spawn wrap-in scale/ring; it decays even while serveTimer holds the ball still at center, so it's finished before launch. spawnImpactBurst()/sparks is a separate particle system from debris (which is only the full wall-shatter on elimination) — it fires on every concede() via the conceding player's own color.
+- VFX pass (0.8.12): bursts[] (originally token-pickup-only) is now tier-aware ('small'/'big'/'huge' via b.tier, default 'small' for backward compat with the untagged token-pickup push) — 'small' is the per-hit shockwave (fires for every player's paddle return now, not just human), 'big'/'huge' are spawnImpactBurst()'s wall-impact/elimination rings, drawn by the same drawBursts(). popups[] + spawnPopup()/drawPopups() is a new floating-text system for every discrete point event (paddle hit, buff/nerf/wild pickup, nerfed penalty, rally/elim kill) — deliberately excludes survival (continuous) and the placement/difficulty multipliers (end-of-match only). flatValue(base,step,n) gives the value of the n-th occurrence alone (not the running sum escalatingFlatTotal() gives) — that's what a popup should show. creditKill() now takes (hitter,receiver,type,x,y) to know where to place its popup. dust[] is ambient background particles (normalized [0,1] coords × current W/H, so resize-proof), drifting left, drawn via drawDust() early in draw() before the shake/lighter-blend section, skipped when fxLevel===0. Continuous spawn-wrap-in screen vibration (SPAWN_VIBE_MAG) is separate from the decaying shakeT/shakeMag system — added directly in draw()'s shake-offset calc, active whenever any live ball has spawnT>0.
 
 === UI / PANELS ===
-- Panels: nameGate, start, modePanel, customPanel, brief, pausePanel, codex, achPanel, over, setPanel, statsPanel, scoreHelpPanel, logPanel, lbPanel, recentPanel, ctxPanel.
-- showSetup() is the common "back to menu" entry; keep logPanel, lbPanel, recentPanel, ctxPanel, scoreHelpPanel (and any new panels) in its hide list.
+- Panels: nameGate, start, brief, pausePanel, codex, achPanel, over, setPanel, statsPanel, scoreHelpPanel, logPanel, lbPanel, recentPanel, ctxPanel, brPanel. This list lives in ONE place now: the ALL_PANELS array, consumed by hideAllPanels(). Adding a new panel? Add its id to ALL_PANELS — every show*() function already calls hideAllPanels() before unhiding its own target, so nothing else needs touching. (Prior to 0.8.10 this was 13 separately hand-maintained array literals, which had drifted — several newer panels were missing from older lists, and 3 call sites used an unguarded getElementById that would throw outright once modePanel/customPanel were removed. Don't reintroduce inline panel-id arrays; extend ALL_PANELS instead.)
 - Main menu High Score band shows the best for the currently selected difficulty (tiers[diffIdx].bestScore) and opens Stats; bottom "Scoring" button opens scoreHelpPanel (formula explanation).
 - Compact mini-leaderboard (top 5, Easy / Medium / Hard tabs) on main menu under High Score; tap opens full top-25 #lbPanel with the same difficulty tabs. Time filters (7 Days / Today) removed; all-time only, split by difficulty. Missing difficulty on old rows is backfilled as Medium.
 - Mini Recent Matches (top 5) under that; tap opens full list #recentPanel.
@@ -1154,6 +1055,31 @@ ${VERSION} — Triple-click main-menu version opens this project context panel f
    Append a new entry and bump the patch digit of VERSION on every change set.
    The in-game Changelog panel reads this array directly. */
 const CHANGELOG = [
+  { v: '0.8.13', date: '2026-08-17', notes: [
+    'Fixed: the ball\u2019s trail ballooned in length as speed increased (pressure ramp, Hard difficulty) because it was capped by frame count, not distance \u2014 the same ~26 frames simply covered more screen space at higher speed. Now capped by actual travel distance (BALL_TRAIL_MAX_FRAC \u00d7 arena radius), so it reads as roughly the same visual length at any speed.',
+  ]},
+  { v: '0.8.12', date: '2026-08-17', notes: [
+    'New: ambient background particles drift slowly left across the arena, purely decorative (skipped when Visual effects is Off).',
+    'The hit shockwave ring now fires for every player\u2019s paddle return, not just yours \u2014 the whole board reads as alive.',
+    'New: floating +points popups for every discrete scoring event \u2014 paddle hits, buff/nerf/wildcard pickups, the nerfed penalty (shown as a negative), and rally-kill/elimination bounties. Survival (continuous) and the placement/difficulty multipliers (applied once at match end) stay silent since they aren\u2019t per-event.',
+    'Wall-impact explosions upgraded: misses now get a big expanding ring (the same visual language a match win used to get exclusively), and eliminations layer an even bigger ring on top for a distinctly escalated moment.',
+    'Ball spawn wrap-in lengthened (0.45s \u2192 0.85s) and the ring grows further; the whole screen now vibrates continuously for the duration, distinct from the punchier one-off shake used on hits and misses.',
+  ]},
+  { v: '0.8.11', date: '2026-08-17', notes: [
+    'Ball now tints to whoever last hit it (ball.hitCol), so it\u2019s obvious at a glance who\u2019s responsible for the current rally. Glow/trail carry the full color; the solid core blends 65% toward white so it stays legible against any wall.',
+    'Added a faint, longer-reaching path-history line behind the ball\u2019s existing glow trail, tracing its recent route through the arena.',
+    'New: a small burst of sparks fires at the exact impact point whenever a player misses and the ball reaches their wall (both a life-loss and a full elimination) \u2014 colored to match that player\u2019s wall.',
+    'New: balls now wrap in with a brief scale-up + expanding ring when they spawn, instead of popping into existence at full size. Plays out during the serve countdown so the ball has finished materializing by the time it launches.',
+    'Ball glow (bloom) sprite is now cached per-color instead of a single shared blue sprite, so multiple balls (e.g. from Split) can each show their own hitter\u2019s color simultaneously.',
+  ]},
+  { v: '0.8.10', date: '2026-08-17', notes: [
+    'New: Colorblind shapes, Paddle color, Visual effects, CRT effects, Screen shake, and Haptics all added to Settings. All six were already fully coded and working (some going back several versions) but had no UI control to ever turn them on — an audit caught the gap.',
+    'Removed the entire dead Mode Select + Custom panel subsystem (unreachable since the simplified main menu shipped — confirmed nothing called into it). Endless mode\u2019s only two toggles lived inside those panels; the mechanic itself is untouched but currently has no UI path to enable it.',
+    'Fixed a crash risk: 3 of the 13 places that hid panels before showing a new one used an unguarded lookup that would throw once the dead panels above were removed. Consolidated all 13 into one ALL_PANELS list + hideAllPanels() helper, which also fixes several older panels (added in later versions) that had drifted out of a few of those lists and were never being hidden.',
+    'Removed ~150 lines of orphaned CSS left behind by the above and by earlier redesigns (achievement-count band, colorblind DOM-shape system superseded by the canvas one, custom-panel-only styles).',
+    'Removed the dead crack field from DIFF (present on all three tiers, always 0, never read).',
+    'Reconciled the XP difficulty multiplier with the leaderboard one \u2014 they were two separately hand-tuned curves (1/1.5/2.25 vs 0.65/1/1.55) that drifted apart after the 0.8.8 balance pass. XP now reuses the leaderboard curve directly. Note: this measurably lowers Hard\u2019s XP reward (2.25x \u2192 1.55x relative to Medium) and leaves Easy\u2019s roughly unchanged \u2014 flagging since it\u2019s a real gameplay change, not just cleanup.',
+  ]},
   { v: '0.8.9', date: '2026-08-17', notes: [
     'New: Rally kills. If the next player to touch the ball after your return concedes a life (without being eliminated), you\u2019re credited a bounty: 25,000 for the 1st this match, escalating on a growing curve (26,000 \u2192 28,000 \u2192 31,000\u2026).',
     'New: Eliminations. Same idea for a kill that removes an opponent\u2019s wall entirely: 50,000 for the 1st, then 55,000 \u2192 65,000 \u2192 80,000\u2026',
@@ -1514,11 +1440,18 @@ async function loadRecentPanel() {
     body.textContent = 'Could not reach the leaderboard. Check your connection.';
   }
 }
-function showRecentMatches() {
-  ['start', 'over', 'brief', 'pausePanel', 'codex', 'statsPanel', 'setPanel',
-   'achPanel', 'modePanel', 'customPanel', 'logPanel', 'lbPanel'].forEach(id => {
+// Single source of truth for every top-level panel div, so "hide everything, show one"
+// navigation can't drift out of sync the way 13 separately-maintained array literals did
+// (several were missing panels added in later versions — see CHANGELOG 0.8.10).
+const ALL_PANELS = ['nameGate', 'start', 'brief', 'pausePanel', 'codex', 'achPanel', 'over',
+  'setPanel', 'statsPanel', 'scoreHelpPanel', 'logPanel', 'lbPanel', 'recentPanel', 'ctxPanel', 'brPanel'];
+function hideAllPanels() {
+  ALL_PANELS.forEach(id => {
     const el = document.getElementById(id); if (el) el.classList.add('hidden');
   });
+}
+function showRecentMatches() {
+  hideAllPanels();
   document.getElementById('recentPanel').classList.remove('hidden');
   loadRecentPanel();
 }
@@ -1599,7 +1532,12 @@ const SCORE_ELIM_KILL_STEP  = 5000;   // triangular step — see header note abo
 const SCORE_PLACE_MUL = [0, 3, 2.5, 2, 1.5, 1.25, 1];         // index = finishing place 1..6
 const SCORE_DIFF_MUL  = [0.65, 1.0, 1.55];                    // Easy / Medium / Hard — applied AFTER placement (widened 0.8.8)
 const SCORE_PLACE   = [0, 3000, 1500, 750, 250, 100, 50];    // legacy flat place XP (progress system)
-const SCORE_DIFF    = [1, 1.5, 2.25];                        // Easy / Medium / Hard (XP only)
+// XP's difficulty multiplier used to be its own hand-tuned array (1/1.5/2.25) that quietly
+// drifted from SCORE_DIFF_MUL after the 0.8.8 balance pass — two different answers to
+// "how much should Hard matter" with no cross-check. Now XP just reuses the same curve so
+// there's one source of truth; if the two ever need to diverge on purpose, make that
+// decision explicit here rather than letting a future balance pass forget one of them.
+const SCORE_DIFF    = SCORE_DIFF_MUL;                         // Easy / Medium / Hard (XP)
 /** Sum of a flat-step escalating series: base + (base+step) + (base+2*step) + … for n occurrences.
  *  Same shape paddle hits already use (500+600+700+…); now shared with modifier hits. */
 function escalatingFlatTotal(n, base, step) {
@@ -1612,6 +1550,13 @@ function escalatingFlatTotal(n, base, step) {
 function paddlePoints(n) {
   return escalatingFlatTotal(n, SCORE_PADDLE_BASE, SCORE_PADDLE_STEP);
 }
+/** Value of the n-th occurrence alone (not the running sum) in a flat-step series —
+ *  what a score popup should show, since the popup is for THIS event, not a total. */
+function flatValue(base, step, n) {
+  n = Math.max(1, n | 0);
+  return base + step * (n - 1);
+}
+const NERFED_POPUP_COL = '#ff6a6a'; // distinct from the nerf token's own pickup color
 /** Value of the k-th kill in a triangular-step series (k is 1-indexed): base, base+step,
  *  base+3*step, base+6*step … the gap between consecutive kills grows by one more step. */
 function killValue(k, base, step) {
@@ -1704,10 +1649,7 @@ function showBreakdown(parts, name, score, from) {
   }
   const body = document.getElementById('brBody');
   if (body) body.innerHTML = breakdownHtml(parts);
-  ['start', 'over', 'brief', 'pausePanel', 'codex', 'statsPanel', 'setPanel', 'achPanel',
-   'modePanel', 'customPanel', 'logPanel', 'lbPanel', 'recentPanel', 'ctxPanel', 'scoreHelpPanel'].forEach(id => {
-    const el = document.getElementById(id); if (el) el.classList.add('hidden');
-  });
+  hideAllPanels();
   document.getElementById('brPanel').classList.remove('hidden');
 }
 function hideBreakdown() {
@@ -2165,10 +2107,7 @@ async function loadMiniLeaderboard() {
   }
 }
 function showLeaderboard() {
-  ['start', 'over', 'brief', 'pausePanel', 'codex', 'statsPanel', 'setPanel',
-   'achPanel', 'modePanel', 'customPanel', 'logPanel', 'recentPanel'].forEach(id => {
-    const el = document.getElementById(id); if (el) el.classList.add('hidden');
-  });
+  hideAllPanels();
   document.getElementById('lbPanel').classList.remove('hidden');
   loadLeaderboard();
 }
@@ -2364,7 +2303,6 @@ function resize() {
   layout();
   R = Rtarget;
   buildWalls();
-  buildBloom();
   // The arena just changed size, so any Modifier still sitting at its old pixel position
   // may now be outside the walls where no ball can reach it. Left alone, five stranded
   // Modifiers also hold the spawner at its cap and silently kill the Modifier system for the
@@ -2391,6 +2329,18 @@ let rallyHits = 0, elapsed = 0, playerHits = 0, knockouts = 0;
 let pressure = 0;
 let sound = true, lastT = 0;
 let debris = [];          // fading ghosts of burned-out walls
+let sparks = [];          // little explosion fragments when a wall takes a hit (concede)
+let popups = [];          // floating +points text for every discrete scoring event
+let dust = [];             // ambient background particles, slowly drifting left
+function initDust() {
+  dust = [];
+  const n = 34;
+  for (let i = 0; i < n; i++) {
+    dust.push({ x: Math.random(), y: Math.random(), sp: 0.006 + Math.random() * 0.012,
+                r: 0.6 + Math.random() * 1.3, a: 0.15 + Math.random() * 0.25 });
+  }
+}
+initDust();
 let ending = false;       // player is out: freeze play, let the shatter land, then stats
 let collapseFlash = 0;
 
@@ -2495,11 +2445,17 @@ function newPlayers() {
   }));
 }
 
+const BALL_SPAWN_DUR = 0.85;    // seconds for the spawn wrap-in animation to complete (lengthened 0.8.12)
+const SPAWN_RING_MAX = 3.6;     // ring grows to this many ball-radii before fading (widened 0.8.12)
+const SPAWN_VIBE_MAG = 3.4;     // px of continuous screen jitter while any ball is wrapping in
+const BALL_TRAIL_MAX_FRAC = 0.42; // trail capped to this fraction of R, regardless of ball speed
+const BALL_DEFAULT_COL = '#bfe9ff'; // ball tint before anyone has hit it yet this rally
 function newBall(x, y, ang, sp) {
   // trail is a fixed ring buffer (trailLen slots) to avoid shift() every frame
   return { x, y, vx: Math.cos(ang) * sp, vy: Math.sin(ang) * sp,
            trail: [], trailHead: 0, trailLen: 0,
-           hitter: null, pendingNerf: null, hot: false, stallX: x, stallY: y, stallT: 0 };
+           hitter: null, hitCol: null, pendingNerf: null, hot: false,
+           stallX: x, stallY: y, stallT: 0, spawnT: 1 };
 }
 
 function serve(fromWall) {
@@ -2536,16 +2492,14 @@ function startGame() {
   over = false; paused = false; running = true;
   elapsed = 0; playerHits = 0; knockouts = 0; pressure = 0;
   lastPlayerHitAt = 0; consecutiveAiHits = 0;
-  debris = []; collapseFlash = 0; ending = false;
+  debris = []; sparks = []; collapseFlash = 0; ending = false;
   clearFx();
   layout(); R = Rtarget; buildWalls();
   balls = [];                         // hold the ball until countdown finishes
   serveTimer = 0;
   countdown = 5.0;
   resumeCountdown = false;
-  ['start', 'brief', 'over', 'pausePanel', 'codex', 'statsPanel', 'setPanel', 'modePanel', 'customPanel', 'logPanel', 'lbPanel', 'recentPanel', 'ctxPanel', 'achPanel', 'scoreHelpPanel', 'brPanel', 'nameGate'].forEach(id => {
-    const el = document.getElementById(id); if (el) el.classList.add('hidden');
-  });
+  hideAllPanels();
   document.getElementById('bPause').textContent = 'PAUSE';
   toast('5', '#bfe9ff', 0.9);
   haptic(10);
@@ -2701,6 +2655,7 @@ function applyEffect(f, targets) {
         const sp = Math.hypot(src.vx, src.vy);
         const nb = newBall(src.x, src.y, a, sp);
         nb.hitter = src.hitter;
+        nb.hitCol = src.hitCol;
         nb.pendingNerf = src.pendingNerf || null;
         balls.push(nb);
       }
@@ -3044,8 +2999,14 @@ function update(dt) {
   collapseFlash = Math.max(0, collapseFlash - dt * 1.4);
   for (const g of debris) g.t -= dt * 0.9;
   if (debris.length) debris = debris.filter(g => g.t > 0);
-  for (const b of bursts) b.t -= dt * 2.2;
+  for (const b of bursts) b.t -= dt * (b.tier === 'huge' ? 1.05 : b.tier === 'big' ? 1.5 : 2.2);
   if (bursts.length) bursts = bursts.filter(b => b.t > 0);
+  for (const s of sparks) { s.x += s.vx * dt; s.y += s.vy * dt; s.vx *= (1 - dt * 2.2); s.vy *= (1 - dt * 2.2); s.t -= dt * 1.7; }
+  if (sparks.length) sparks = sparks.filter(s => s.t > 0);
+  for (const p of popups) { p.y += p.vy * dt; p.t -= dt * 0.9; }
+  if (popups.length) popups = popups.filter(p => p.t > 0);
+  // Ambient background dust: slow leftward drift, wraps around when it exits the left edge.
+  for (const d of dust) { d.x -= d.sp * dt * 0.4; if (d.x < -0.05) d.x = 1.05; }
 
   // Eclipse Drift — ball is frozen only while the arena is actively spinning. Outbound
   // spin runs for a random 2-5s, then play resumes immediately (no countdown). After a
@@ -3217,6 +3178,11 @@ function update(dt) {
   }
 
   // ── balls ───────────────────────────────────────────
+  // Spawn wrap-in: runs even while serveTimer holds the ball still at center,
+  // so the ball has finished materializing by the time it actually launches.
+  for (const b of balls) {
+    if (b.spawnT > 0) b.spawnT = Math.max(0, b.spawnT - dt / BALL_SPAWN_DUR);
+  }
   if (serveTimer > 0) { serveTimer -= dt; return; }
   // Eclipse: arena is turning; balls stay frozen in place until it stops
   if (eclipseT > 0) return;
@@ -3347,9 +3313,13 @@ function hitModifiers(b) {
     if (run && b.hitter && b.hitter.human) {
       run.modifierHits++;
       const k = t.fx && t.fx.key;
-      if (k === 'b') { run.buffHits++; career.buffHits = (career.buffHits || 0) + 1; }
-      else if (k === 'n') { run.nerfHits++; career.nerfHits = (career.nerfHits || 0) + 1; }
-      else if (k === 'w') { run.wildHits++; career.wildHits = (career.wildHits || 0) + 1; }
+      const col = (t.fx && t.fx.col) || '#ffffff';
+      if (k === 'b') { run.buffHits++; career.buffHits = (career.buffHits || 0) + 1;
+        spawnPopup(t.x, t.y, '+' + commas(flatValue(SCORE_BUFF, SCORE_MODIFIER_STEP, run.buffHits)), col); }
+      else if (k === 'n') { run.nerfHits++; career.nerfHits = (career.nerfHits || 0) + 1;
+        spawnPopup(t.x, t.y, '+' + commas(flatValue(SCORE_NERF, SCORE_MODIFIER_STEP, run.nerfHits)), col); }
+      else if (k === 'w') { run.wildHits++; career.wildHits = (career.wildHits || 0) + 1;
+        spawnPopup(t.x, t.y, '+' + commas(flatValue(SCORE_WILD, SCORE_MODIFIER_STEP, run.wildHits)), col); }
     }
     resolveModifier(t, b, b.hitter || null);
   }
@@ -3479,16 +3449,26 @@ function collide(b) {
         b.x = w.ax + w.dx * tc + w.nx * (padFaceS() + 1.2);
         b.y = w.ay + w.dy * tc + w.ny * (padFaceS() + 1.2);
         b.hitter = p;
+        b.hitCol = p.col;
+        // Hit shockwave: every player's return gets the small ring, human or AI — helps
+        // the whole board read as alive, not just the player's own paddle.
+        bursts.push({ x: b.x, y: b.y, col: p.col, t: 1, tier: 'small' });
         // a nerf Modifier this ball picked up earlier lands on whoever just returned it
         if (b.pendingNerf) {
           applyEffect(b.pendingNerf, [p]);
           b.pendingNerf = null;
-          if (run && p.human) { run.nerfedHits++; career.nerfedHits = (career.nerfedHits || 0) + 1; }
+          if (run && p.human) {
+            run.nerfedHits++; career.nerfedHits = (career.nerfedHits || 0) + 1;
+            spawnPopup(b.x, b.y - 10, '-' + commas(flatValue(-SCORE_NERFED, SCORE_MODIFIER_STEP, run.nerfedHits)), NERFED_POPUP_COL);
+          }
         }
         p.hitFlash = 1; rallyHits++;
         if (rallyHits > run.bestRally) run.bestRally = rallyHits;
         if (sp2 > run.topSpeed) run.topSpeed = sp2;
-        if (p.human) playerHits++;
+        if (p.human) {
+          playerHits++;
+          spawnPopup(b.x, b.y - 10, '+' + commas(flatValue(SCORE_PADDLE_BASE, SCORE_PADDLE_STEP, playerHits)), p.col);
+        }
         // Track paddle hit position for scoring
         if (p.human && run) {
           if (aOff < 0.08) run.paddleHitsCenter++;
@@ -3541,10 +3521,15 @@ function collide(b) {
 // (b.hitter), never to the conceding player themselves. Only the human side of this
 // is ever scored (matchScore only ever runs for the human's run), so non-human
 // hitters are skipped here rather than tracked and discarded later.
-function creditKill(hitter, receiver, type) {
+function creditKill(hitter, receiver, type, x, y) {
   if (!run || !hitter || !hitter.human || hitter === receiver) return;
-  if (type === 'rally') run.rallyKills = (run.rallyKills || 0) + 1;
-  else if (type === 'elim') run.eliminationKills = (run.eliminationKills || 0) + 1;
+  if (type === 'rally') {
+    run.rallyKills = (run.rallyKills || 0) + 1;
+    spawnPopup(x, y, '+' + commas(killValue(run.rallyKills, SCORE_RALLY_KILL_BASE, SCORE_RALLY_KILL_STEP)), '#bfe9ff');
+  } else if (type === 'elim') {
+    run.eliminationKills = (run.eliminationKills || 0) + 1;
+    spawnPopup(x, y, '+' + commas(killValue(run.eliminationKills, SCORE_ELIM_KILL_BASE, SCORE_ELIM_KILL_STEP)), '#ffd97a');
+  }
 }
 // Returns true when the ball is gone (scored) so the caller stops integrating it.
 function concede(p, b, w) {
@@ -3553,6 +3538,7 @@ function concede(p, b, w) {
 
   p.lives -= 1;
   p.hurtFlash = 1;
+  spawnImpactBurst(b.x, b.y, p.col);
   if (p.human) run.conceded++;
   applyShake(9, 0.32);
   beep(110, 0.28, 'sawtooth', 0.07);
@@ -3569,7 +3555,7 @@ function concede(p, b, w) {
       p.fx = {};
       p.hurtFlash = 1;
       knockouts++;
-      creditKill(b.hitter, p, 'rally');
+      creditKill(b.hitter, p, 'rally', b.x, b.y);
       applyShake(12, 0.4); collapseFlash = 0.6;
       // Removed toast: player respawned
       beep(140, 0.12, 'sawtooth', 0.05);
@@ -3585,11 +3571,14 @@ function concede(p, b, w) {
     const dw = walls[p.wall];
     if (dw) debris.push({ ax: dw.ax, ay: dw.ay, bx: dw.bx, by: dw.by,
                           nx: dw.nx, ny: dw.ny, col: p.col, t: 1 });
+    // Elimination gets an extra, visibly bigger burst layered on top of the standard
+    // impact burst already fired above — reads as an escalating explosion, not just a repeat.
+    spawnImpactBurst(b.x, b.y, p.col, 'huge');
     p.out = true;
     p.wall = -1;
     p.fx = {};
     knockouts++;
-    creditKill(b.hitter, p, 'elim');
+    creditKill(b.hitter, p, 'elim', b.x, b.y);
     // Stronger elimination beat: bigger shake, longer flash, layered tone
     applyShake(22, 0.72); collapseFlash = 1.35;
     // elimination toast suppressed (0.7.7) — shake/flash/SFX still fire
@@ -3626,7 +3615,7 @@ function concede(p, b, w) {
   }
 
   // life-loss toast suppressed (0.7.7)
-  creditKill(b.hitter, p, 'rally');
+  creditKill(b.hitter, p, 'rally', b.x, b.y);
   if (balls.length === 0) {
     serve(p.wall >= 0 ? p.wall : null);
     serveTimer += SERVE_DELAY_LIFE_LOST;
@@ -3641,8 +3630,7 @@ function endGame(winner, eliminated) {
   // player's wall broke used to leave the pause panel stacked under the stats.
   paused = false;
   document.getElementById('bPause').textContent = 'PAUSE';
-  ['pausePanel', 'codex', 'brief', 'statsPanel', 'setPanel', 'achPanel', 'modePanel', 'customPanel'].forEach(id =>
-    document.getElementById(id).classList.add('hidden'));
+  hideAllPanels();
   const t = document.getElementById('overTitle');
   const sub = document.getElementById('overSub');
   if (eliminated) {
@@ -3907,10 +3895,20 @@ function draw() {
   ctx.fillStyle = 'rgba(1,2,6,0.34)';
   ctx.fillRect(0, 0, W, H);
 
+  let shakeX = 0, shakeY = 0;
   if (shakeT > 0) {
     const m = shakeMag * Math.min(1, shakeT / 0.32);
-    ctx.translate((Math.random() - .5) * m, (Math.random() - .5) * m);
+    shakeX += (Math.random() - .5) * m; shakeY += (Math.random() - .5) * m;
   }
+  // Continuous vibration for the full spawn wrap-in duration — a sustained jitter, distinct
+  // from the punchy decaying shake used on hits/impacts above.
+  if (fxLevel > 0 && balls.some(b => b.spawnT > 0)) {
+    shakeX += (Math.random() - .5) * SPAWN_VIBE_MAG;
+    shakeY += (Math.random() - .5) * SPAWN_VIBE_MAG;
+  }
+  if (shakeX || shakeY) ctx.translate(shakeX, shakeY);
+
+  if (fxLevel > 0) drawDust();
 
   ctx.globalCompositeOperation = 'lighter';
 
@@ -3938,6 +3936,7 @@ function draw() {
   drawModifiers();
   for (const b of balls) drawBall(b);
   drawBursts();
+  drawSparks();
   drawTouchGuide();
 
   if (collapseFlash > 0.01) {
@@ -3951,6 +3950,7 @@ function draw() {
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
 
   for (const w of walls) if (w.owner) drawLabel(w);
+  drawPopups();
 
   if (paused) { ctx.fillStyle = 'rgba(0,4,10,.5)'; ctx.fillRect(0, 0, W, H); }
 }
@@ -4061,6 +4061,19 @@ function drawTouchGuide() {
   ctx.restore();
 }
 
+// Ambient background: faint particles drifting slowly left, wrapping around. Purely
+// decorative depth behind the arena — skipped entirely when fxLevel is Off.
+function drawDust() {
+  ctx.save();
+  for (const d of dust) {
+    ctx.fillStyle = 'rgba(150,200,255,' + d.a + ')';
+    ctx.beginPath();
+    ctx.arc(d.x * W, d.y * H, d.r, 0, TAU);
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
 function drawDebris() {
   for (const g of debris) {
     const k = 1 - g.t;                       // 0 -> 1 as it fades
@@ -4075,6 +4088,52 @@ function drawDebris() {
     ctx.moveTo(g.ax - g.nx * drift, g.ay - g.ny * drift);
     ctx.lineTo(g.bx - g.nx * drift, g.by - g.ny * drift);
     ctx.stroke();
+    ctx.restore();
+  }
+}
+
+// A little explosion at the point of impact when a player misses and the ball reaches
+// their wall — separate from `debris` (which is the wall itself crumbling on elimination).
+// This fires on every concede, life-loss or elimination alike. 'big' tier reuses the same
+// expanding-ring visual that used to be reserved for a match win; 'huge' (elimination) is a
+// visibly bigger version of the same ring, with a second inner ring for extra weight.
+function spawnImpactBurst(x, y, col, tier) {
+  tier = tier || 'big';
+  const n = (lite ? 5 : 9) * (tier === 'huge' ? 2.4 : 1);
+  for (let i = 0; i < n; i++) {
+    const a = Math.random() * TAU;
+    const sp = R * (0.35 + Math.random() * 0.55);
+    sparks.push({ x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp,
+                  col, t: 1, r: 1.5 + Math.random() * 2 });
+  }
+  bursts.push({ x, y, col, t: 1, tier });
+}
+function drawSparks() {
+  for (const s of sparks) {
+    ctx.save();
+    ctx.globalAlpha = s.t;
+    ctx.fillStyle = s.col;
+    ctx.shadowColor = s.col; ctx.shadowBlur = glow(10 * s.t);
+    ctx.beginPath(); ctx.arc(s.x, s.y, s.r * s.t, 0, TAU); ctx.fill();
+    ctx.restore();
+  }
+}
+
+// Floating +points text for every discrete scoring event (paddle hits, modifier pickups,
+// the nerfed penalty, rally-kill/elimination bounties) — everything except survival (which
+// ticks continuously) and the placement/difficulty multipliers (applied once at match end).
+function spawnPopup(x, y, text, col) {
+  popups.push({ x, y, text, col, t: 1, vy: -34 });
+}
+function drawPopups() {
+  for (const p of popups) {
+    ctx.save();
+    ctx.globalAlpha = Math.min(1, p.t * 1.6);
+    ctx.font = '700 13px -apple-system, BlinkMacSystemFont, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.shadowColor = p.col; ctx.shadowBlur = 6;
+    ctx.fillStyle = mixWhite(p.col, 0.5);
+    ctx.fillText(p.text, p.x, p.y);
     ctx.restore();
   }
 }
@@ -4219,43 +4278,106 @@ function drawPaddle(w) {
 
 /* The bloom used to build a fresh radial gradient every single frame. It only depends
    on BALL.r, so render it once into an offscreen canvas and blit it instead. */
-let bloomCv = null, bloomR = 0;
-function buildBloom() {
+const bloomCache = new Map();   // hex color -> {cv, r} — small, bounded by PALETTE size
+function getBloom(col) {
   const rad = Math.max(4, BALL.r) * 5.5;
-  const size = Math.ceil(rad * 2);
-  bloomCv = document.createElement('canvas');
-  bloomCv.width = size; bloomCv.height = size;
-  const b = bloomCv.getContext('2d');
-  const g = b.createRadialGradient(rad, rad, 0, rad, rad, rad);
-  g.addColorStop(0, 'rgba(190,220,255,0.85)');
-  g.addColorStop(0.22, 'rgba(90,140,255,0.42)');
-  g.addColorStop(0.6, 'rgba(50,90,220,0.13)');
-  g.addColorStop(1, 'rgba(0,0,40,0)');
-  b.fillStyle = g;
-  b.beginPath(); b.arc(rad, rad, rad, 0, TAU); b.fill();
-  bloomR = rad;
+  let entry = bloomCache.get(col);
+  if (!entry || Math.abs(entry.r - rad) > 1) {
+    const size = Math.ceil(rad * 2);
+    const cv = document.createElement('canvas');
+    cv.width = size; cv.height = size;
+    const b = cv.getContext('2d');
+    const g = b.createRadialGradient(rad, rad, 0, rad, rad, rad);
+    g.addColorStop(0, hexA(col, 0.85));
+    g.addColorStop(0.22, hexA(col, 0.42));
+    g.addColorStop(0.6, hexA(col, 0.13));
+    g.addColorStop(1, hexA(col, 0));
+    b.fillStyle = g;
+    b.beginPath(); b.arc(rad, rad, rad, 0, TAU); b.fill();
+    entry = { cv, r: rad };
+    bloomCache.set(col, entry);
+  }
+  return entry;
+}
+// Blend a hex color toward white so the solid core stays bright/legible while still
+// clearly reading as "that color" — a fully-saturated core got lost against busy walls.
+function mixWhite(hex, t) {
+  const h = hex.replace('#', '');
+  const r = parseInt(h.substring(0, 2), 16), g = parseInt(h.substring(2, 4), 16), b = parseInt(h.substring(4, 6), 16);
+  const mr = Math.round(r + (255 - r) * t), mg = Math.round(g + (255 - g) * t), mb = Math.round(b + (255 - b) * t);
+  return 'rgb(' + mr + ',' + mg + ',' + mb + ')';
 }
 
 function drawBall(ball) {
+  const col = ball.hitCol || BALL_DEFAULT_COL;
+  // Spawn wrap-in: scale up from nothing, with a brief expanding ring as it settles.
+  const spawnK = ball.spawnT > 0 ? 1 - ball.spawnT : 1;   // 0 -> 1 as it materializes
+  const scale = ball.spawnT > 0 ? (0.15 + 0.85 * (1 - Math.pow(1 - spawnK, 3))) : 1;
+  if (ball.spawnT > 0) {
+    ctx.save();
+    ctx.globalAlpha = ball.spawnT;
+    ctx.strokeStyle = hexA(col, 0.8);
+    ctx.lineWidth = 2.2;
+    ctx.shadowColor = col; ctx.shadowBlur = glow(16);
+    ctx.beginPath(); ctx.arc(ball.x, ball.y, BALL.r * (1 + (1 - ball.spawnT) * SPAWN_RING_MAX), 0, TAU); ctx.stroke();
+    ctx.restore();
+  }
   if (fxLevel > 0) {
     const tn = ball.trail.length;
     const step = lite ? 2 : 1;
     // trail is a ring: trailHead points at the oldest slot once the buffer is full
     const head = (tn > 0 && ball.trailLen >= tn) ? (ball.trailHead || 0) : 0;
-    for (let i = 0; i < tn; i += step) {
+    // Cap the trail by actual pixel distance traveled, not frame count — otherwise the
+    // same 26-frame buffer spans far more screen distance as ball speed ramps up (pressure,
+    // Hard difficulty), making the tail balloon. Walk backward from the ball accumulating
+    // real distance and stop once the budget is hit, so it reads as one fixed length at
+    // any speed.
+    const trailMaxPx = R * BALL_TRAIL_MAX_FRAC;
+    let visStart = tn, dist = 0, px = ball.x, py = ball.y;
+    for (let i = tn - 1; i >= 0; i--) {
       const t = ball.trail[(head + i) % tn];
-      const a = i / tn;
+      dist += Math.hypot(t.x - px, t.y - py);
+      px = t.x; py = t.y;
+      if (dist > trailMaxPx) break;
+      visStart = i;
+    }
+    const visN = tn - visStart;
+    // Faint path-history line: a thin stroke through every visible tracked point, well
+    // behind and longer-reaching than the brighter trail blobs drawn after it.
+    if (visN > 1) {
+      ctx.save();
+      ctx.strokeStyle = hexA(col, 0.16);
+      ctx.lineWidth = 1.1;
+      ctx.lineJoin = 'round'; ctx.lineCap = 'round';
       ctx.beginPath();
-      ctx.fillStyle = 'rgba(120,170,255,' + (a * a * 0.20 * step) + ')';
+      for (let i = visStart; i < tn; i++) {
+        const t = ball.trail[(head + i) % tn];
+        if (i === visStart) ctx.moveTo(t.x, t.y); else ctx.lineTo(t.x, t.y);
+      }
+      ctx.lineTo(ball.x, ball.y);
+      ctx.stroke();
+      ctx.restore();
+    }
+    for (let i = visStart; i < tn; i += step) {
+      const t = ball.trail[(head + i) % tn];
+      const a = (i - visStart + 1) / visN;
+      ctx.beginPath();
+      ctx.fillStyle = hexA(col, a * a * 0.28 * step);
       ctx.arc(t.x, t.y, BALL.r * (0.35 + a * 0.85), 0, TAU);
       ctx.fill();
     }
-    if (!bloomCv || Math.abs(bloomR - BALL.r * 5.5) > 1) buildBloom();
-    ctx.drawImage(bloomCv, ball.x - bloomR, ball.y - bloomR);
+    const bloom = getBloom(col);
+    ctx.save();
+    if (ball.spawnT > 0) ctx.globalAlpha = spawnK;
+    ctx.drawImage(bloom.cv, ball.x - bloom.r, ball.y - bloom.r);
+    ctx.restore();
   }
-  // solid core (always)
-  ctx.fillStyle = '#ffffff';
-  ctx.beginPath(); ctx.arc(ball.x, ball.y, BALL.r * (fxLevel === 0 ? 1 : 0.72), 0, TAU); ctx.fill();
+  // solid core (always), tinted toward whoever last hit it — 65% white keeps it
+  // bright and legible against any wall color while still reading as that color
+  ctx.fillStyle = mixWhite(col, 0.65);
+  ctx.beginPath();
+  ctx.arc(ball.x, ball.y, BALL.r * (fxLevel === 0 ? 1 : 0.72) * scale, 0, TAU);
+  ctx.fill();
 }
 
 /* ── Modifiers ──────────────────────────────────────────────────────────────
@@ -4339,11 +4461,19 @@ function drawModifiers() {
 function drawBursts() {
   for (const b of bursts) {
     const k = 1 - b.t;
+    const tier = b.tier || 'small';
+    const big = tier === 'big', huge = tier === 'huge';
     ctx.save();
-    ctx.strokeStyle = hexA(b.col, b.t * 0.8);
-    ctx.lineWidth = 2.5 * b.t;
-    ctx.shadowColor = b.col; ctx.shadowBlur = glow(18 * b.t);
-    ctx.beginPath(); ctx.arc(b.x, b.y, BALL.r + k * R * 0.30, 0, TAU); ctx.stroke();
+    ctx.strokeStyle = hexA(b.col, b.t * 0.85);
+    ctx.lineWidth = (huge ? 4.5 : big ? 3.2 : 2.5) * b.t;
+    ctx.shadowColor = b.col; ctx.shadowBlur = glow((huge ? 34 : big ? 24 : 18) * b.t);
+    const base = huge ? 14 : big ? 10 : BALL.r;
+    const reach = huge ? R * 1.05 : big ? R * 0.7 : R * 0.30;
+    ctx.beginPath(); ctx.arc(b.x, b.y, base + k * reach, 0, TAU); ctx.stroke();
+    if (huge) {
+      ctx.globalAlpha = b.t * 0.5;
+      ctx.beginPath(); ctx.arc(b.x, b.y, (base + k * reach) * 0.6, 0, TAU); ctx.stroke();
+    }
     ctx.restore();
   }
 }
@@ -4637,22 +4767,6 @@ const EFFECTS = [
 const FX = {};                         // id -> effect definition (+ its category)
 EFFECTS.forEach(g => g.list.forEach(f => { f.key = g.key; f.col = g.col; FX[f.id] = f; }));
 
-/* per-Modifier on/off, so a player can prune the pool down to whichever effects they like */
-const Modifier_TOGGLES_KEY = 'hexapong_Modifiertoggles_v1';
-function defaultModifierToggles() {
-  const o = {};
-  EFFECTS.forEach(g => g.list.forEach(f => { o[f.id] = true; }));
-  return o;
-}
-let ModifierToggles = defaultModifierToggles();
-try {
-  const raw = localStorage.getItem(Modifier_TOGGLES_KEY);
-  if (raw) ModifierToggles = Object.assign(defaultModifierToggles(), JSON.parse(raw));
-} catch (e) {}
-function saveModifierToggles() {
-  try { localStorage.setItem(Modifier_TOGGLES_KEY, JSON.stringify(ModifierToggles)); } catch (e) {}
-}
-
 function buildCodex() {
   document.getElementById('codexBody').innerHTML = EFFECTS.map(g =>
     '<div class="cxg"><h3 style="color:' + g.col + '">' + g.title + '</h3><p>' + g.blurb + '</p>' +
@@ -4750,8 +4864,7 @@ if (setNameEl) {
   });
 }
 function showBriefing() {
-  ['start', 'over', 'pausePanel', 'codex', 'statsPanel', 'setPanel', 'modePanel', 'customPanel'].forEach(id =>
-    document.getElementById(id).classList.add('hidden'));
+  hideAllPanels();
   document.getElementById('brief').classList.remove('hidden');
 }
 // the front-page hook, refreshed whenever the menu is shown
@@ -4799,11 +4912,7 @@ function refreshLevelBand() {
 function showSetup() {
   running = false; over = false; paused = false; ending = false;
   document.getElementById('bPause').textContent = 'PAUSE';
-  ['over', 'brief', 'pausePanel', 'codex', 'statsPanel', 'setPanel', 'achPanel',
-   'modePanel', 'customPanel', 'logPanel', 'nameGate', 'lbPanel', 'recentPanel', 'ctxPanel',
-   'scoreHelpPanel', 'brPanel'].forEach(id => {
-    const el = document.getElementById(id); if (el) el.classList.add('hidden');
-  });
+  hideAllPanels();
   refreshHiScore();
   refreshLevelBand();
   loadMiniLeaderboard();
@@ -4879,8 +4988,7 @@ function paintStats() {
 }
 
 function showStats() {
-  ['start', 'over', 'brief', 'pausePanel', 'codex', 'setPanel', 'modePanel', 'customPanel'].forEach(id =>
-    document.getElementById(id).classList.add('hidden'));
+  hideAllPanels();
   paintStats();
   document.getElementById('statsPanel').classList.remove('hidden');
 }
@@ -5047,80 +5155,6 @@ const MODES = {
 };
 let gameMode = 'Modifier';
 
-function showMode(key) {
-  gameMode = key;
-  const m = MODES[key];
-  const icon = document.getElementById('modeIcon');
-  icon.innerHTML = m.icon;
-  icon.className = 'mi big ' + m.cls;
-  icon.style.color = key === 'Modifier' ? '#5de2a8' : '#5fb8ee';
-  const h = document.getElementById('modeTitle');
-  h.textContent = m.title;
-  h.className = 'ruled';
-  document.getElementById('modeChips').innerHTML = m.chips.map(c => '<span>' + c + '</span>').join('');
-  const md = document.getElementById('modeDiff');
-  if (md) [...md.children].forEach(b => b.classList.toggle('on', +b.dataset.d === diffIdx));
-  const me = document.getElementById('modeEndless');
-  if (me) [...me.children].forEach(b => b.classList.toggle('on', +b.dataset.e === (endlessMode ? 1 : 0)));
-  ['start', 'over', 'pausePanel', 'codex', 'statsPanel', 'setPanel', 'achPanel', 'customPanel']
-    .forEach(id => document.getElementById(id).classList.add('hidden'));
-  document.getElementById('modePanel').classList.remove('hidden');
-}
-
-function showCustom() {
-  gameMode = 'custom';
-  document.getElementById('customIcon').innerHTML =
-    '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.4"/><path d="M12 1.8v3.4M12 18.8v3.4M1.8 12h3.4M18.8 12h3.4M4.8 4.8l2.4 2.4M16.8 16.8l2.4 2.4M19.2 4.8l-2.4 2.4M7.2 16.8l-2.4 2.4"/></svg>';
-  buildModifierGrid();
-  syncCustomUI();
-  ['start', 'over', 'pausePanel', 'codex', 'statsPanel', 'setPanel', 'achPanel', 'modePanel']
-    .forEach(id => document.getElementById(id).classList.add('hidden'));
-  document.getElementById('customPanel').classList.remove('hidden');
-}
-
-// Vanilla and Modifier run the full Modifier roster; the per-Modifier switches are Custom's alone,
-// so a preset match always behaves the same way for everyone.
-function applyMode(key) {
-  gameMode = key;
-  if (key === 'custom') return;                 // custom already holds its own state
-  const m = MODES[key];
-  startLives = m.lives; ModifiersOn = m.Modifiers; ModifierRate = m.rate;
-}
-
-// the Modifier grid reuses the exact icons from the Modifier Index
-function buildModifierGrid() {
-  const rows = [];
-  for (const g of EFFECTS) for (const f of g.list) {
-    rows.push('<button class="tokrow' + (ModifierToggles[f.id] !== false ? ' on' : '') +
-      '" data-id="' + f.id + '"><span class="tok ' + g.key + '"><img src="' +
-      (Modifier_ICON_DATA[f.id] || '') + '" alt=""></span><span class="tn">' + f.name +
-      '</span><span class="sw2"></span></button>');
-  }
-  document.getElementById('cModifierGrid').innerHTML = rows.join('');
-}
-
-function syncCustomUI() {
-  const mark = (id, attr, val) => {
-    const el = document.getElementById(id);
-    if (!el) return;
-    [...el.children].forEach(b => b.classList.toggle('on', +b.dataset[attr] === val));
-  };
-  mark('cLives', 'l', startLives);
-  mark('cModifiers', 't', ModifiersOn ? 1 : 0);
-  mark('cRate', 'tr', ModifierRate);
-  mark('cDiff', 'd', diffIdx);
-  mark('cEndless', 'e', endlessMode ? 1 : 0);
-  mark('modeEndless', 'e', endlessMode ? 1 : 0);
-  const grid = document.getElementById('cModifierGrid');
-  if (grid) {
-    grid.style.opacity = ModifiersOn ? '1' : '.35';
-    grid.style.pointerEvents = ModifiersOn ? '' : 'none';
-  }
-  const ca = document.getElementById('cAll'), cn = document.getElementById('cNone');
-  if (ca) ca.disabled = !ModifiersOn;
-  if (cn) cn.disabled = !ModifiersOn;
-}
-
 // Simple build: single Play button → Normal difficulty, mid Modifier rate. Modifiers
 // on/off comes from the menu toggle (ModifiersOn), not forced here, so a player's
 // choice survives from one match to the next.
@@ -5182,56 +5216,6 @@ if (mModifiersSeg) mModifiersSeg.addEventListener('click', e => {
   syncModifiersToggle();
   saveSettings();
 });
-const bModeBack = document.getElementById('bModeBack');
-if (bModeBack) bModeBack.addEventListener('click', showSetup);
-const bCustomBack = document.getElementById('bCustomBack');
-if (bCustomBack) bCustomBack.addEventListener('click', showSetup);
-const modeDiffEl = document.getElementById('modeDiff');
-if (modeDiffEl) modeDiffEl.addEventListener('click', e => {
-  const b = e.target.closest('button'); if (!b) return;
-  diffIdx = clamp(+b.dataset.d, 0, DIFF.length - 1);
-  [...modeDiffEl.children].forEach(x => x.classList.toggle('on', +x.dataset.d === diffIdx));
-  saveSettings();
-});
-const bModeStart = document.getElementById('bModeStart');
-if (bModeStart) bModeStart.addEventListener('click', () => {
-  applyMode(gameMode);
-  saveSettings();
-  startGame();
-});
-
-document.getElementById('cLives').addEventListener('click', e => {
-  const b = e.target.closest('button'); if (!b) return;
-  startLives = +b.dataset.l; syncCustomUI(); saveSettings();
-});
-document.getElementById('cModifiers').addEventListener('click', e => {
-  const b = e.target.closest('button'); if (!b) return;
-  ModifiersOn = b.dataset.t === '1'; syncCustomUI(); saveSettings();
-});
-document.getElementById('cRate').addEventListener('click', e => {
-  const b = e.target.closest('button'); if (!b) return;
-  ModifierRate = clamp(+b.dataset.tr, 0, 2); syncCustomUI(); saveSettings();
-});
-document.getElementById('cDiff').addEventListener('click', e => {
-  const b = e.target.closest('button'); if (!b) return;
-  diffIdx = clamp(+b.dataset.d, 0, DIFF.length - 1); syncCustomUI(); saveSettings();
-});
-document.getElementById('cModifierGrid').addEventListener('click', e => {
-  const b = e.target.closest('.tokrow'); if (!b) return;
-  const id = b.dataset.id;
-  ModifierToggles[id] = ModifierToggles[id] === false;
-  b.classList.toggle('on', ModifierToggles[id] !== false);
-  saveModifierToggles();
-});
-const setAllModifiers = on => {
-  for (const g of EFFECTS) for (const f of g.list) ModifierToggles[f.id] = on;
-  saveModifierToggles(); buildModifierGrid();
-};
-document.getElementById('cAll').addEventListener('click', () => setAllModifiers(true));
-document.getElementById('cNone').addEventListener('click', () => setAllModifiers(false));
-document.getElementById('bCustomStart').addEventListener('click', () => {
-  applyMode('custom'); saveSettings(); startGame();
-});
 
 document.getElementById('bHow').addEventListener('click', showBriefing);
 // High Score band still opens Stats; bottom menu uses Scoring instead
@@ -5282,10 +5266,7 @@ function showScoreHelp() {
     body.innerHTML = SCORE_HELP_ROWS.map(r =>
       '<div class="bl"><div class="bt">' + r[0] + '</div><div>' + r[1] + '</div></div>').join('');
   }
-  ['start', 'over', 'brief', 'pausePanel', 'codex', 'statsPanel', 'setPanel', 'achPanel',
-   'modePanel', 'customPanel', 'logPanel', 'lbPanel', 'recentPanel', 'ctxPanel'].forEach(id => {
-    const el = document.getElementById(id); if (el) el.classList.add('hidden');
-  });
+  hideAllPanels();
   document.getElementById('scoreHelpPanel').classList.remove('hidden');
   const card = document.getElementById('scoreHelpPanel').querySelector('.card');
   if (card) card.scrollTop = 0;
@@ -5341,7 +5322,10 @@ function syncSettingsUI() {
   mark('crtOpts', 'c', crtFx ? 1 : 0);
   mark('fxOpts', 'fx', fxLevel);
   mark('fpsOpts', 'f', fpsCap ? 1 : 0);
-  mark('modeDiff', 'd', diffIdx);
+  mark('cbOpts', 'cb', colorBlind ? 1 : 0);
+  mark('shakeOpts', 'sh', shakeLevel);
+  mark('hapticsOpts', 'hp', hapticsLevel);
+  buildColorSwatches();
 }
 // the filled part of the track is a CSS variable, so it has to be pushed on every change
 function setSlider(id, label, pct) {
@@ -5371,6 +5355,27 @@ function bindOptRow(id, attr, apply) {
 bindOptRow('crtOpts', 'c', v => { crtFx = !!v; applyCrtVisibility(); });
 bindOptRow('fxOpts', 'fx', v => { setFxLevel(v); applyCrtVisibility(); });
 bindOptRow('fpsOpts', 'f', v => { fpsCap = !!v; });
+bindOptRow('cbOpts', 'cb', v => { colorBlind = !!v; document.body.classList.toggle('cb', colorBlind); });
+bindOptRow('shakeOpts', 'sh', v => { shakeLevel = clamp(v | 0, 0, 2); });
+bindOptRow('hapticsOpts', 'hp', v => { hapticsLevel = clamp(v | 0, 0, 2); });
+
+// Paddle color swatches: one button per PALETTE entry, filled via the inner <i> (see CSS).
+function buildColorSwatches() {
+  const grid = document.getElementById('colorSwatches');
+  if (!grid) return;
+  grid.innerHTML = PALETTE.map(c =>
+    '<button type="button" class="sw' + (c === playerCol ? ' on' : '') +
+    '" data-col="' + c + '" aria-label="Paddle color"><i style="background:' + c + '"></i></button>'
+  ).join('');
+}
+buildColorSwatches();
+const colorSwatchesEl = document.getElementById('colorSwatches');
+if (colorSwatchesEl) colorSwatchesEl.addEventListener('click', e => {
+  const b = e.target.closest('button.sw'); if (!b || !b.dataset.col) return;
+  playerCol = b.dataset.col;
+  [...colorSwatchesEl.children].forEach(x => x.classList.toggle('on', x === b));
+  saveSettings();
+});
 
 function confirmDanger(msg) {
   return window.confirm(msg) && window.confirm('Really sure? This cannot be undone.');
@@ -5392,14 +5397,6 @@ document.getElementById('bGear').addEventListener('click', () => {
 });
 document.getElementById('bSetBack').addEventListener('click', hideSettings);
 
-// Endless toggles
-const setEndless = on => { endlessMode = !!on; syncCustomUI(); saveSettings(); };
-document.getElementById('modeEndless').addEventListener('click', e => {
-  const b = e.target.closest('button'); if (!b) return; setEndless(+b.dataset.e === 1);
-});
-document.getElementById('cEndless').addEventListener('click', e => {
-  const b = e.target.closest('button'); if (!b) return; setEndless(+b.dataset.e === 1);
-});
 document.getElementById('bPrestige').addEventListener('click', () => {
   if (!doPrestige()) { /* Removed toast: REACH LEVEL 100 FIRST */ return; }
   refreshLevelBand();
@@ -5445,7 +5442,7 @@ window.__hex = {
   spawn: (id) => { const f = FX[id]; if (!f) return false; spawnModifier(f); return true; },
   drop: () => { Modifiers.length = 0; },
   ModifiersOn: (v) => { ModifiersOn = v; },
-  hitter: (i) => { if (balls[0]) balls[0].hitter = players[i]; },
+  hitter: (i) => { if (balls[0]) { balls[0].hitter = players[i]; balls[0].hitCol = players[i] && players[i].col; } },
   fxList: () => Object.keys(FX),
   shareCard: () => buildShareCard().toDataURL('image/png'),
   carry: (v) => { PADDLE_CARRY = v; },
@@ -5550,10 +5547,7 @@ function buildChangelog() {
 }
 function showChangelog() {
   buildChangelog();
-  ['start', 'over', 'brief', 'pausePanel', 'codex', 'statsPanel', 'setPanel',
-   'achPanel', 'modePanel', 'customPanel', 'ctxPanel'].forEach(id => {
-    const el = document.getElementById(id); if (el) el.classList.add('hidden');
-  });
+  hideAllPanels();
   document.getElementById('logPanel').classList.remove('hidden');
   const card = document.getElementById('logPanel').querySelector('.card');
   if (card) card.scrollTop = 0;
@@ -5565,10 +5559,7 @@ function hideChangelog() {
 function showProjectContext() {
   const body = document.getElementById('ctxBody');
   if (body) body.textContent = PROJECT_CONTEXT;
-  ['start', 'over', 'brief', 'pausePanel', 'codex', 'statsPanel', 'setPanel',
-   'achPanel', 'modePanel', 'customPanel', 'logPanel', 'lbPanel', 'recentPanel'].forEach(id => {
-    const el = document.getElementById(id); if (el) el.classList.add('hidden');
-  });
+  hideAllPanels();
   document.getElementById('ctxPanel').classList.remove('hidden');
   const card = document.getElementById('ctxPanel').querySelector('.card');
   if (card) card.scrollTop = 0;
