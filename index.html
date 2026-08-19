@@ -418,6 +418,7 @@
   .scorebreak .srow{display:flex;justify-content:space-between;gap:12px;padding:1px 0}
   .scorebreak .srow span:last-child{color:#dff1ff;font-weight:700;white-space:nowrap}
   .scorebreak .srow.muted span:last-child{color:#6d94b0;font-weight:600}
+  .scorebreak .snote{margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,205,110,.22);color:#6d94b0;font-size:10px;line-height:1.35;letter-spacing:.03em}
   .scorebreak .stotal{color:#ffd97a;font-weight:800;font-size:12.5px;letter-spacing:.06em;
     border-top:1px solid rgba(255,205,110,.28);margin-top:6px;padding-top:7px;
     display:flex;justify-content:space-between;gap:12px}
@@ -1135,7 +1136,34 @@
     #pausePanel #bCodex2,#pausePanel #bQuit{color:#8feaff;border-color:rgba(0,215,241,.55);background:rgba(3,21,35,.75);box-shadow:0 0 12px rgba(0,215,241,.08)}
     #pausePanel #bCodex2:hover,#pausePanel #bQuit:hover{color:#e6faff;border-color:rgba(0,215,241,.95);box-shadow:0 0 16px rgba(0,215,241,.22)}
     @media(max-width:620px){#pausePanel .card{width:calc(100% - 16px);padding:calc(24px + env(safe-area-inset-top,0px)) 14px calc(16px + env(safe-area-inset-bottom,0px))}#pausePanel .card::after{top:10px;right:17px;font-size:7px}#pausePanel .brief .bl{grid-template-columns:1fr;gap:4px;padding:10px 12px}#pausePanel .brief{font-size:12.5px}#pausePanel .btnrow{grid-template-columns:1fr;gap:7px}#pausePanel .btnrow .go{min-height:44px}}
-    </style>)))))}*/
+    
+/* Score breakdown: match the Stats command-deck layout */
+#brPanel.panel{background:rgba(0,2,7,.92);backdrop-filter:none;padding:8px 0}
+#brPanel .card{width:calc(100% - 28px);max-width:620px;max-height:calc(100dvh - 16px);padding:calc(22px + env(safe-area-inset-top,0px)) 18px calc(18px + env(safe-area-inset-bottom,0px));position:relative;overflow-y:auto;scrollbar-width:none;border:1px solid rgba(229,180,29,.85);background:linear-gradient(180deg,rgba(3,13,24,.99),rgba(1,6,14,.995));box-shadow:0 0 30px rgba(229,180,29,.14),inset 0 0 64px rgba(24,84,125,.10);clip-path:polygon(15px 0,calc(100% - 15px) 0,100% 15px,100% calc(100% - 15px),calc(100% - 15px) 100%,15px 100%,0 calc(100% - 15px),0 15px)}
+#brPanel .card::-webkit-scrollbar{display:none}
+#brPanel .card::before{content:"";position:absolute;inset:5px;pointer-events:none;border:1px solid rgba(93,183,228,.25);clip-path:inherit}
+#brPanel .pbar,#brPanel h1,#brPanel .scoreband,#brPanel #brBody{position:relative;z-index:1}
+#brPanel .pbar{margin:0 0 14px;text-align:left}
+#brPanel .backlink{border:1px solid rgba(0,215,241,.58);background:rgba(3,21,35,.84);color:#00d9ff;min-height:42px;padding:9px 15px;font:inherit;font-size:11px;letter-spacing:.16em;text-transform:uppercase;clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px)}
+#brPanel h1{margin:0 0 14px;color:#ffd35a!important;font-family:"Arial Black","SF Pro Display",sans-serif;font-size:clamp(29px,8vw,42px)!important;line-height:1;letter-spacing:.10em;text-shadow:0 0 12px rgba(255,190,52,.45)}
+#brPanel .scoreband{min-height:80px;margin:0 0 12px;padding:11px 14px;border-color:rgba(229,180,29,.72);background:linear-gradient(100deg,rgba(42,31,7,.86),rgba(14,13,10,.82));box-shadow:inset 0 0 25px rgba(255,201,77,.06);clip-path:polygon(10px 0,calc(100% - 10px) 0,100% 10px,100% calc(100% - 10px),calc(100% - 10px) 100%,10px 100%,0 calc(100% - 10px),0 10px)}
+#brPanel .scoreband .sl2{font-size:10px;color:#d9a91f;letter-spacing:.24em}
+#brPanel .scoreband .sv{font-size:clamp(28px,8vw,42px);color:#ffd35a;text-shadow:0 0 14px rgba(255,190,52,.5)}
+#brPanel .scorebreak{margin:0;padding:12px 14px;border:1px solid rgba(105,157,192,.34);background:linear-gradient(110deg,rgba(6,25,41,.72),rgba(2,13,24,.68));font-size:11px;line-height:1.7;clip-path:polygon(10px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%,0 10px)}
+#brPanel .scorebreak .srow{padding:5px 0;border-bottom:1px solid rgba(105,157,192,.14);color:#91b7d0}
+#brPanel .scorebreak .srow span:last-child{color:#eaf6ff;font-weight:800}
+#brPanel .scorebreak .snote{margin-top:12px;padding-top:10px;border-top:1px solid rgba(229,180,29,.34);color:#c7a9ea;font-size:10px;letter-spacing:.08em;line-height:1.55}
+@media (max-width:620px){#brPanel .card{width:calc(100% - 16px);padding:calc(18px + env(safe-area-inset-top,0px)) 14px calc(16px + env(safe-area-inset-bottom,0px))}#brPanel .scorebreak{font-size:11.5px}}
+
+#statsPanel .hsrow.hasbr{cursor:pointer;transition:border-color .16s ease,background .16s ease}
+#statsPanel .hsrow.hasbr:hover{border-color:rgba(0,215,241,.64);background:rgba(0,215,241,.06)}
+#statsPanel .hsrow.hasbr .lbn-btn{border:0;background:none;padding:0;color:#eaf6ff;font:inherit;letter-spacing:inherit;text-align:left;cursor:pointer}
+#statsPanel .hsrow.hasbr .lbn-btn:hover{color:#00d9ff;text-shadow:0 0 8px rgba(0,215,241,.45)}
+
+#lbPanel .lbrow.hasbr,#recentPanel .lbrow.hasbr{cursor:pointer;transition:border-color .16s ease,background .16s ease}
+#lbPanel .lbrow.hasbr:hover,#recentPanel .lbrow.hasbr:hover{border-color:rgba(0,215,241,.64);background:rgba(0,215,241,.06)}
+#over .statgrid{display:none!important}
+</style>)))))}*/
 </head>
 <body>
 <div id="wrap"><canvas id="c"></canvas></div>
@@ -1342,7 +1370,7 @@
     <div class="scoreband" id="overScore"></div>
     <div id="overBreak" class="scorebreak" style="display:none"></div>
     <div class="wallet" id="overRewards"></div>
-    <div class="statgrid">
+    <div class="statgrid" aria-hidden="true">
       <div>
         <h4>This Run</h4>
         <div id="statRun"></div>
@@ -1558,7 +1586,7 @@ const DIFF = [
 let diffIdx = 1;
 let startLives = 3;
 let displayName = 'RHYNOCK';
-const VERSION = '0.8.22';
+const VERSION = '0.8.29';
 /* Online leaderboard (Cloudflare Worker + D1).
    Leave empty to keep the game fully offline.
    After you deploy the Worker, set this to your workers.dev URL, e.g.:
@@ -1579,7 +1607,23 @@ Optional online leaderboard (Cloudflare Worker + D1) via LEADERBOARD_URL — lea
 === VERSION & CHANGELOG (MANDATORY ON EVERY CHANGE SET) ===
 - Constant: const VERSION = 'x.y.z';
 - Always increment the PATCH (last) digit for any non-trivial change set.
-- Array: const CHANGELOG = [ { v, date, notes: [...] }, ... ] (newest first).
+- Array: const CHANGELOG = [
+  { v: '0.8.29', date: '2026-08-19', notes: [
+    'Made breakdown-enabled Leaderboard and Recent Matches rows fully clickable, matching Personal High Scores.',
+    'Removed post-match This Run and Career panels and the placement/difficulty sequencing note from score breakdowns.'
+  ]},
+  { v: '0.8.27', date: '2026-08-19', notes: [
+    'Unified math-complete score breakdowns across post-match results, online boards, and personal high scores.'
+  ]},
+  { v: '0.8.26', date: '2026-08-19', notes: [
+    'Added explicit placement and difficulty multiplier rows to leaderboard match breakdowns.'
+  ]},
+  { v: '0.8.25', date: '2026-08-19', notes: [
+    'Fixed pause during the opening countdown, refreshed score breakdown styling, and abbreviated modifier tags to B, N, and W.'
+  ]},
+  { v: '0.8.24', date: '2026-08-19', notes: [
+    'Removed the unused Endless Mode gameplay path and settings persistence; supported modes remain Vanilla and Modifier.'
+  ]}, { v, date, notes: [...] }, ... ] (newest first).
 - Prepend a new entry describing what you changed.
 - Version string appears as plain text on the main menu (#verTag). Looks like normal credit text — not a button.
 - Triple-click #verTag (3 clicks within ~900ms) opens #ctxPanel with this PROJECT_CONTEXT text.
@@ -1604,7 +1648,7 @@ Optional online leaderboard (Cloudflare Worker + D1) via LEADERBOARD_URL — lea
 - reanchorDrag() runs every frame while eclipseT > 0: the touch anchor is wall-relative, so a rotating wall invalidates it and the paddle stops answering the finger.
 - Concede pacing (SERVE_DELAY_LIFE_LOST 1s / SERVE_DELAY_KNOCKOUT 2s): hidden holds added to serveTimer after a concede. serveTimer freezes the ball only; paddles and arena animation keep running and no countdown UI appears.
 - Main menu has a Modifiers On/Off toggle and Easy/Medium/Hard difficulty selector (both remembered). Play button (#mPlay / startSimplePlay()) uses the selected difficulty, 3 lives, ModifierRate locked to difficulty (0/1/2), endless off; mode is modifier or vanilla based on the Modifiers toggle.
-- Custom mode and its panel (#customPanel, #modePanel, ModifierToggles, showMode/showCustom/applyMode/buildModifierGrid/syncCustomUI) were fully removed in 0.8.10 — they'd been unreachable dead code since the simplified main menu shipped (nothing ever called showMode/showCustom), confirmed by a full audit. Endless mode's only two toggles (modeEndless/cEndless) lived inside those same panels and were removed with them; the endlessMode variable and all its gameplay logic (concede(), XP, achievements) are untouched and still work, but there is currently no UI path to ever set it true. If Endless is wanted back, it needs a new toggle somewhere reachable (e.g. Settings) — ask before assuming where.
+- Custom mode and its panel (#customPanel, #modePanel, ModifierToggles, showMode/showCustom/applyMode/buildModifierGrid/syncCustomUI) were fully removed in 0.8.10 — they'd been unreachable dead code since the simplified main menu shipped (nothing ever called showMode/showCustom), confirmed by a full audit. Endless mode's only two toggles (modeEndless/cEndless) lived inside those same panels and were removed with them; the Endless Mode gameplay path has now been removed; the supported presets are Vanilla and Modifier.
 - Scoring only for vanilla + modifier (scoredMode()). Custom is deliberately unscored.
 - Score formula (0.8.9): survival = seconds × 100 × (1 + √(seconds/150)); paddle hits escalate 500, 600, 700… via escalatingFlatTotal(); modifier pickups (buff/nerf/wild, base 5000/5000/2500) escalate per type via the same helper, +SCORE_MODIFIER_STEP (1000) per consecutive hit of that type. Nerfs still apply their gameplay effect to the next return, but never subtract points from the player they affect. Rally kills (opponent concedes a life off your last hit, not eliminated) and eliminations (opponent's wall shatters off your last hit) are new bounties credited via creditKill()/concede()'s b.hitter, tallied in run.rallyKills/run.eliminationKills, and summed via killTotal()/killValue() — a TRIANGULAR step (the gap between consecutive kills grows by one more step each time: 25k/50k base, jumps of 1k/5k that themselves grow), not a flat step like paddle/modifiers. All five (survival, paddle, modifier, rallyBounty, eliminationBounty) sum into subtotal; then × SCORE_PLACE_MUL[place]; then × SCORE_DIFF_MUL[diffIdx] (Easy 0.65 / Medium 1.0 / Hard 1.55, widened 0.8.8 — the scoreHelpPanel text had gone stale after that change until 0.8.9 fixed it). Difficulty multiplier is applied AFTER placement. worker.js's serializeBreakdown() keys allowlist was updated to include rallyBounty/eliminationBounty/rallyKills/eliminationKills — requires redeploy for submitted breakdowns to retain them.
 - Bounty modifier removed as of 0.7.1 (was a wildcard, arena-wide, doubled the next concede cost).
@@ -1645,6 +1689,10 @@ ${VERSION} — Triple-click main-menu version opens this project context panel f
    Append a new entry and bump the patch digit of VERSION on every change set.
    The in-game Changelog panel reads this array directly. */
 const CHANGELOG = [
+  { v: '0.8.23', date: '2026-08-18', notes: [
+    'Post-match score breakdown aligned with the Scoring page: removed the redundant Subtotal, separate Placement/Difficulty multiplier rows, and duplicate Final Total row. The score band remains the single final-total display.',
+    'Removed the stale Custom Run result label; any future unscored run now uses a neutral Unscored Run label.',
+  ]},
   { v: '0.8.22', date: '2026-08-18', notes: [
     'Added signed, short-lived match tokens to online scored runs so the Worker can reject direct and replayed score submissions.',
   ]},
@@ -2290,8 +2338,6 @@ function saveCareer() {
    Earned points (survival + paddles + modifiers + bounties) form a subtotal.
    Placement multiplies that subtotal (6th=1× … 1st=3×), then difficulty
    multiplies again (Easy ×0.65 / Medium ×1 / Hard ×1.55, widened 0.8.8).
-   Custom matches are unscored.
-
    0.8.9: two new bounty types, both credited to whoever's b.hitter is (the
    last player to touch the ball) when an opponent concedes off their return:
      - Rally kill: opponent loses a life but isn't eliminated.
@@ -2401,24 +2447,25 @@ function breakdownHtml(parts) {
   if (!parts) return '<div class="lbstatus">Breakdown unavailable</div>';
   const padNote = parts.paddleHits ? ' (' + parts.paddleHits + ')' : '';
   const modBits = [];
-  if (parts.buffHits) modBits.push(parts.buffHits + ' buff');
-  if (parts.nerfHits) modBits.push(parts.nerfHits + ' nerf');
-  if (parts.wildHits) modBits.push(parts.wildHits + ' wild');
-  if (parts.nerfedHits) modBits.push(parts.nerfedHits + ' nerfed · no penalty');
+  if (parts.buffHits) modBits.push(parts.buffHits + ' B');
+  if (parts.nerfHits) modBits.push(parts.nerfHits + ' N');
+  if (parts.wildHits) modBits.push(parts.wildHits + ' W');
   const modNote = modBits.length ? ' (' + modBits.join(', ') + ')' : '';
   const rallyNote = parts.rallyKills ? ' (' + parts.rallyKills + ')' : '';
   const elimNote = parts.eliminationKills ? ' (' + parts.eliminationKills + ')' : '';
-  const dLabel = (DIFF[parts.dIdx] && DIFF[parts.dIdx].label) || 'MEDIUM';
-  const diffMul = parts.diffMul != null ? parts.diffMul : 1;
+  const place = clamp(Number(parts.place) || 6, 1, 6);
+  const placeMul = Number.isFinite(Number(parts.placeMul)) ? Number(parts.placeMul) : (SCORE_PLACE_MUL[place] || 1);
+  const dIdx = clamp(Number(parts.dIdx) || 1, 0, SCORE_DIFF_MUL.length - 1);
+  const diffMul = Number.isFinite(Number(parts.diffMul)) ? Number(parts.diffMul) : (SCORE_DIFF_MUL[dIdx] || 1);
+  const diffLabel = DIFF[dIdx] ? DIFF[dIdx].label : 'Medium';
+  const fmtMul = v => '×' + Number(v).toFixed(2).replace(/\.?0+$/, '');
   return '<div class="srow"><span>Survival · ' + fmtTime(parts.survivedS || 0) + '</span><span>' + commas(parts.survival) + '</span></div>' +
-    '<div class="srow' + (parts.paddle ? '' : ' muted') + '"><span>Paddle hits' + padNote + '</span><span>' + commas(parts.paddle) + '</span></div>' +
-    '<div class="srow' + (parts.modifier ? '' : ' muted') + '"><span>Modifiers' + modNote + '</span><span>' + commas(parts.modifier) + '</span></div>' +
-    '<div class="srow' + (parts.rallyBounty ? '' : ' muted') + '"><span>Rally kills' + rallyNote + '</span><span>' + commas(parts.rallyBounty) + '</span></div>' +
-    '<div class="srow' + (parts.eliminationBounty ? '' : ' muted') + '"><span>Eliminations' + elimNote + '</span><span>' + commas(parts.eliminationBounty) + '</span></div>' +
-    '<div class="srow muted"><span>Subtotal</span><span>' + commas(parts.subtotal) + '</span></div>' +
-    '<div class="srow muted"><span>Placement · ' + ordinal(parts.place || 6) + '</span><span>×' + (parts.placeMul || 1) + '</span></div>' +
-    '<div class="srow muted"><span>Difficulty · ' + titleCase(dLabel) + '</span><span>×' + diffMul + '</span></div>' +
-    '<div class="stotal"><span>Final Total</span><span>' + commas(parts.total) + '</span></div>';
+    '<div class="srow"' + (parts.paddle ? '' : ' muted') + '><span>Paddle hits' + padNote + '</span><span>' + commas(parts.paddle) + '</span></div>' +
+    '<div class="srow"' + (parts.modifier ? '' : ' muted') + '><span>Modifiers' + modNote + '</span><span>' + commas(parts.modifier) + '</span></div>' +
+    '<div class="srow"' + (parts.rallyBounty ? '' : ' muted') + '><span>Rally kills' + rallyNote + '</span><span>' + commas(parts.rallyBounty) + '</span></div>' +
+    '<div class="srow"' + (parts.eliminationBounty ? '' : ' muted') + '><span>Eliminations' + elimNote + '</span><span>' + commas(parts.eliminationBounty) + '</span></div>' +
+    '<div class="srow"><span>Placement · ' + ordinal(place) + '</span><span>' + fmtMul(placeMul) + '</span></div>' +
+    '<div class="srow"><span>Difficulty · ' + diffLabel + '</span><span>' + fmtMul(diffMul) + '</span></div>';
 }
 let brFrom = 'lbPanel';
 function showBreakdown(parts, name, score, from) {
@@ -2469,7 +2516,7 @@ function saveSettings() {
   try {
     localStorage.setItem(SETTINGS_KEY, JSON.stringify({
       diffIdx, startLives, ModifiersOn, ModifierRate, fxLevel, lite, playerCol, sfxVol,
-      shakeLevel, crtFx, colorBlind, hapticsLevel, fpsCap, endlessMode
+      shakeLevel, crtFx, colorBlind, hapticsLevel, fpsCap
     }));
   } catch (e) {}
 }
@@ -2497,7 +2544,6 @@ function applySavedSettings() {
   if (typeof savedSettings.colorBlind === 'boolean') colorBlind = savedSettings.colorBlind;
   if (typeof savedSettings.hapticsLevel === 'number') hapticsLevel = clamp(savedSettings.hapticsLevel | 0, 0, 2);
   if (typeof savedSettings.fpsCap === 'boolean') fpsCap = savedSettings.fpsCap;
-  if (typeof savedSettings.endlessMode === 'boolean') endlessMode = savedSettings.endlessMode;
   applyCrtVisibility();
   document.body.classList.toggle('cb', colorBlind);
 }
@@ -3536,7 +3582,6 @@ let crtFx = false;            // flicker + scanlines independent of quality pres
 let colorBlind = false;      // shape codes on Modifiers
 let hapticsLevel = 2;        // 0=off, 1=light, 2=full
 let fpsCap = false;          // 30fps battery saver
-let endlessMode = false;     // opponents respawn, decay never stops
 let lastFrameSkip = 0;
 
 /* one-time control hint, dismissed on first drag */
@@ -3708,7 +3753,8 @@ function togglePause(force) {
     // Resume freeze: 3-2-1 before play continues (skip if we were force-paused into a non-running state)
     if (wasPaused && running && !over && !ending) {
       countdown = 3.0;
-      resumeCountdown = true;   // keep ball(s) where they were; no center re-serve
+      // Preserve an in-progress rally; the initial countdown still needs to serve the first ball.
+      resumeCountdown = balls.length > 0;
       toast('3', '#bfe9ff', 0.85);
       haptic(8);
     }
@@ -4393,22 +4439,6 @@ function concede(p, b, w) {
   if (bi >= 0) balls.splice(bi, 1);
 
   if (p.lives <= 0) {
-    // Endless: AI walls respawn with full lives; player elimination still ends the run.
-    if (endlessMode && !p.human) {
-      p.lives = startLives;
-      p.fx = {};
-      p.hurtFlash = 1;
-      knockouts++;
-      creditKill(b.hitter, p, 'rally', b.x, b.y);
-      applyShake(12, 0.4); collapseFlash = 0.6;
-      // Removed toast: player respawned
-      beep(140, 0.12, 'sawtooth', 0.05);
-      if (balls.length === 0) {
-        serve(p.wall >= 0 ? p.wall : null);
-        serveTimer += SERVE_DELAY_KNOCKOUT;
-      }
-      return true;
-    }
     p.place = players.filter(q => !q.out).length;      // 6 alive -> finishes 6th
     if (p.human) run.survived = elapsed;
     // the wall shatters and is removed from the arena entirely
@@ -4594,7 +4624,7 @@ function endGame(winner, eliminated) {
   // XP breakdown (Vanilla/Modifier, or any Endless run)
   let xpGain = null;
   let xpBreakHtml = '';
-  const giveXp = scored || endlessMode;
+  const giveXp = scored;
   if (giveXp) {
     const base = Math.max(0, Math.round((run.survived || 0) * SCORE_PER_SEC));
     const placeXP = SCORE_PLACE[clamp(me.place | 0, 1, 6)] || 0;
@@ -4621,7 +4651,7 @@ function endGame(winner, eliminated) {
   const newAch = checkAchievements();
 
   const runHtml =
-    statLine('Score', scored ? commas(score) : (endlessMode ? commas(score || 0) + ' (endless)' : 'Not scored')) +
+    statLine('Score', scored ? commas(score) : 'Not scored') +
     // Level / XP intentionally omitted from results while the progression system is on hold
     statLine('Survived', fmtTime(run.survived)) +
     statLine('Match length', fmtTime(elapsed)) +
@@ -4697,7 +4727,7 @@ function endGame(winner, eliminated) {
     br.innerHTML = breakdownHtml(parts);
   } else {
     sb.className = 'scoreband muted';
-    sb.innerHTML = '<span class="sl2">Custom Run</span><span class="sm">Not scored</span>';
+    sb.innerHTML = '<span class="sl2">Unscored Run</span><span class="sm">Not scored</span>';
     br.style.display = 'none';
     br.innerHTML = '';
   }
@@ -6263,15 +6293,20 @@ function boardHtml() {
     .sort((a, b) => (b.score - a.score) || ((a.at || 0) - (b.at || 0)))
     .slice(0, 10);
   if (!rows.length)
-    return '<div class="sl"><span>No ' + (DIFF[hsDiffIdx] ? DIFF[hsDiffIdx].label.toLowerCase() : 'medium') + ' scores yet</span><span>&mdash;</span></div>';
+    return '<div class="sl"><span>No ' + (DIFF[hsDiffIdx] ? DIFF[hsDiffIdx].label.toLowerCase() : 'medium') + ' scores yet</span><span>&mdash;</span>';
   return rows.map((e, i) => {
-    const meta = [
-      ordinal(e.p || 6),
-      fmtTime(e.t || 0)
-    ].filter(Boolean).join(' · ');
-    return '<div class="hsrow' + (e.at && e.at === lastScoreStamp ? ' fresh' : '') + '">' +
+    const meta = [ordinal(e.p || 6), fmtTime(e.t || 0)].filter(Boolean).join(' · ');
+    const hasBr = e.breakdown && typeof e.breakdown === 'object';
+    let br = hasBr ? Object.assign({}, e.breakdown) : null;
+    if (br && br.dIdx == null) {
+      const dIdx = clamp(e.d | 0, 0, 2);
+      const place = br.place == null ? (e.p || 6) : br.place;
+      br = Object.assign({}, br, { dIdx: dIdx, diffMul: br.diffMul == null ? (SCORE_DIFF_MUL[dIdx] || 1) : br.diffMul, place: place, placeMul: br.placeMul == null ? (SCORE_PLACE_MUL[place] || 1) : br.placeMul });
+    }
+    const attrs = hasBr ? ' data-br="' + encodeURIComponent(JSON.stringify(br)) + '" data-nm="' + encodeURIComponent(String(e.n || 'PLAYER')) + '" data-sc="' + (e.score || 0) + '"' : '';
+    return '<div class="hsrow' + (hasBr ? ' hasbr' : '') + (e.at && e.at === lastScoreStamp ? ' fresh' : '') + '"' + attrs + '>' +
       '<span class="hsr">' + (i + 1) + '</span>' +
-      '<span class="hsn">' + esc(e.n || 'PLAYER') + '<em>' + meta + '</em></span>' +
+      '<span class="hsn">' + (hasBr ? '<button type="button" class="lbn-btn">' + esc(e.n || 'PLAYER') + '</button>' : esc(e.n || 'PLAYER')) + '<em>' + meta + '</em></span>' +
       '<span class="hss">' + commas(e.score) + '</span></div>';
   }).join('');
 }
@@ -6448,9 +6483,9 @@ function hideCodex() {
 }
 
 /* ── game modes ────────────────────────────────────────────────────────────
-   Vanilla and Modifier are fixed presets: pick a difficulty and you are playing.
-   Custom owns lives, Modifiers, spawn rate and the per-Modifier switches, which is why
-   those toggles came out of the Modifier Index. */
+   Vanilla and Modifier are the only active presets: pick a difficulty and play.
+   The old Custom panel and dormant Endless Mode path were removed; only the two
+   supported presets remain. */
 const MODES = {
   vanilla: { title:'VANILLA MODE', cls:'vanilla', lives:3, Modifiers:false, rate:1,
              icon:'<svg viewBox="0 0 24 24"><path d="M12 2.6 20.4 7.3v9.4L12 21.4 3.6 16.7V7.3z"/><path d="M7.2 7.4h5.2a3.4 3.4 0 0 1 0 6.8H9.7l-2.5 3.1"/><circle cx="17" cy="16.3" r="1.25" fill="currentColor" stroke="none"/></svg>',
@@ -6470,7 +6505,6 @@ function startSimplePlay() {
   startLives = 3;
   // Spawn rate is locked to difficulty: Easy=Min, Medium=Mid, Hard=Max
   ModifierRate = clamp(diffIdx, 0, 2);
-  endlessMode = false;
   saveSettings();
   startGame();
 }
@@ -6804,20 +6838,19 @@ document.getElementById('verTag').textContent = 'v' + VERSION;
 // Breakdown panel: click name on leaderboard / recent rows (delegation)
 (function wireBreakdownDelegation() {
   document.addEventListener('click', e => {
-    const btn = e.target.closest('.lbn-btn');
-    if (!btn) return;
-    const row = btn.closest('.lbrow');
+    const row = e.target.closest('.lbrow,.hsrow');
     if (!row || !row.dataset.br) return;
-    // Only when a board panel is visible
     const lbOpen = document.getElementById('lbPanel') && !document.getElementById('lbPanel').classList.contains('hidden');
     const recentOpen = document.getElementById('recentPanel') && !document.getElementById('recentPanel').classList.contains('hidden');
-    if (!lbOpen && !recentOpen) return;
+    const statsOpen = document.getElementById('statsPanel') && !document.getElementById('statsPanel').classList.contains('hidden');
+    const from = lbOpen ? 'lbPanel' : recentOpen ? 'recentPanel' : statsOpen ? 'statsPanel' : null;
+    if (!from) return;
     e.preventDefault(); e.stopPropagation();
     try {
       const parts = JSON.parse(decodeURIComponent(row.dataset.br));
       const nm = decodeURIComponent(row.dataset.nm || 'PLAYER');
       const sc = +(row.dataset.sc || 0);
-      showBreakdown(parts, nm, sc, lbOpen ? 'lbPanel' : 'recentPanel');
+      showBreakdown(parts, nm, sc, from);
     } catch (err) {}
   });
   const back = document.getElementById('bBrBack');
