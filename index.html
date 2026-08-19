@@ -47,6 +47,8 @@
   .panel{position:fixed;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;
     background:rgba(0,2,6,.72);backdrop-filter:blur(3px);}
   .panel.hidden{display:none}
+  /* Interactive iPhone-style back gesture: the two panels stay attached while dragging. */
+  .panel.swipe-layer{will-change:transform}
   .card{width:min(560px,92vw);max-height:92vh;overflow-y:auto;
     padding:30px 34px 26px;border:1px solid rgba(120,200,255,.28);
     background:linear-gradient(180deg,rgba(6,14,24,.96),rgba(2,5,12,.96));
@@ -136,15 +138,20 @@
     text-transform:uppercase;padding-top:2px}
   /* Prominent chase score: top band under HUD so current vs best is always glanceable */
   #scorebar{position:fixed;left:0;right:0;
-    top:calc(52px + env(safe-area-inset-top,0px));
+    top:calc(86px + env(safe-area-inset-top,0px));
     z-index:8;pointer-events:none;padding:0 12px;
-    display:flex;gap:16px;justify-content:center;align-items:baseline;flex-wrap:wrap}
+    display:grid;grid-template-columns:minmax(0,auto) auto;
+    grid-template-areas:"score best" "gap gap";
+    column-gap:18px;row-gap:3px;justify-content:center;align-items:center}
   #scorebar.off{display:none}
-  #scorebar .sc{font-size:34px;font-weight:800;letter-spacing:.08em;color:#ffd97a;
-    text-shadow:0 0 18px rgba(255,200,90,.65);font-variant-numeric:tabular-nums}
-  #scorebar .sb{font-size:14px;letter-spacing:.14em;color:#8d7a4f;text-transform:uppercase;
-    font-variant-numeric:tabular-nums}
-  #scorebar .sd{font-size:14px;letter-spacing:.1em;color:#c99a4a;text-transform:uppercase;
+  #scorebar .sc{grid-area:score;font-size:40px;font-weight:800;letter-spacing:.08em;color:#ffd97a;
+    text-shadow:0 0 12px rgba(255,200,90,.48);font-variant-numeric:tabular-nums;line-height:1}
+  #scorebar .sb{grid-area:best;display:flex;flex-direction:column;align-items:flex-start;gap:2px;
+    font-size:11px;letter-spacing:.14em;color:#8d7a4f;text-transform:uppercase;
+    font-variant-numeric:tabular-nums;line-height:1.05}
+  #scorebar .sbl{font-size:10px;letter-spacing:.2em;color:#a18852}
+  #scorebar .sbv{font-size:17px;letter-spacing:.12em;color:#c9a75d}
+  #scorebar .sd{grid-area:gap;justify-self:center;font-size:12px;letter-spacing:.1em;color:#c99a4a;text-transform:uppercase;
     font-variant-numeric:tabular-nums}
   #scorebar.ahead .sc{color:#9ff5b0;text-shadow:0 0 16px rgba(120,240,150,.65)}
   #scorebar.ahead .sb,#scorebar.ahead .sd{color:#6d9b7c}
@@ -180,11 +187,14 @@
     right:calc(12px + env(safe-area-inset-right,0px));
     top:calc(12px + env(safe-area-inset-top,0px));z-index:9;
     display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;align-items:center}
-  .mini{font:inherit;font-size:12px;letter-spacing:.16em;padding:7px 10px;cursor:pointer;
-    min-height:34px;display:flex;align-items:center;justify-content:center;
-    background:rgba(10,24,40,.6);color:#8ab4d0;border:1px solid rgba(90,150,200,.32);
-    width:100%}
-  .mini:hover{color:#dff1ff;border-color:rgba(150,220,255,.6)}
+  .mini{font:inherit;font-size:12px;letter-spacing:.16em;padding:10px 10px;cursor:pointer;
+    min-height:46px;display:flex;align-items:center;justify-content:center;border-radius:4px;
+    background:rgba(10,24,40,.62);color:#a9c8dc;border:1px solid rgba(90,150,200,.42);
+    width:100%;transition:background .15s,border-color .15s,color .15s}
+  #bPause{border-color:rgba(150,205,235,.55);color:#b9d8ee}
+  #bRestart{border-color:rgba(178,140,255,.48);color:#c9b5ff}
+  #bGear{border-color:rgba(90,150,200,.34);color:#86a6bd}
+  .mini:hover{color:#eaf6ff;border-color:rgba(180,225,255,.8);background:rgba(18,40,66,.78)}
   /* touch hint that fades once the player has dragged */
   /* volume sliders */
   .vnum{color:#a8cfe8;letter-spacing:.1em;margin-left:6px}
@@ -245,8 +255,8 @@
   #mDiff button.opt[data-d="2"].on{background:rgba(255,80,80,.22);color:#fff;
     border-color:rgba(255,140,140,.9);box-shadow:0 0 14px rgba(255,90,90,.45), inset 0 0 14px rgba(255,90,90,.15)}
 
-  .difftag{display:inline-block;margin-left:8px;padding:2px 9px;font-size:9px;letter-spacing:.16em;
-    border:1px solid;border-radius:2px;vertical-align:middle;text-transform:uppercase}
+  .difftag{display:inline-block;margin-left:10px;padding:3px 10px;font-size:11px;letter-spacing:.14em;
+    border:1px solid;border-radius:2px;vertical-align:middle;text-transform:uppercase;font-weight:700}
   .difftag.easy{color:#ffd97a;border-color:rgba(255,217,140,.6);background:rgba(255,205,110,.12)}
   .difftag.medium{color:#b278ff;border-color:rgba(190,140,255,.6);background:rgba(150,90,255,.12)}
   .difftag.hard{color:#ff6a6a;border-color:rgba(255,140,140,.6);background:rgba(255,80,80,.12)}
@@ -274,6 +284,7 @@
   .lbrow:nth-child(3) .lbr{color:#c99a4a}
   .lbrow .lbn{flex:1;min-width:0;font-size:12.5px;letter-spacing:.08em;color:#dff1ff;
     overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .lbrow .lbtag{font-size:9px;letter-spacing:.12em;color:#a98bd3;font-weight:600;white-space:nowrap}
   .lbrow .lbn em{display:block;font-style:normal;font-size:9px;letter-spacing:.12em;
     color:#5f87a8;text-transform:uppercase;margin-top:2px}
   .lbrow .lbs{font-size:15px;font-weight:800;color:#ffd97a;font-variant-numeric:tabular-nums;
@@ -430,13 +441,15 @@
 
   /* active Modifier readout, sits under the score band */
   #fxbar{position:fixed;left:0;right:0;z-index:8;text-align:center;pointer-events:none;
-    top:calc(96px + env(safe-area-inset-top,0px));padding:0 10px;
+    top:calc(196px + env(safe-area-inset-top,0px));padding:0 10px;
     display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
-  .fxpill{font-size:13px;letter-spacing:.12em;text-transform:uppercase;padding:6px 12px;
-    border:1.5px solid currentColor;border-radius:3px;white-space:nowrap;
-    display:inline-flex;align-items:center;gap:8px;background:rgba(0,4,10,.6);
-    box-shadow:0 0 12px rgba(0,0,0,.35)}
-  .fxpill b{font-weight:700;opacity:.85;font-variant-numeric:tabular-nums;font-size:14px}
+  .fxpill{position:relative;font-size:13px;letter-spacing:.1em;text-transform:uppercase;padding:7px 12px 11px;
+    border:1.5px solid currentColor;border-radius:6px;white-space:nowrap;
+    display:inline-flex;align-items:center;gap:8px;background:rgba(2,5,14,.86);
+    box-shadow:0 0 16px rgba(0,0,0,.42), inset 0 0 14px rgba(100,80,180,.08)}
+  .fxpill b{font-weight:700;opacity:.9;font-variant-numeric:tabular-nums;font-size:14px}
+  .fxmeter{position:absolute;left:10px;right:10px;bottom:4px;height:2px;border-radius:2px;background:rgba(180,150,255,.18);overflow:hidden}
+  .fxmeter i{display:block;height:100%;background:currentColor;box-shadow:0 0 8px currentColor;border-radius:2px}
 
   #thint{position:fixed;left:0;right:0;z-index:8;text-align:center;pointer-events:none;
     bottom:calc(26px + env(safe-area-inset-bottom,0px));
@@ -486,12 +499,15 @@
     .cxg > p{font-size:12px}
     .cxg > h3{font-size:12px}
     .note{font-size:10.5px;padding:8px 10px;margin-bottom:12px}
-    #scorebar{top:calc(50px + env(safe-area-inset-top,0px));gap:12px}
-    #scorebar .sc{font-size:28px}
-    #scorebar .sb,#scorebar .sd{font-size:12px}
+    #scorebar{top:calc(84px + env(safe-area-inset-top,0px));column-gap:14px;row-gap:4px}
+    #scorebar .sc{font-size:34px}
+    #scorebar .sbl{font-size:9px}
+    #scorebar .sbv{font-size:15px}
+    #scorebar .sb,#scorebar .sd{font-size:11px}
     #thint{bottom:calc(18px + env(safe-area-inset-bottom,0px));font-size:11px}
-    #fxbar{top:calc(92px + env(safe-area-inset-top,0px));gap:6px}
-    .fxpill{font-size:12px;padding:5px 10px;letter-spacing:.08em}
+    #fxbar{top:calc(194px + env(safe-area-inset-top,0px));gap:6px}
+    .fxpill{font-size:12px;padding:7px 10px 11px;letter-spacing:.08em}
+    .mini{min-height:48px}
     button.sw{width:44px;height:44px}
     .swatches{gap:10px;max-width:260px;grid-template-columns:repeat(4, 1fr)}
     .mode .mt{font-size:15px;letter-spacing:.1em}
@@ -538,7 +554,588 @@
   body.fxoff .panel{backdrop-filter:none;background:rgba(0,2,6,.85)}
   .win{font-size:26px;letter-spacing:.2em;margin:6px 0 4px;font-weight:800}
   .stats{font-size:11px;color:#6d94b0;letter-spacing:.14em;line-height:2;margin-top:10px}
-</style>
+  /* ── premium command-deck main menu ─────────────────────────────── */
+  #start.panel{background:rgba(0,2,6,.28);backdrop-filter:none}
+  #start .card{width:min(560px,96vw);max-height:100dvh;padding:28px 24px 22px;
+    border:1px solid rgba(238,192,48,.92);background:linear-gradient(180deg,rgba(3,12,22,.97),rgba(2,5,13,.98));
+    box-shadow:0 0 34px rgba(238,176,42,.16),inset 0 0 70px rgba(28,100,150,.11);
+    display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2.1fr);gap:12px;align-content:start;position:relative}
+  #start .card::before{content:'';position:absolute;inset:8px;border:1px solid rgba(238,192,48,.22);pointer-events:none}
+  #start h1,#start .sub{grid-column:1/-1;position:relative;z-index:1}
+  #start h1{font-size:clamp(38px,10vw,64px)!important;letter-spacing:.14em;margin:0 0 2px;color:#ffd35a;
+    text-shadow:0 0 12px rgba(255,198,72,.72),0 0 34px rgba(255,176,28,.32)}
+  #start .sub{font-size:15px;letter-spacing:.38em;color:#b77dff;margin:0 0 8px}
+  #start #mModifiersRow,#start #mDiffRow{margin:0;min-height:122px;padding:14px 12px;display:flex;flex-direction:column;
+    align-items:stretch;justify-content:center;gap:10px;border:1px solid rgba(115,150,180,.5);background:rgba(5,20,34,.68);position:relative;z-index:1}
+  #start #mModifiersRow{grid-column:1} #start #mDiffRow{grid-column:2}
+  #start .clab{flex:none;text-align:center;font-size:12px;letter-spacing:.18em;color:#d6dce3}
+  #start #mModifiersRow .cseg{display:flex;justify-content:center;gap:5px}
+  #start .cseg .opt{min-height:42px;padding:8px 11px;font-size:11px}
+  #start #mDiffRow .cseg{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:0}
+  #start #mDiffRow .opt{min-height:64px;padding:8px 3px;font-size:10px;letter-spacing:.1em}
+  #start .modes,#start #hiBand,#start #lvlBand,#start #miniLb,#start #miniRecent,#start .minigrid{grid-column:1/-1;position:relative;z-index:1}
+  #start .modes{margin:0}
+  #start button.mode.playbig{min-height:126px;padding:20px 18px;gap:18px;border:2px solid #f2bd36;
+    background:linear-gradient(180deg,#f3c94f 0%,#d9a524 100%);color:#100d04;box-shadow:0 0 30px rgba(242,184,45,.45),inset 0 0 0 1px rgba(255,241,157,.55)}
+  #start button.mode.playbig:hover{transform:translateY(-1px);filter:brightness(1.06)}
+  #start button.mode.playbig .mi{flex:0 0 64px;height:64px;border:none;border-radius:0;color:#171006}
+  #start button.mode.playbig .mi svg{width:62px;height:62px;stroke-width:1.25}
+  #start button.mode.playbig .mt{font-size:clamp(22px,6vw,34px);letter-spacing:.1em;color:#100d04;text-shadow:none}
+  #start #hiBand{margin:0;padding:16px 18px;min-height:76px;justify-content:space-between;border:1px solid rgba(220,169,52,.68);background:rgba(32,23,8,.72)}
+  #start .hiband .hl{font-size:11px;color:#d5a83b} #start .hiband .hv{font-size:30px;color:#ffd66b}
+  #start .hiband .hm{font-size:10px;color:#9f8854}
+  #start .minilb,#start #miniRecent{margin:0;min-height:218px;padding:15px 154px 14px 16px;border:1px solid rgba(112,182,226,.58);background:rgba(5,20,34,.72);overflow:hidden}
+  #start .minilb-head{margin-bottom:10px} #start .minilb-head .mlabel{font-size:12px;letter-spacing:.18em;color:#9ac4e2}
+  #start .minilb-head .mview{display:none}
+  #start .minilb::before{content:'';position:absolute;top:14px;bottom:14px;right:136px;width:1px;background:rgba(112,182,226,.42)}
+  #start .minilb::after{position:absolute;right:18px;top:50%;transform:translateY(-50%);width:98px;white-space:pre;text-align:center;font-size:11px;line-height:1.55;letter-spacing:.12em;color:#00d9ff}
+  #start #miniLb::after{content:'TOP 25\\A TAP TO VIEW'}
+  #start #miniRecent::after{content:'LATEST 25\\A TAP TO VIEW'}
+  #start .minilb .lbrow{padding:6px 0}
+  #start .minilb .lbrow .lbn{font-size:11px} #start .minilb .lbrow .lbs{font-size:13px}
+  #start .minilb .lbrow .lbn em{font-size:8px}
+  #start .minigrid{grid-template-columns:repeat(3,1fr);gap:0;padding:10px 4px;border:1px solid rgba(112,182,226,.45);background:rgba(5,20,34,.58)}
+  #start .minigrid .go{margin:0;min-height:88px;padding:8px 5px;border:0;border-right:1px solid rgba(112,182,226,.35);background:none;color:#00d9ff;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;font-size:10px;letter-spacing:.13em}
+  #start .minigrid .go:nth-child(3){border-right:0}
+  #start .minigrid .go::before{font-size:34px;line-height:1;color:#00d9ff;font-weight:400;letter-spacing:0}
+  #start #bHow::before{content:'?'} #start #bScoreHelp::before{content:'▥'} #start #bCodexMenu::before{content:'☷'}
+  #start #bSettings{grid-column:1/-1;width:55%;justify-self:center;min-height:58px;margin-top:10px;border:1px solid rgba(112,182,226,.45);color:#00d9ff}
+  #start #bSettings::before{content:'⚙';font-size:25px}
+  #start .difftag{font-size:10px;padding:3px 8px}
+  #start .keys{display:none}
+  @media (max-width:620px){
+    #start .card{width:100%;max-height:100dvh;padding:calc(18px + env(safe-area-inset-top,0px)) 16px calc(16px + env(safe-area-inset-bottom,0px));gap:9px;border-left:1px solid rgba(238,192,48,.92);border-right:1px solid rgba(238,192,48,.92)}
+    #start h1{font-size:clamp(34px,9vw,48px)!important;letter-spacing:.12em}
+    #start .sub{font-size:12px;letter-spacing:.3em}
+    #start #mModifiersRow,#start #mDiffRow{min-height:108px;padding:11px 8px;gap:7px}
+    #start .clab{font-size:10px}
+    #start #mDiffRow .opt{min-height:57px;font-size:9px}
+    #start .cseg .opt{min-height:40px;padding:7px 8px;font-size:10px}
+    #start button.mode.playbig{min-height:112px;padding:16px 10px;gap:10px}
+    #start button.mode.playbig .mi{flex-basis:52px;height:52px} #start button.mode.playbig .mi svg{width:52px;height:52px}
+    #start button.mode.playbig .mt{font-size:clamp(19px,5.5vw,28px)}
+    #start #hiBand{min-height:68px;padding:13px 12px} #start .hiband .hv{font-size:25px}
+    #start .minilb,#start #miniRecent{min-height:205px;padding:13px 118px 12px 12px}
+    #start .minilb::before{right:106px} #start .minilb::after{right:5px;width:92px;font-size:9px}
+    #start .minilb-head .mlabel{font-size:10px}
+    #start .minilb .lbrow{padding:5px 0} #start .minilb .lbrow .lbn{font-size:10px}
+    #start .minigrid .go{min-height:80px;font-size:9px} #start .minigrid .go::before{font-size:29px}
+  }
+
+  /* ── prototype-matched main command deck ────────────────────────── */
+  #start.panel{background:rgba(0,2,6,.2);backdrop-filter:none;padding:8px 0}
+  #start .card{width:calc(100% - 16px);height:calc(100dvh - 16px);max-height:none;padding:max(58px,env(safe-area-inset-top,0px)) 20px 10px;
+    border:1px solid rgba(229,180,29,.95);background:linear-gradient(180deg,rgba(2,12,22,.985),rgba(1,6,14,.99));
+    box-shadow:0 0 26px rgba(229,180,29,.12),inset 0 0 70px rgba(24,84,125,.08);clip-path:polygon(14px 0,calc(100% - 14px) 0,100% 14px,100% calc(100% - 14px),calc(100% - 14px) 100%,14px 100%,0 calc(100% - 14px),0 14px);
+    display:grid;grid-template-columns:minmax(0,.31fr) minmax(0,.69fr);gap:7px 8px;align-content:start;overflow-y:auto;scrollbar-width:none}
+  #start .card::-webkit-scrollbar{display:none}
+  #start .card::before{content:'';position:absolute;inset:1px;pointer-events:none;background:linear-gradient(180deg,rgba(1,10,19,.99),rgba(1,5,12,.995));
+    clip-path:polygon(13px 0,calc(100% - 13px) 0,100% 13px,100% calc(100% - 13px),calc(100% - 13px) 100%,13px 100%,0 calc(100% - 13px),0 13px)}
+  #start h1,#start .sub,#start .brandrule,#start #mModifiersRow,#start #mDiffRow,#start .modes,#start #hiBand,#start #lvlBand,#start #miniLb,#start #miniRecent,#start .minigrid{position:relative;z-index:1}
+  #start h1,#start .sub,#start .brandrule{grid-column:1/-1}
+  #start h1{font-family:"Arial Black","SF Pro Display",sans-serif;font-size:clamp(48px,14vw,61px)!important;line-height:.86;letter-spacing:.055em;margin:0;
+    background:linear-gradient(180deg,#ffe484 0%,#d99615 52%,#ffd253 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+    filter:drop-shadow(0 0 8px rgba(255,190,52,.46));text-shadow:none;white-space:nowrap}
+  #start .sub{font-size:13px;line-height:18px;letter-spacing:.24em;color:#b57bff;margin:0;text-transform:none}
+  #start .brandrule{height:13px;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:-2px}
+  #start .brandrule::before,#start .brandrule::after{content:'';height:1px;width:24%;background:linear-gradient(90deg,transparent,#e4af20)}
+  #start .brandrule::after{background:linear-gradient(90deg,#e4af20,transparent)}
+  #start .brandrule span{width:12px;height:12px;background:#e4af20;clip-path:polygon(25% 0,75% 0,100% 50%,75% 100%,25% 100%,0 50%);position:relative}
+  #start .brandrule span::after{content:'';position:absolute;inset:2px;background:#04101c;clip-path:inherit}
+  #start #mModifiersRow,#start #mDiffRow{margin:0;height:103px;padding:10px 9px;display:flex;flex-direction:column;align-items:stretch;justify-content:center;gap:7px;
+    border:1px solid rgba(110,139,161,.6);background:rgba(3,17,30,.76);clip-path:polygon(8px 0,calc(100% - 8px) 0,100% 8px,100% calc(100% - 8px),calc(100% - 8px) 100%,8px 100%,0 calc(100% - 8px),0 8px)}
+  #start #mModifiersRow{grid-column:1} #start #mDiffRow{grid-column:2}
+  #start .clab{flex:none;text-align:center;font-size:10px;line-height:14px;letter-spacing:.14em;color:#d5d8dc}
+  #start #mModifiersRow .cseg{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin:0}
+  #start #mModifiersRow .opt{min-width:0;height:42px;padding:0;font-size:11px}
+  #start #mModifiers button[data-t="1"].on{color:#bffaff;background:rgba(0,202,235,.16);border-color:#00d7f1;box-shadow:0 0 12px rgba(0,215,241,.28),inset 0 0 10px rgba(0,215,241,.08)}
+  #start #mModifiers button[data-t="0"].on{color:#bffaff;background:rgba(0,202,235,.16);border-color:#00d7f1;box-shadow:0 0 12px rgba(0,215,241,.28)}
+  #start #mDiffRow .cseg{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin:0}
+  #start #mDiffRow .opt{height:65px;min-width:0;padding:34px 2px 5px;border:0;background:rgba(3,16,29,.94);font-size:9px;letter-spacing:.08em;clip-path:polygon(25% 2%,75% 2%,100% 50%,75% 98%,25% 98%,0 50%);position:relative;isolation:isolate}
+  #start #mDiffRow .opt::before{content:'';position:absolute;inset:1px;background:#061523;clip-path:inherit;z-index:-1}
+  #start #mDiffRow .opt::after{content:'⬡';position:absolute;left:0;right:0;top:7px;text-align:center;font-size:25px;line-height:24px;color:currentColor}
+  #start #mDiff button.opt[data-d="0"]{color:#00ccec;background:#00ccec}
+  #start #mDiff button.opt[data-d="1"]{color:#b968ef;background:#b968ef}
+  #start #mDiff button.opt[data-d="2"]{color:#87bd3d;background:#87bd3d}
+  #start #mDiff button.opt.on{filter:drop-shadow(0 0 7px currentColor)}
+  #start .modes,#start #hiBand,#start #lvlBand,#start #miniLb,#start #miniRecent,#start .minigrid{grid-column:1/-1}
+  #start .modes{height:90px;margin:0}
+  #start button.mode.playbig{width:100%;height:90px;min-height:0;padding:10px 15px;gap:13px;border:0;background:linear-gradient(180deg,#f4ce53 0%,#d7a521 100%);color:#120e04;
+    clip-path:polygon(10px 0,calc(100% - 10px) 0,100% 10px,100% calc(100% - 10px),calc(100% - 10px) 100%,10px 100%,0 calc(100% - 10px),0 10px);box-shadow:none;position:relative}
+  #start button.mode.playbig::before{content:'';position:absolute;inset:4px;border:1px solid rgba(93,66,4,.55);clip-path:inherit;pointer-events:none}
+  #start button.mode.playbig .mi{flex:0 0 55px;height:55px;border:none;border-radius:0;color:#171006}
+  #start button.mode.playbig .mi svg{width:54px;height:54px;stroke-width:1.35}
+  #start button.mode.playbig .mt{font-family:"Arial Black","SF Pro Display",sans-serif;font-size:clamp(23px,7.6vw,31px);line-height:1;letter-spacing:.045em;color:#100c03;text-shadow:none;white-space:nowrap}
+  #start button.mode.playbig:hover{transform:none;filter:brightness(1.05)}
+  #start #hiBand{height:48px;min-height:0;margin:0;padding:7px 17px;justify-content:space-between;border:1px solid rgba(110,139,161,.55);background:rgba(3,17,30,.76);
+    clip-path:polygon(7px 0,calc(100% - 7px) 0,100% 7px,100% calc(100% - 7px),calc(100% - 7px) 100%,7px 100%,0 calc(100% - 7px),0 7px)}
+  #start .hiband .hl{font-size:10px;color:#d8dce1;letter-spacing:.14em}
+  #start .hiband .hv{font-size:22px;color:#f3bd2f;text-shadow:0 0 8px rgba(243,189,47,.35)}
+  #start .hiband .hm{display:none}
+  #start .minilb{height:134px;min-height:0;margin:0;padding:10px 100px 8px 14px;border:1px solid rgba(110,139,161,.58);background:rgba(3,17,30,.76);overflow:hidden;
+    clip-path:polygon(8px 0,calc(100% - 8px) 0,100% 8px,100% calc(100% - 8px),calc(100% - 8px) 100%,8px 100%,0 calc(100% - 8px),0 8px)}
+  #start .minilb-head{margin:0 0 5px;min-height:14px}
+  #start .minilb-head .mlabel{font-size:10px;letter-spacing:.13em;color:#d4d9de}
+  #start .difftag{margin-left:5px;padding:1px 5px;font-size:7px;letter-spacing:.08em}
+  #start .minilb-head .mview{display:flex;position:absolute;right:0;top:0;bottom:0;width:88px;padding:12px 8px;border-left:1px solid rgba(110,139,161,.5);
+    align-items:center;justify-content:center;flex-direction:column;gap:7px;text-align:center;white-space:normal;font-size:8px;line-height:1.4;letter-spacing:.11em;color:#00d7f1}
+  #start .minilb-head .mview::before{display:grid;place-items:center;width:39px;height:35px;background:rgba(0,215,241,.1);color:#00d7f1;
+    clip-path:polygon(25% 0,75% 0,100% 50%,75% 100%,25% 100%,0 50%);font-size:22px;line-height:1}
+  #start #miniLb .mview::before{content:'▥'} #start #miniRecent .mview::before{content:'◷'}
+  #start .minilb-body{min-height:0}
+  #start .minilb .lbrow{height:19px;padding:1px 0;border-bottom:0;gap:6px}
+  #start .minilb .lbrow .lbr{flex-basis:14px;font-size:9px}
+  #start .minilb .lbrow .lbn{font-size:9px;letter-spacing:.05em}
+  #start .minilb .lbrow .lbn em{display:none}
+  #start .minilb .lbrow .lbtag{font-size:7px}
+  #start .minilb .lbrow .lbs{font-size:10px}
+  #start .minilb .lbstatus{font-size:9px;padding:20px 4px}
+  #start .minigrid{height:130px;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:74px 49px;gap:7px 0;padding:0;border:0;background:none;position:relative}
+  #start .minigrid::before{content:'';position:absolute;left:0;right:0;top:0;height:74px;border:1px solid rgba(110,139,161,.58);background:rgba(3,17,30,.76);
+    clip-path:polygon(8px 0,calc(100% - 8px) 0,100% 8px,100% calc(100% - 8px),calc(100% - 8px) 100%,8px 100%,0 calc(100% - 8px),0 8px)}
+  #start .minigrid .go{height:74px;min-height:0;margin:0;padding:7px 3px;border:0;border-right:1px solid rgba(110,139,161,.38);background:none;color:#00d7f1;box-shadow:none;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:8px;line-height:1.15;letter-spacing:.09em;position:relative;z-index:1}
+  #start .minigrid .go:nth-of-type(3){border-right:0}
+  #start .minigrid .go::before{display:grid;place-items:center;width:37px;height:34px;background:rgba(0,215,241,.08);color:#00d7f1;
+    clip-path:polygon(25% 0,75% 0,100% 50%,75% 100%,25% 100%,0 50%);font-size:21px;line-height:1;letter-spacing:0}
+  #start #bHow::before{content:'?'} #start #bScoreHelp::before{content:'▥'} #start #bCodexMenu::before{content:'☷'}
+  #start #bSettings{grid-column:1/-1;grid-row:2;width:62%;height:49px;min-height:0;justify-self:center;border:1px solid rgba(110,139,161,.58);background:rgba(3,17,30,.76);flex-direction:row;font-size:10px;gap:9px;
+    clip-path:polygon(7px 0,calc(100% - 7px) 0,100% 7px,100% calc(100% - 7px),calc(100% - 7px) 100%,7px 100%,0 calc(100% - 7px),0 7px)}
+  #start #bSettings::before{content:'⚙';width:32px;height:29px;font-size:18px}
+  #start .keys{display:none}
+  @media (min-width:621px){#start .card{width:min(560px,calc(100% - 20px));padding-left:29px;padding-right:29px}}
+
+  /* ── goal screenshot fidelity fixes ─────────────────────────────── */
+  #start #miniLb,#start #miniRecent{height:134px!important;min-height:0!important}
+  #start .minilb::before,#start .minilb::after{content:none!important;display:none!important}
+
+  /* ── final arena button + difficulty polish ───────────────────── */
+  #start button.mode.playbig{justify-content:center;background:radial-gradient(circle at 50% 28%,rgba(255,240,166,.72),transparent 44%),linear-gradient(180deg,#f6d66b 0%,#e8b936 56%,#d79e18 100%);clip-path:polygon(2% 0,31% 0,32% 3%,68% 3%,69% 0,98% 0,100% 12%,100% 88%,98% 100%,69% 100%,68% 97%,32% 97%,31% 100%,2% 100%,0 88%,0 12%);box-shadow:0 0 16px rgba(231,174,35,.34)}
+  #start button.mode.playbig::before{inset:3px;border:1px solid rgba(83,57,2,.68);clip-path:inherit}
+  #start button.mode.playbig::after{content:'';position:absolute;inset:7px;border:1px solid rgba(255,226,117,.72);clip-path:inherit;pointer-events:none}
+  #start button.mode.playbig .mi{display:none!important}
+  #start button.mode.playbig .mt{width:100%;text-align:center}
+  #start #mDiff button.opt{filter:none}
+  #start #mDiff button.opt[data-d="2"]{color:#ff5c67;background:#ff5c67}
+  #start #mDiff button.opt.on{filter:drop-shadow(0 0 10px currentColor) drop-shadow(0 0 3px currentColor)}
+  #start #mDiff button.opt[data-d="0"].on::before{background:#073142;box-shadow:inset 0 0 18px rgba(0,215,241,.42)}
+  #start #mDiff button.opt[data-d="1"].on::before{background:#28153d;box-shadow:inset 0 0 18px rgba(185,104,239,.42)}
+  #start #mDiff button.opt[data-d="2"].on::before{background:#40151d;box-shadow:inset 0 0 18px rgba(255,92,103,.42)}
+  #start .difftag.easy{color:#00d7f1;border-color:rgba(0,215,241,.65);background:rgba(0,202,235,.12)}
+
+  /* ── selected difficulty glow + solid icon ────────────────────── */
+  #start #mDiff button.opt.on{z-index:2;filter:drop-shadow(0 0 5px currentColor) drop-shadow(0 0 12px currentColor) brightness(1.14)!important}
+  #start #mDiffRow .opt.on::after{content:'';left:50%;right:auto;top:9px;width:20px;height:18px;transform:translateX(-50%);background:currentColor;clip-path:polygon(25% 0,75% 0,100% 50%,75% 100%,25% 100%,0 50%);filter:drop-shadow(0 0 5px currentColor)}
+
+  /* ── premium restraint + consistent iconography ───────────────── */
+  #start.panel{background:#00060c}
+  #start h1{filter:drop-shadow(0 0 4px rgba(255,190,52,.32))}
+  #start .modes{height:82px}
+  #start button.mode.playbig{height:82px;background:radial-gradient(circle at 50% 42%,rgba(211,160,40,.13),transparent 58%),linear-gradient(180deg,#071724 0%,#030c15 100%);box-shadow:0 0 12px rgba(231,174,35,.13),inset 0 0 22px rgba(231,174,35,.05)}
+  #start button.mode.playbig::before{border:1px solid rgba(235,184,48,.9);box-shadow:inset 0 0 9px rgba(235,184,48,.12)}
+  #start button.mode.playbig::after{border:1px solid rgba(235,184,48,.35)}
+  #start button.mode.playbig .mt{color:#f1c64d;text-shadow:0 0 8px rgba(241,198,77,.28)}
+  #start button.mode.playbig:active{background:linear-gradient(180deg,#f6d66b,#dca51d);filter:none}
+  #start button.mode.playbig:active .mt{color:#090700;text-shadow:none}
+  #start #hiBand{box-shadow:0 0 10px rgba(235,184,48,.09),inset 0 0 16px rgba(235,184,48,.035)}
+  #start #bScoreHelp::before{content:'';background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2300d7f1' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 19v-5h3v5M10.5 19V9h3v10M16 19V5h3v14M3 20h18'/%3E%3C/svg%3E")}
+  #start #bCodexMenu::before{content:'';background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2300d7f1' stroke-width='1.7' stroke-linecap='round'%3E%3Cpath d='M4 7h16M4 12h16M4 17h16'/%3E%3Ccircle cx='9' cy='7' r='2' fill='%2304101c'/%3E%3Ccircle cx='15' cy='12' r='2' fill='%2304101c'/%3E%3Ccircle cx='11' cy='17' r='2' fill='%2304101c'/%3E%3C/svg%3E")}
+  #start #bSettings::before{content:'';background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2300d7f1' stroke-width='1.7' stroke-linecap='round'%3E%3Ccircle cx='12' cy='12' r='3.2'/%3E%3Cpath d='M12 3v2.2M12 18.8V21M3 12h2.2M18.8 12H21M5.6 5.6l1.6 1.6M16.8 16.8l1.6 1.6M18.4 5.6l-1.6 1.6M7.2 16.8l-1.6 1.6'/%3E%3C/svg%3E")}
+  #start #miniLb .mview::before{content:'';background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2300d7f1' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 19v-7h4v7M10 19V5h4v14M15 19v-5h4v5M3 20h18'/%3E%3C/svg%3E")}
+  #start #miniRecent .mview::before{content:'';background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2300d7f1' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='8'/%3E%3Cpath d='M12 7v5l4 2'/%3E%3C/svg%3E")}
+  #start #bScoreHelp::before,#start #bCodexMenu::before,#start #bSettings::before,#start #miniLb .mview::before,#start #miniRecent .mview::before{background-color:rgba(0,215,241,.08);background-repeat:no-repeat;background-position:center;background-size:22px 22px}
+
+  /* ── final interaction + accessibility pass ───────────────────── */
+  #start button.mode.playbig{transition:transform .12s ease,filter .12s ease,background .16s ease}
+  #start button.mode.playbig:active{transform:scale(.985)}
+  #start #mDiff button.opt.on{animation:diffSelectPulse .3s ease-out}
+  #start #mModifiersRow .opt{height:44px;min-height:44px}
+  #start button:focus-visible{outline:2px solid #d9b449;outline-offset:3px}
+  #start .card{transition:opacity .22s ease,transform .22s ease,filter .22s ease}
+  #start.arena-launching .card{opacity:0;transform:scale(1.025);filter:brightness(1.28)}
+  @keyframes diffSelectPulse{0%{filter:drop-shadow(0 0 2px currentColor) brightness(1)}55%{filter:drop-shadow(0 0 15px currentColor) brightness(1.2)}100%{filter:drop-shadow(0 0 5px currentColor) drop-shadow(0 0 12px currentColor) brightness(1.14)}}
+  @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}#start button.mode.playbig:active,#start.arena-launching .card{transform:none!important}}
+
+  /* ── How to Play: command-deck briefing ─────────────────────────── */
+  #brief.panel{background:rgba(0,2,7,.88);backdrop-filter:none;padding:8px 0}
+  #brief .card{width:calc(100% - 28px);max-width:560px;max-height:calc(100dvh - 16px);padding:calc(22px + env(safe-area-inset-top,0px)) 18px calc(18px + env(safe-area-inset-bottom,0px));position:relative;overflow-y:auto;scrollbar-width:none;border:1px solid rgba(229,180,29,.85);background:linear-gradient(180deg,rgba(3,13,24,.99),rgba(1,6,14,.995));box-shadow:0 0 30px rgba(229,180,29,.14),inset 0 0 64px rgba(24,84,125,.10);clip-path:polygon(15px 0,calc(100% - 15px) 0,100% 15px,100% calc(100% - 15px),calc(100% - 15px) 100%,15px 100%,0 calc(100% - 15px),0 15px)}
+  #brief .card::-webkit-scrollbar{display:none}
+  #brief .card::before{content:'';position:absolute;inset:5px;pointer-events:none;border:1px solid rgba(93,183,228,.25);clip-path:inherit}
+  #brief .pbar{position:relative;z-index:1;margin:0 0 14px;text-align:left}
+  #brief .backlink{border:1px solid rgba(0,215,241,.58);background:rgba(3,21,35,.84);color:#00d9ff;min-height:42px;padding:9px 15px;font:inherit;font-size:11px;letter-spacing:.16em;text-transform:uppercase;clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px)}
+  #brief .backlink:active{filter:brightness(1.25);transform:scale(.98)}
+  #brief h1{position:relative;z-index:1;margin:0;color:#ffd35a!important;font-family:"Arial Black","SF Pro Display",sans-serif;font-size:clamp(29px,8vw,42px)!important;line-height:1;letter-spacing:.10em;text-shadow:0 0 12px rgba(255,190,52,.45)}
+  #brief .sub{position:relative;z-index:1;margin:8px 0 18px;font-size:11px;letter-spacing:.28em;color:#b77dff;text-transform:uppercase}
+  #brief .sub::after{content:'';display:block;width:170px;max-width:65%;height:1px;margin:12px auto 0;background:linear-gradient(90deg,transparent,#d9a91f 24%,#d9a91f 76%,transparent)}
+  #brief .brief{position:relative;z-index:1;margin:0;text-align:left;display:grid;gap:8px;font-size:13px;line-height:1.55;color:#c9d9e7}
+  #brief .brief .bl{display:grid;grid-template-columns:96px minmax(0,1fr);gap:12px;align-items:start;padding:13px 14px;border:1px solid rgba(105,157,192,.35);background:linear-gradient(100deg,rgba(7,29,46,.78),rgba(2,13,24,.68));clip-path:polygon(10px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%,0 10px)}
+  #brief .brief .bl:nth-child(3n + 1){border-left-color:rgba(0,215,241,.88)}
+  #brief .brief .bl:nth-child(3n + 2){border-left-color:rgba(183,123,255,.88)}
+  #brief .brief .bl:nth-child(3n){border-left-color:rgba(229,180,29,.88)}
+  #brief .brief .bt{margin:0;padding-top:1px;color:#00d9ff;font-size:10px;font-weight:800;letter-spacing:.17em;text-transform:uppercase}
+  #brief .brief .bl:nth-child(3n + 2) .bt{color:#c88cff}
+  #brief .brief .bl:nth-child(3n) .bt{color:#ffd35a}
+  #brief .brief b{font-weight:800}
+  @media (max-width:620px){#brief .card{width:calc(100% - 16px);padding:calc(18px + env(safe-area-inset-top,0px)) 14px calc(16px + env(safe-area-inset-bottom,0px))}#brief .brief .bl{grid-template-columns:1fr;gap:4px;padding:12px 13px}#brief .brief .bt{font-size:10px}#brief .brief{font-size:13px}.backlink{min-height:40px}}
+
+  /* ── Scoring: command-deck data panel ───────────────────────────── */
+  #scoreHelpPanel.panel{background:rgba(0,2,7,.90);backdrop-filter:none;padding:8px 0}
+  #scoreHelpPanel .card{width:calc(100% - 28px);max-width:600px;max-height:calc(100dvh - 16px);padding:calc(22px + env(safe-area-inset-top,0px)) 18px calc(18px + env(safe-area-inset-bottom,0px));position:relative;overflow-y:auto;scrollbar-width:none;border:1px solid rgba(229,180,29,.85);background:linear-gradient(180deg,rgba(3,13,24,.99),rgba(1,6,14,.995));box-shadow:0 0 30px rgba(229,180,29,.14),inset 0 0 64px rgba(24,84,125,.10);clip-path:polygon(15px 0,calc(100% - 15px) 0,100% 15px,100% calc(100% - 15px),calc(100% - 15px) 100%,15px 100%,0 calc(100% - 15px),0 15px)}
+  #scoreHelpPanel .card::-webkit-scrollbar{display:none}
+  #scoreHelpPanel .card::before{content:'';position:absolute;inset:5px;pointer-events:none;border:1px solid rgba(93,183,228,.25);clip-path:inherit}
+  #scoreHelpPanel .pbar{position:relative;z-index:1;margin:0 0 14px;text-align:left}
+  #scoreHelpPanel .backlink{border:1px solid rgba(0,215,241,.58);background:rgba(3,21,35,.84);color:#00d9ff;min-height:42px;padding:9px 15px;font:inherit;font-size:11px;letter-spacing:.16em;text-transform:uppercase;clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px)}
+  #scoreHelpPanel .backlink:active{filter:brightness(1.25);transform:scale(.98)}
+  #scoreHelpPanel h1{position:relative;z-index:1;margin:0;color:#ffd35a!important;font-family:"Arial Black","SF Pro Display",sans-serif;font-size:clamp(29px,8vw,42px)!important;line-height:1;letter-spacing:.10em;text-shadow:0 0 12px rgba(255,190,52,.45)}
+  #scoreHelpPanel .sub{position:relative;z-index:1;margin:8px 0 12px;font-size:11px;letter-spacing:.23em;color:#b77dff;text-transform:uppercase}
+  #scoreHelpPanel .sub::after{content:'';display:block;width:170px;max-width:65%;height:1px;margin:12px auto 0;background:linear-gradient(90deg,transparent,#d9a91f 24%,#d9a91f 76%,transparent)}
+  #scoreHelpPanel .note{position:relative;z-index:1;margin:0 0 12px;padding:9px 12px;border:1px solid rgba(229,180,29,.34);border-left:3px solid #d9a91f;background:rgba(45,32,9,.48);color:#d7c28e;font-size:10px;line-height:1.45;text-align:left;clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px)}
+  #scoreHelpPanel .brief{position:relative;z-index:1;margin:0;text-align:left;display:grid;gap:7px;font-size:12px;line-height:1.48;color:#c9d9e7}
+  #scoreHelpPanel .brief .bl{display:grid;grid-template-columns:100px minmax(0,1fr);gap:12px;align-items:start;padding:11px 13px;border:1px solid rgba(105,157,192,.34);background:linear-gradient(100deg,rgba(7,29,46,.78),rgba(2,13,24,.68));clip-path:polygon(10px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%,0 10px)}
+  #scoreHelpPanel .brief .bl:nth-child(4n + 1){border-left-color:rgba(0,215,241,.88)}
+  #scoreHelpPanel .brief .bl:nth-child(4n + 2){border-left-color:rgba(183,123,255,.88)}
+  #scoreHelpPanel .brief .bl:nth-child(4n + 3){border-left-color:rgba(229,180,29,.88)}
+  #scoreHelpPanel .brief .bl:nth-child(4n){border-left-color:rgba(255,92,103,.88)}
+  #scoreHelpPanel .brief .bt{margin:0;padding-top:1px;color:#00d9ff;font-size:9px;font-weight:800;letter-spacing:.16em;text-transform:uppercase}
+  #scoreHelpPanel .brief .bl:nth-child(4n + 2) .bt{color:#c88cff}
+  #scoreHelpPanel .brief .bl:nth-child(4n + 3) .bt{color:#ffd35a}
+  #scoreHelpPanel .brief .bl:nth-child(4n) .bt{color:#ff7c86}
+  #scoreHelpPanel .brief b{font-weight:800;color:#ffe08a}
+  @media (max-width:620px){#scoreHelpPanel .card{width:calc(100% - 16px);padding:calc(18px + env(safe-area-inset-top,0px)) 14px calc(16px + env(safe-area-inset-bottom,0px))}#scoreHelpPanel .brief .bl{grid-template-columns:1fr;gap:4px;padding:10px 12px}#scoreHelpPanel .brief{font-size:12.5px}#scoreHelpPanel .backlink{min-height:40px}}
+
+  /* ── Modifier Index: tactical catalog ───────────────────────────── */
+  #codex.panel{background:rgba(0,2,7,.90);backdrop-filter:none;padding:8px 0}
+  #codex .card{width:calc(100% - 28px);max-width:620px;max-height:calc(100dvh - 16px);padding:calc(22px + env(safe-area-inset-top,0px)) 18px calc(18px + env(safe-area-inset-bottom,0px));position:relative;overflow-y:auto;scrollbar-width:none;border:1px solid rgba(229,180,29,.85);background:linear-gradient(180deg,rgba(3,13,24,.99),rgba(1,6,14,.995));box-shadow:0 0 30px rgba(229,180,29,.14),inset 0 0 64px rgba(24,84,125,.10);clip-path:polygon(15px 0,calc(100% - 15px) 0,100% 15px,100% calc(100% - 15px),calc(100% - 15px) 100%,15px 100%,0 calc(100% - 15px),0 15px)}
+  #codex .card::-webkit-scrollbar{display:none}
+  #codex .card::before{content:'';position:absolute;inset:5px;pointer-events:none;border:1px solid rgba(93,183,228,.25);clip-path:inherit}
+  #codex .pbar,#codex h1,#codex .sub,#codex .note,#codexBody{position:relative;z-index:1}
+  #codex .pbar{margin:0 0 14px;text-align:left}
+  #codex .backlink{border:1px solid rgba(0,215,241,.58);background:rgba(3,21,35,.84);color:#00d9ff;min-height:42px;padding:9px 15px;font:inherit;font-size:11px;letter-spacing:.16em;text-transform:uppercase;clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px)}
+  #codex h1{margin:0;color:#ffd35a!important;font-family:"Arial Black","SF Pro Display",sans-serif;font-size:clamp(26px,7vw,39px)!important;line-height:1;letter-spacing:.075em;text-shadow:0 0 12px rgba(255,190,52,.45)}
+  #codex .sub{margin:8px 0 12px;font-size:11px;letter-spacing:.22em;color:#b77dff;text-transform:uppercase}
+  #codex .note{margin:0 0 14px;padding:9px 12px;border:1px solid rgba(93,183,228,.34);border-left:3px solid #00d9ff;background:rgba(4,25,41,.62);color:#9ec4dc;font-size:10px;line-height:1.45;text-align:left;clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px)}
+  #codex .cxg{margin:12px 0 0;padding:12px;border:1px solid rgba(105,157,192,.30);background:rgba(3,18,31,.58);clip-path:polygon(11px 0,100% 0,100% calc(100% - 11px),calc(100% - 11px) 100%,0 100%,0 11px)}
+  #codex .cxg>h3{margin:0 0 8px;padding:0 0 8px;font-size:11px;letter-spacing:.22em;border-bottom:1px solid currentColor}
+  #codex .cxg>p{display:none}
+  #codex .fx{gap:12px;padding:11px 0;border-bottom:1px solid rgba(105,157,192,.18)}
+  #codex .tok{flex:0 0 42px;height:42px;padding:7px;border:1px solid currentColor;background:rgba(3,12,22,.75);clip-path:polygon(8px 0,calc(100% - 8px) 0,100% 50%,calc(100% - 8px) 100%,8px 100%,0 50%)}
+  #codex .tok.b{background:rgba(255,201,77,.08)}#codex .tok.n{background:rgba(255,92,103,.08)}#codex .tok.w{background:rgba(192,123,255,.09)}
+  #codex .fxn{font-size:11px;letter-spacing:.15em;color:#eaf5ff}
+  #codex .fxd{font-size:11px;line-height:1.48;color:#9bbbd3;margin-top:3px}
+  @media (max-width:620px){#codex .card{width:calc(100% - 16px);padding:calc(18px + env(safe-area-inset-top,0px)) 14px calc(16px + env(safe-area-inset-bottom,0px))}#codex .cxg{padding:10px}#codex .fxd{font-size:11.5px}}
+
+  /* ── Settings: identity terminal ─────────────────────────────────── */
+  #setPanel.panel{background:rgba(0,2,7,.92);backdrop-filter:none;padding:8px 0}
+  #setPanel .card{width:calc(100% - 28px);max-width:560px;max-height:calc(100dvh - 16px);padding:calc(22px + env(safe-area-inset-top,0px)) 18px calc(18px + env(safe-area-inset-bottom,0px));position:relative;overflow-y:auto;scrollbar-width:none;border:1px solid rgba(229,180,29,.85);background:linear-gradient(180deg,rgba(3,13,24,.99),rgba(1,6,14,.995));box-shadow:0 0 30px rgba(229,180,29,.14),inset 0 0 64px rgba(24,84,125,.10);clip-path:polygon(15px 0,calc(100% - 15px) 0,100% 15px,100% calc(100% - 15px),calc(100% - 15px) 100%,15px 100%,0 calc(100% - 15px),0 15px)}
+  #setPanel .card::-webkit-scrollbar{display:none}
+  #setPanel .card::before{content:'';position:absolute;inset:5px;pointer-events:none;border:1px solid rgba(93,183,228,.25);clip-path:inherit}
+  #setPanel .pbar,#setPanel h1,#setPanel .sub,#setPanel .grouplabel,#setPanel .row,#setPanel .identityNote{position:relative;z-index:1}
+  #setPanel .pbar{margin:0 0 14px;text-align:left}
+  #setPanel .backlink{border:1px solid rgba(0,215,241,.58);background:rgba(3,21,35,.84);color:#00d9ff;min-height:42px;padding:9px 15px;font:inherit;font-size:11px;letter-spacing:.16em;text-transform:uppercase;clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px)}
+  #setPanel .backlink:active{filter:brightness(1.25);transform:scale(.98)}
+  #setPanel h1{margin:0;color:#ffd35a!important;font-family:"Arial Black","SF Pro Display",sans-serif;font-size:clamp(29px,8vw,42px)!important;line-height:1;letter-spacing:.10em;text-shadow:0 0 12px rgba(255,190,52,.45)}
+  #setPanel .sub{margin:8px 0 24px;font-size:11px;letter-spacing:.25em;color:#b77dff;text-transform:uppercase}
+  #setPanel .sub::after{content:'';display:block;width:170px;max-width:65%;height:1px;margin:12px auto 0;background:linear-gradient(90deg,transparent,#d9a91f 24%,#d9a91f 76%,transparent)}
+  #setPanel .grouplabel{margin:0 0 9px;text-align:left;color:#00d9ff;font-size:10px;font-weight:800;letter-spacing:.22em;text-transform:uppercase}
+  #setPanel .row{margin:0;padding:15px 14px;border:1px solid rgba(105,157,192,.38);background:linear-gradient(100deg,rgba(7,29,46,.78),rgba(2,13,24,.68));clip-path:polygon(11px 0,100% 0,100% calc(100% - 11px),calc(100% - 11px) 100%,0 100%,0 11px)}
+  #setPanel input.tagfield{width:100%;min-height:55px;box-sizing:border-box;padding:12px 14px;border:1px solid rgba(0,215,241,.72);background:rgba(2,18,31,.92);color:#eaf6ff;font-size:16px;letter-spacing:.20em;box-shadow:inset 0 0 18px rgba(0,215,241,.06);clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px)}
+  #setPanel input.tagfield:focus{border-color:#00d9ff;box-shadow:0 0 16px rgba(0,215,241,.34),inset 0 0 18px rgba(0,215,241,.10)}
+  #setPanel .identityNote{margin:10px 0 0!important;padding:10px 12px;border:1px solid rgba(183,123,255,.36);border-left:3px solid #b77dff;background:rgba(29,13,49,.42);color:#bca7d5;font-size:10px;letter-spacing:.12em;line-height:1.55;text-align:left;clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px)}
+  #setPanel .identityNote b{color:#e6d3ff}
+  @media (max-width:620px){#setPanel .card{width:calc(100% - 16px);padding:calc(18px + env(safe-area-inset-top,0px)) 14px calc(16px + env(safe-area-inset-bottom,0px))}#setPanel .sub{margin-bottom:20px}#setPanel .row{padding:12px}#setPanel input.tagfield{min-height:52px}}
+  /* ── Stats: personal performance dashboard ───────────────────────── */
+  #statsPanel.panel{background:rgba(0,2,7,.92);backdrop-filter:none;padding:8px 0}
+  #statsPanel .card{width:calc(100% - 28px);max-width:620px;max-height:calc(100dvh - 16px);padding:calc(22px + env(safe-area-inset-top,0px)) 18px calc(18px + env(safe-area-inset-bottom,0px));position:relative;overflow-y:auto;scrollbar-width:none;border:1px solid rgba(229,180,29,.85);background:linear-gradient(180deg,rgba(3,13,24,.99),rgba(1,6,14,.995));box-shadow:0 0 30px rgba(229,180,29,.14),inset 0 0 64px rgba(24,84,125,.10);clip-path:polygon(15px 0,calc(100% - 15px) 0,100% 15px,100% calc(100% - 15px),calc(100% - 15px) 100%,15px 100%,0 calc(100% - 15px),0 15px)}
+  #statsPanel .card::-webkit-scrollbar{display:none}
+  #statsPanel .card::before{content:'';position:absolute;inset:5px;pointer-events:none;border:1px solid rgba(93,183,228,.25);clip-path:inherit}
+  #statsPanel .pbar,#statsPanel h1,#statsPanel .sub,#statsPanel .statgrid,#statsPanel .hshead,#statsPanel .tabs,#statsPanel #hsBoard{position:relative;z-index:1}
+  #statsPanel .pbar{margin:0 0 14px;text-align:left}
+  #statsPanel .backlink{border:1px solid rgba(0,215,241,.58);background:rgba(3,21,35,.84);color:#00d9ff;min-height:42px;padding:9px 15px;font:inherit;font-size:11px;letter-spacing:.16em;text-transform:uppercase;clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px)}
+  #statsPanel h1{margin:0;color:#ffd35a!important;font-family:"Arial Black","SF Pro Display",sans-serif;font-size:clamp(29px,8vw,42px)!important;line-height:1;letter-spacing:.10em;text-shadow:0 0 12px rgba(255,190,52,.45)}
+  #statsPanel .sub{margin:8px 0 18px;font-size:11px;letter-spacing:.25em;color:#b77dff;text-transform:uppercase}
+  #statsPanel .sub::after{content:'';display:block;width:170px;max-width:65%;height:1px;margin:12px auto 0;background:linear-gradient(90deg,transparent,#d9a91f 24%,#d9a91f 76%,transparent)}
+  #statsPanel .statgrid{gap:10px;margin:0;grid-template-columns:repeat(2,minmax(0,1fr))}
+  #statsPanel .statgrid>div{padding:12px;border:1px solid rgba(105,157,192,.34);background:linear-gradient(100deg,rgba(7,29,46,.78),rgba(2,13,24,.68));clip-path:polygon(10px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%,0 10px)}
+  #statsPanel .statgrid>div:first-child{border-top-color:rgba(0,215,241,.82)}
+  #statsPanel .statgrid>div:last-child{border-top-color:rgba(183,123,255,.82)}
+  #statsPanel .statgrid h4,#statsPanel .hshead{margin:0 0 8px;padding:0 0 8px;border-bottom:1px solid rgba(105,157,192,.30);color:#00d9ff;font-size:10px;font-weight:800;letter-spacing:.20em;text-transform:uppercase}
+  #statsPanel .statgrid>div:last-child h4{color:#c88cff}
+  #statsPanel .sl{padding:5px 0;border-bottom:1px solid rgba(105,157,192,.14);font-size:10px;color:#91b7d0;letter-spacing:.08em}
+  #statsPanel .sl:last-child{border-bottom:0}
+  #statsPanel .sl span:last-child{color:#eaf6ff;font-weight:800}
+  #statsPanel .hshead{margin:16px 0 8px!important;color:#ffd35a!important;border-bottom-color:rgba(229,180,29,.34)}
+  #statsPanel .tabs{margin:0 0 10px!important;padding:8px;border:1px solid rgba(105,157,192,.34);background:rgba(3,18,31,.65);clip-path:polygon(9px 0,100% 0,100% calc(100% - 9px),calc(100% - 9px) 100%,0 100%,0 9px)}
+  #statsPanel .tabs .opt{min-height:42px;border:1px solid rgba(105,157,192,.48);background:rgba(4,21,36,.65);color:#9fc6dd;font-size:10px;letter-spacing:.12em}
+  #statsPanel .tabs .opt[data-diff="0"].on{border-color:#00d9ff;color:#bff7ff;background:rgba(0,215,241,.12);box-shadow:0 0 15px rgba(0,215,241,.25)}
+  #statsPanel .tabs .opt[data-diff="1"].on{border-color:#c17bff;color:#e0c3ff;background:rgba(183,123,255,.12);box-shadow:0 0 15px rgba(183,123,255,.25)}
+  #statsPanel .tabs .opt[data-diff="2"].on{border-color:#ff6570;color:#ffc1c6;background:rgba(255,92,103,.12);box-shadow:0 0 15px rgba(255,92,103,.25)}
+  #statsPanel #hsBoard{padding:4px 12px;border:1px solid rgba(105,157,192,.34);background:rgba(3,18,31,.56);clip-path:polygon(10px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%,0 10px)}
+  #statsPanel .hsrow{padding:10px 0;border-bottom:1px solid rgba(105,157,192,.18)}
+  #statsPanel .hsrow:last-child{border-bottom:0}
+  #statsPanel .hsr{color:#ffd35a}.hsn{color:#eaf6ff}.hss{color:#ffd35a;text-shadow:0 0 9px rgba(255,190,52,.26)}
+  #statsPanel .hsn em{color:#7ca5bf}
+  @media (max-width:620px){#statsPanel .card{width:calc(100% - 16px);padding:calc(18px + env(safe-area-inset-top,0px)) 14px calc(16px + env(safe-area-inset-bottom,0px))}#statsPanel .statgrid{grid-template-columns:1fr;gap:8px}#statsPanel .sl{font-size:12px;padding:6px 0}#statsPanel .tabs .opt{min-height:40px}}
+  /* ── Full boards + post-match command deck ─────────────────────── */
+  #lbPanel.panel,#recentPanel.panel,#over.panel{background:rgba(0,2,7,.92);backdrop-filter:none;padding:8px 0}
+  #lbPanel .card,#recentPanel .card,#over .card{width:calc(100% - 28px);max-width:620px;max-height:calc(100dvh - 16px);padding:calc(22px + env(safe-area-inset-top,0px)) 18px calc(18px + env(safe-area-inset-bottom,0px));position:relative;overflow-y:auto;scrollbar-width:none;border:1px solid rgba(229,180,29,.85);background:linear-gradient(180deg,rgba(3,13,24,.99),rgba(1,6,14,.995));box-shadow:0 0 30px rgba(229,180,29,.14),inset 0 0 64px rgba(24,84,125,.10);clip-path:polygon(15px 0,calc(100% - 15px) 0,100% 15px,100% calc(100% - 15px),calc(100% - 15px) 100%,15px 100%,0 calc(100% - 15px),0 15px)}
+  #lbPanel .card::-webkit-scrollbar,#recentPanel .card::-webkit-scrollbar,#over .card::-webkit-scrollbar{display:none}
+  #lbPanel .card::before,#recentPanel .card::before,#over .card::before{content:'';position:absolute;inset:5px;pointer-events:none;border:1px solid rgba(93,183,228,.25);clip-path:inherit}
+  #lbPanel .pbar,#lbPanel h1,#lbPanel .sub,#lbPanel #lbBody,#recentPanel .pbar,#recentPanel h1,#recentPanel .sub,#recentPanel #recentBody,#over .sub,#over .win,#over .stats,#over .scoreband,#over .scorebreak,#over .wallet,#over .statgrid,#over .btnrow{position:relative;z-index:1}
+  #lbPanel .pbar,#recentPanel .pbar{margin:0 0 14px;text-align:left}
+  #lbPanel .backlink,#recentPanel .backlink{border:1px solid rgba(0,215,241,.58);background:rgba(3,21,35,.84);color:#00d9ff;min-height:42px;padding:9px 15px;font:inherit;font-size:11px;letter-spacing:.16em;text-transform:uppercase;clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px)}
+  #lbPanel h1,#recentPanel h1{margin:0;color:#ffd35a!important;font-family:'Arial Black','SF Pro Display',sans-serif;font-size:clamp(29px,8vw,42px)!important;line-height:1;letter-spacing:.09em;text-shadow:0 0 12px rgba(255,190,52,.45)}
+  #lbPanel .sub,#recentPanel .sub{margin:8px 0 18px;font-size:11px;letter-spacing:.22em;color:#b77dff;text-transform:uppercase}
+  #lbPanel .sub::after,#recentPanel .sub::after{content:'';display:block;width:170px;max-width:65%;height:1px;margin:12px auto 0;background:linear-gradient(90deg,transparent,#d9a91f 24%,#d9a91f 76%,transparent)}
+  #lbPanel .difftag{margin-left:8px;padding:2px 7px;font-size:9px;letter-spacing:.1em}
+  #lbPanel #lbBody,#recentPanel #recentBody{padding:4px 12px;border:1px solid rgba(105,157,192,.36);background:linear-gradient(110deg,rgba(6,25,41,.72),rgba(2,13,24,.68));clip-path:polygon(11px 0,100% 0,100% calc(100% - 11px),calc(100% - 11px) 100%,0 100%,0 11px)}
+  #lbPanel .lbrow,#recentPanel .lbrow{min-height:50px;padding:9px 1px;gap:10px;border-bottom:1px solid rgba(105,157,192,.2)}
+  #lbPanel .lbrow:last-child,#recentPanel .lbrow:last-child{border-bottom:0}
+  #lbPanel .lbrow .lbr,#recentPanel .lbrow .lbr{flex-basis:26px;font-size:14px;color:#82abc7}
+  #lbPanel .lbrow:nth-child(1) .lbr,#recentPanel .lbrow:nth-child(1) .lbr{color:#ffd35a;text-shadow:0 0 9px rgba(255,190,52,.3)}
+  #lbPanel .lbrow:nth-child(2) .lbr,#recentPanel .lbrow:nth-child(2) .lbr{color:#dce9f5}
+  #lbPanel .lbrow:nth-child(3) .lbr,#recentPanel .lbrow:nth-child(3) .lbr{color:#d49a47}
+  #lbPanel .lbrow .lbn,#recentPanel .lbrow .lbn{font-size:12px;letter-spacing:.11em;color:#eaf6ff}
+  #lbPanel .lbrow .lbn em,#recentPanel .lbrow .lbn em{font-size:8.5px;letter-spacing:.1em;color:#79a1bd;line-height:1.5}
+  #lbPanel .lbrow .lbn-btn,#recentPanel .lbrow .lbn-btn{font-size:inherit!important;letter-spacing:inherit!important;color:inherit!important}
+  #lbPanel .lbrow.hasbr .lbn-btn:hover,#recentPanel .lbrow.hasbr .lbn-btn:hover{color:#00d9ff!important;text-shadow:0 0 8px rgba(0,215,241,.45)}
+  #lbPanel .lbrow .lbs,#recentPanel .lbrow .lbs{font-size:16px;color:#ffd35a;text-shadow:0 0 10px rgba(255,190,52,.32)}
+  #lbPanel .lbstatus,#recentPanel .lbstatus{padding:32px 10px;color:#9dc4dc;font-size:11px;letter-spacing:.13em;line-height:1.6}
+  #recentPanel h1{font-size:clamp(25px,7vw,38px)!important}
+  #recentPanel .sub{color:#00d9ff}
+  #recentPanel .sub::after{background:linear-gradient(90deg,transparent,#00bcd9 24%,#b77dff 76%,transparent)}
+  #recentPanel #recentBody{border-color:rgba(0,215,241,.34)}
+  #recentPanel .lbrow .lbtag{font-size:8.5px;letter-spacing:.1em;color:#c58cff}
+
+  #over .card{max-width:660px;text-align:center}
+  #over .sub{margin:2px 0 8px;color:#79a8cb;font-size:11px;letter-spacing:.28em;text-transform:uppercase}
+  #over .win{margin:0 0 10px;font-family:'Arial Black','SF Pro Display',sans-serif;font-size:clamp(27px,8vw,42px);line-height:1.18;letter-spacing:.13em;font-weight:900}
+  #over .stats{margin:0 0 15px;color:#9bc2dc;font-size:11px;letter-spacing:.2em;line-height:1.55;text-transform:uppercase}
+  #over .scoreband{min-height:80px;margin:0 0 12px;padding:11px 14px;border-color:rgba(229,180,29,.72);background:linear-gradient(100deg,rgba(42,31,7,.86),rgba(14,13,10,.82));box-shadow:inset 0 0 25px rgba(255,201,77,.06);clip-path:polygon(10px 0,calc(100% - 10px) 0,100% 10px,100% calc(100% - 10px),calc(100% - 10px) 100%,10px 100%,0 calc(100% - 10px),0 10px)}
+  #over .scoreband .sl2{font-size:10px;color:#d9a91f;letter-spacing:.24em}
+  #over .scoreband .sv{font-size:clamp(28px,8vw,42px);color:#ffd35a;text-shadow:0 0 14px rgba(255,190,52,.5)}
+  #over .scoreband .sm{font-size:9px;color:#bda56c;letter-spacing:.15em}
+  #over .scoreband.best{border-color:rgba(112,230,160,.7);background:linear-gradient(100deg,rgba(8,46,31,.82),rgba(7,24,20,.8))}
+  #over .scorebreak{margin:0 0 12px;padding:12px 14px;border-color:rgba(229,180,29,.38);background:linear-gradient(110deg,rgba(35,27,9,.68),rgba(6,14,23,.78));font-size:11px;line-height:1.7;clip-path:polygon(10px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%,0 10px)}
+  #over .scorebreak .srow{padding:3px 0;color:#9fc2d9}
+  #over .scorebreak .srow span:last-child{color:#eaf6ff}
+  #over .scorebreak .stotal{margin-top:7px;padding-top:9px;color:#ffd35a;font-size:13px;border-top-color:rgba(229,180,29,.38)}
+  #over .wallet{margin:2px 0 12px;color:#c7a9ea}
+  #over .statgrid{gap:10px;margin:0 0 13px;grid-template-columns:repeat(2,minmax(0,1fr));text-align:left}
+  #over .statgrid>div{padding:12px;border:1px solid rgba(105,157,192,.34);background:linear-gradient(110deg,rgba(6,25,41,.72),rgba(2,13,24,.68));clip-path:polygon(10px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%,0 10px)}
+  #over .statgrid>div:first-child{border-top-color:rgba(0,215,241,.78)}
+  #over .statgrid>div:last-child{border-top-color:rgba(183,123,255,.78)}
+  #over .statgrid h4{margin:0 0 8px;padding:0 0 8px;color:#00d9ff;font-size:10px;font-weight:800;letter-spacing:.2em;border-bottom:1px solid rgba(105,157,192,.3);text-transform:uppercase}
+  #over .statgrid>div:last-child h4{color:#c88cff}
+  #over .sl{padding:5px 0;border-bottom:1px solid rgba(105,157,192,.14);font-size:10px;color:#91b7d0;letter-spacing:.08em}
+  #over .sl:last-child{border-bottom:0}
+  #over .sl span:last-child{color:#eaf6ff;font-weight:800}
+  #over .btnrow{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:0}
+  #over .btnrow .go{min-height:55px;margin:0;padding:10px 8px;border:1px solid rgba(229,180,29,.78);background:linear-gradient(110deg,#ffe17b,#d9a91f);color:#090a0c;font-family:'Arial Black','SF Pro Display',sans-serif;font-size:11px;letter-spacing:.14em;box-shadow:0 0 16px rgba(255,190,52,.2);clip-path:polygon(9px 0,100% 0,100% calc(100% - 9px),calc(100% - 9px) 100%,0 100%,0 9px)}
+  #over .btnrow .go:first-child{grid-column:1/-1}
+  #over .btnrow .go.alt{border-color:rgba(0,215,241,.6);background:rgba(3,21,35,.88);color:#9ed4f4;box-shadow:none}
+  #over .btnrow .go:active{transform:scale(.985);filter:brightness(1.16)}
+  @media (max-width:620px){
+    #lbPanel .card,#recentPanel .card,#over .card{width:calc(100% - 16px);padding:calc(18px + env(safe-area-inset-top,0px)) 14px calc(16px + env(safe-area-inset-bottom,0px))}
+    #lbPanel .lbrow,#recentPanel .lbrow{min-height:56px;padding:9px 0}
+    #lbPanel .lbrow .lbn,#recentPanel .lbrow .lbn{font-size:12px}
+    #lbPanel .lbrow .lbn em,#recentPanel .lbrow .lbn em{font-size:8px}
+    #lbPanel .lbrow .lbs,#recentPanel .lbrow .lbs{font-size:15px}
+    #over .win{font-size:clamp(25px,7.4vw,35px)}
+    #over .scorebreak{font-size:11.5px}
+    #over .statgrid{grid-template-columns:1fr;gap:8px}
+    #over .sl{font-size:12px;padding:6px 0}
+  }
+/* Gameplay command HUD: compact sci-fi controls with score and active Modifier on one layer */
+  #corner{left:calc(8px + env(safe-area-inset-left,0px));right:calc(8px + env(safe-area-inset-right,0px));
+    top:calc(8px + env(safe-area-inset-top,0px));gap:8px}
+  .mini{position:relative;min-height:50px;border-radius:0;padding:8px 6px;
+    background:linear-gradient(180deg,rgba(6,24,38,.94),rgba(2,10,20,.9));
+    border:1px solid rgba(0,215,245,.58);color:#7eeaff;
+    clip-path:polygon(8px 0,calc(100% - 8px) 0,100% 8px,100% calc(100% - 8px),calc(100% - 8px) 100%,8px 100%,0 calc(100% - 8px),0 8px);
+    box-shadow:inset 0 0 18px rgba(0,180,230,.08);text-shadow:0 0 8px currentColor}
+  .mini::before{display:inline-block;margin-right:7px;font-size:18px;line-height:1;color:#20d9f5;text-shadow:0 0 10px currentColor}
+  #bPause::before{content:'Ⅱ'} #bRestart::before{content:'↻'} #bGear::before{content:'⚙'}
+  #bPause,#bRestart,#bGear{border-color:rgba(0,215,245,.58);color:#8edff3}
+
+  #scorebar{left:8px;right:41%;top:calc(72px + env(safe-area-inset-top,0px));height:70px;padding:10px 10px 12px 62px;
+    border:1px solid rgba(0,205,240,.52);background:linear-gradient(100deg,rgba(4,22,34,.96),rgba(2,10,20,.88));
+    clip-path:polygon(9px 0,calc(100% - 9px) 0,100% 9px,100% calc(100% - 9px),calc(100% - 9px) 100%,9px 100%,0 calc(100% - 9px),0 9px);
+    grid-template-columns:minmax(0,1fr) auto;grid-template-areas:'score best' 'gap gap';
+    column-gap:10px;row-gap:2px;justify-content:stretch;box-shadow:inset 0 0 18px rgba(0,185,225,.07)}
+  #scorebar::before{content:'SCORE';position:absolute;left:12px;top:25px;color:#18d7f2;font-size:9px;letter-spacing:.16em}
+  #scorebar .sc{font-size:29px;align-self:center;letter-spacing:.04em}
+  #scorebar .sbl{font-size:8px} #scorebar .sbv{font-size:12px}
+  #scorebar .sd{font-size:8.5px;letter-spacing:.08em}
+
+  #fxbar{left:61%;right:8px;top:calc(72px + env(safe-area-inset-top,0px));height:70px;padding:7px;
+    align-items:center;align-content:center;overflow:hidden;border:1px solid rgba(188,115,255,.62);
+    background:linear-gradient(110deg,rgba(30,8,48,.9),rgba(6,10,24,.94));
+    clip-path:polygon(9px 0,calc(100% - 9px) 0,100% 9px,100% calc(100% - 9px),calc(100% - 9px) 100%,9px 100%,0 calc(100% - 9px),0 9px);
+    box-shadow:inset 0 0 20px rgba(185,100,255,.12)}
+  #fxbar:empty{display:none}
+  .fxpill{width:100%;box-sizing:border-box;padding:6px 7px 11px;font-size:9px;letter-spacing:.06em;
+    border-color:currentColor;background:rgba(8,8,22,.74);box-shadow:0 0 10px color-mix(in srgb,currentColor 34%,transparent)}
+  .fxpill b{font-size:11px}
+  #thint{color:#29d9f3;text-shadow:0 0 8px rgba(0,210,245,.45)}
+
+/* Prototype-match gameplay pass */
+  #corner{left:calc(14px + env(safe-area-inset-left,0px));right:calc(14px + env(safe-area-inset-right,0px));
+    top:calc(8px + env(safe-area-inset-top,0px));gap:24px}
+  .mini{min-height:42px;padding:5px 4px;font-size:9.5px;letter-spacing:.11em;
+    border-color:rgba(0,218,242,.68);background:linear-gradient(180deg,rgba(4,18,29,.96),rgba(1,8,16,.92))}
+  .mini::before{font-size:16px;margin-right:5px}
+
+  #scorebar{display:block;left:22px;right:auto;top:calc(65px + env(safe-area-inset-top,0px));
+    width:43%;height:102px;padding:0;border:0;background:none;clip-path:none;box-shadow:none}
+  #scorebar::before{left:0;top:0;font-size:10px;color:#ffd44f;letter-spacing:.15em}
+  #scorebar .sc{position:absolute;left:0;top:19px;font-size:39px;line-height:1;color:#ffd457;
+    text-shadow:0 0 13px rgba(255,202,52,.45)}
+  #scorebar .sb{position:absolute;left:0;top:67px;display:flex;flex-direction:row;align-items:baseline;gap:10px}
+  #scorebar .sbl{font-size:9px;color:#ffd457}
+  #scorebar .sbv{font-size:14px;color:#e8eef3;letter-spacing:.08em}
+  #scorebar .sd{display:none}
+
+  #fxbar{left:52%;right:18px;top:calc(66px + env(safe-area-inset-top,0px));height:auto;padding:0;
+    border:0;background:none;clip-path:none;box-shadow:none;align-items:stretch}
+  .fxpill{min-height:82px;width:100%;padding:10px 12px 13px;font-size:10px;text-align:left;
+    border:1px solid currentColor;background:linear-gradient(120deg,rgba(31,6,49,.94),rgba(5,8,18,.94));
+    clip-path:polygon(8px 0,calc(100% - 8px) 0,100% 8px,100% calc(100% - 8px),calc(100% - 8px) 100%,8px 100%,0 calc(100% - 8px),0 8px);
+    box-shadow:inset 0 0 20px rgba(195,105,255,.12),0 0 10px color-mix(in srgb,currentColor 28%,transparent)}
+  .fxpill>span:first-child{display:block;font-size:9px}
+  .fxpill b{display:block;margin-top:5px;font-size:25px;line-height:1;letter-spacing:.04em}
+  .fxmeter{left:12px;right:12px}
+  #thint{display:none}
+
+/* Active Modifier HUD icon badge */
+.fxpill{position:relative;padding-right:78px!important}
+.fxpill .fxname{display:block;font-size:9px}
+.fxpill .fxhudicon{position:absolute;right:12px;top:50%;transform:translateY(-50%);width:54px;height:54px;display:flex;align-items:center;justify-content:center;background:rgba(3,6,15,.9);border:1px solid currentColor;clip-path:polygon(25% 4%,75% 4%,98% 50%,75% 96%,25% 96%,2% 50%);box-shadow:inset 0 0 14px rgba(185,95,255,.12),0 0 13px -2px currentColor}
+.fxpill .fxhudicon::before{content:'';position:absolute;inset:7px;border:1px solid currentColor;clip-path:inherit;opacity:.62}
+.fxpill .fxhudicon img{position:relative;z-index:1;width:58%;height:58%;object-fit:contain;filter:drop-shadow(0 0 5px currentColor)}
+/* Final gameplay target-fidelity layer */
+#corner,#scorebar,#fxbar,#thint{font-family:'Avenir Next Condensed','DIN Condensed','SFMono-Regular',ui-monospace,monospace}
+#corner{left:calc(3.8% + env(safe-area-inset-left,0px));right:calc(3.8% + env(safe-area-inset-right,0px));top:calc(8px + env(safe-area-inset-top,0px));grid-template-columns:22.2% 22.2% 22.2%;justify-content:space-between;gap:0}
+#corner::after{content:'';position:absolute;left:-4.2vw;right:-4.2vw;bottom:-11px;height:1px;background:linear-gradient(90deg,#00d8f4 0 2.5%,transparent 2.5% 97.5%,#00d8f4 97.5%);border-bottom:1px solid rgba(0,216,244,.38);pointer-events:none}
+.mini{min-height:42px;padding:5px 4px;font-family:'Avenir Next Condensed','DIN Condensed','SFMono-Regular',ui-monospace,monospace;font-size:10px;font-weight:600;letter-spacing:.105em;color:#36dcf4;border-color:rgba(0,216,244,.72);background:linear-gradient(180deg,rgba(3,14,24,.97),rgba(1,7,14,.95));box-shadow:inset 0 0 14px rgba(0,180,230,.045),0 0 7px rgba(0,190,230,.055)}
+.mini::before{font-family:'SF Pro Display','Arial Unicode MS',sans-serif;font-size:17px;color:#19d9f5;text-shadow:0 0 7px rgba(0,216,244,.45)}
+#bGear::before{content:'\2699\FE0E'}
+#scorebar{left:6.6%;width:40.2%;top:calc(66px + env(safe-area-inset-top,0px));height:104px}
+#scorebar::before{font-family:'Avenir Next Condensed','DIN Condensed',sans-serif;font-size:10px;font-weight:700;color:#f8c93d}
+#scorebar::after{content:'';position:absolute;right:0;top:0;width:1px;height:78px;background:rgba(0,216,244,.38)}
+#scorebar .sc{font-family:'Avenir Next Condensed','DIN Condensed','SF Pro Display',sans-serif;font-size:40px;font-weight:800;letter-spacing:.015em;color:#f8c93d;text-shadow:0 0 12px rgba(248,201,61,.40)}
+#scorebar .sb{top:68px;gap:10px;font-family:'Avenir Next Condensed','DIN Condensed','SFMono-Regular',monospace}
+#scorebar .sbl{font-size:9px;font-weight:700;color:#f8c93d}
+#scorebar .sbv{font-size:14px;color:#eef3f7}
+#fxbar{left:51.6%;right:5.2%;top:calc(66px + env(safe-area-inset-top,0px))}
+.fxpill{min-height:82px;padding:10px 72px 13px 12px!important;font-family:'Avenir Next Condensed','DIN Condensed','SFMono-Regular',monospace;background:linear-gradient(115deg,rgba(31,5,48,.96),rgba(5,7,17,.97));box-shadow:inset 0 0 22px rgba(190,82,255,.11),0 0 8px color-mix(in srgb,currentColor 22%,transparent)}
+.fxpill .fxname{font-size:10px;font-weight:700;letter-spacing:.08em}
+.fxpill b{margin-top:5px;font-family:'Avenir Next Condensed','DIN Condensed','SF Pro Display',sans-serif;font-size:30px;font-weight:700;letter-spacing:.01em}
+.fxpill .fxhudicon{right:10px;width:52px;height:52px}
+
+/* Compact phone HUD: one protected text column plus one real icon column. */
+@media (max-width:620px) {
+  #fxbar {
+    display:flex;
+    flex-flow:column nowrap;
+    justify-content:flex-start;
+    align-items:stretch;
+    align-content:stretch;
+    gap:4px;
+    height:auto;
+    overflow:visible;
+  }
+  #fxbar .fxpill {
+    box-sizing:border-box;
+    flex:0 0 42px;
+    width:100%;
+    min-height:42px;
+    height:42px;
+    display:grid;
+    grid-template-columns:minmax(0,1fr) 34px;
+    grid-template-rows:1fr;
+    column-gap:6px;
+    align-items:center;
+    padding:4px 7px 6px 9px!important;
+    white-space:nowrap;
+    overflow:hidden;
+    clip-path:polygon(6px 0,calc(100% - 6px) 0,100% 6px,100% calc(100% - 6px),calc(100% - 6px) 100%,6px 100%,0 calc(100% - 6px),0 6px);
+  }
+  #fxbar .fxcopy {
+    grid-column:1;
+    min-width:0;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:flex-start;
+    gap:1px;
+    overflow:hidden;
+  }
+  #fxbar .fxname {
+    display:block;
+    width:100%;
+    min-width:0;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    font-size:7.5px;
+    line-height:10px;
+    letter-spacing:.07em;
+  }
+  #fxbar .fxpill b {
+    display:block;
+    width:100%;
+    min-width:0;
+    margin:0;
+    overflow:hidden;
+    font-size:18px;
+    line-height:19px;
+    letter-spacing:.01em;
+  }
+  #fxbar .fxhudicon {
+    position:relative;
+    grid-column:2;
+    right:auto;
+    top:auto;
+    transform:none;
+    justify-self:end;
+    width:32px;
+    height:32px;
+  }
+  #fxbar .fxhudicon::before { inset:4px; }
+  #fxbar .fxhudicon img { width:58%; height:58%; }
+  #fxbar .fxmeter {
+    left:9px;
+    right:47px;
+    bottom:3px;
+    height:1.5px;
+  }
+}
+
+    /*  Pause screen: command-deck hold state  */
+    #pausePanel.panel{background:rgba(0,2,7,.91);backdrop-filter:none;padding:8px 0}
+    #pausePanel .card{width:calc(100% - 28px);max-width:560px;max-height:calc(100dvh - 16px);padding:calc(28px + env(safe-area-inset-top,0px)) 18px calc(20px + env(safe-area-inset-bottom,0px));position:relative;overflow-y:auto;scrollbar-width:none;border:1px solid rgba(229,180,29,.88);background:radial-gradient(circle at 50% 0%,rgba(29,18,44,.55),transparent 48%),linear-gradient(180deg,rgba(3,13,24,.99),rgba(1,6,14,.995));box-shadow:0 0 34px rgba(229,180,29,.16),inset 0 0 64px rgba(24,84,125,.12);clip-path:polygon(15px 0,calc(100% - 15px) 0,100% 15px,100% calc(100% - 15px),calc(100% - 15px) 100%,15px 100%,0 calc(100% - 15px),0 15px)}
+    #pausePanel .card::-webkit-scrollbar{display:none}
+    #pausePanel .card::before{content:'';position:absolute;inset:5px;pointer-events:none;border:1px solid rgba(93,183,228,.28);clip-path:inherit}
+    #pausePanel .card::after{content:'PAUSE // HOLD';position:absolute;top:12px;right:22px;color:rgba(0,215,241,.72);font-size:8px;letter-spacing:.18em;font-weight:700}
+    #pausePanel h1{position:relative;z-index:1;margin:0;color:#ffd35a!important;font-family:"Arial Black","SF Pro Display",sans-serif;font-size:clamp(30px,8vw,44px)!important;line-height:1;letter-spacing:.12em;text-shadow:0 0 12px rgba(255,190,52,.48),0 0 28px rgba(231,174,35,.2)}
+    #pausePanel .sub{position:relative;z-index:1;margin:9px 0 18px;color:#c88cff;font-size:11px;letter-spacing:.24em;text-transform:uppercase}
+    #pausePanel .sub::after{content:'';display:block;width:190px;max-width:70%;height:1px;margin:12px auto 0;background:linear-gradient(90deg,transparent,#00d9ff 20%,#d9a91f 50%,#b77dff 80%,transparent)}
+    #pausePanel .brief{position:relative;z-index:1;margin:0;text-align:left;display:grid;gap:7px;font-size:12.5px;line-height:1.5;color:#c9d9e7}
+    #pausePanel .brief .bl{display:grid;grid-template-columns:88px minmax(0,1fr);gap:12px;align-items:start;padding:11px 13px;border:1px solid rgba(105,157,192,.34);background:linear-gradient(100deg,rgba(7,29,46,.8),rgba(2,13,24,.7));clip-path:polygon(10px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%,0 10px)}
+    #pausePanel .brief .bl:nth-child(3n + 1){border-left-color:rgba(0,215,241,.9)}
+    #pausePanel .brief .bl:nth-child(3n + 2){border-left-color:rgba(183,123,255,.9)}
+    #pausePanel .brief .bl:nth-child(3n){border-left-color:rgba(229,180,29,.9)}
+    #pausePanel .brief .bt{margin:0;padding-top:1px;color:#00d9ff;font-size:9px;font-weight:800;letter-spacing:.16em;text-transform:uppercase}
+    #pausePanel .brief .bl:nth-child(3n + 2) .bt{color:#c88cff}
+    #pausePanel .brief .bl:nth-child(3n) .bt{color:#ffd35a}
+    #pausePanel .brief b{font-weight:800;color:#e4f3ff}
+    #pausePanel .btnrow{position:relative;z-index:1;display:grid;grid-template-columns:1.25fr 1fr 1fr;gap:8px;margin-top:18px}
+    #pausePanel .btnrow .go{width:100%;min-height:48px;margin:0;padding:10px 8px;font-size:10px;letter-spacing:.14em}
+    #pausePanel #bResume{color:#080700;background:linear-gradient(180deg,#ffe27a,#dca51d);box-shadow:0 0 22px rgba(229,180,29,.3),inset 0 0 12px rgba(255,241,166,.4)}
+    #pausePanel #bCodex2,#pausePanel #bQuit{color:#8feaff;border-color:rgba(0,215,241,.55);background:rgba(3,21,35,.75);box-shadow:0 0 12px rgba(0,215,241,.08)}
+    #pausePanel #bCodex2:hover,#pausePanel #bQuit:hover{color:#e6faff;border-color:rgba(0,215,241,.95);box-shadow:0 0 16px rgba(0,215,241,.22)}
+    @media(max-width:620px){#pausePanel .card{width:calc(100% - 16px);padding:calc(24px + env(safe-area-inset-top,0px)) 14px calc(16px + env(safe-area-inset-bottom,0px))}#pausePanel .card::after{top:10px;right:17px;font-size:7px}#pausePanel .brief .bl{grid-template-columns:1fr;gap:4px;padding:10px 12px}#pausePanel .brief{font-size:12.5px}#pausePanel .btnrow{grid-template-columns:1fr;gap:7px}#pausePanel .btnrow .go{min-height:44px}}
+    </style>)))))}*/
 </head>
 <body>
 <div id="wrap"><canvas id="c"></canvas></div>
@@ -573,8 +1170,9 @@
 
 <div class="panel hidden" id="start">
   <div class="card">
-    <h1>HEXAPONG</h1>
-    <div class="sub">Six Walls | One Survivor</div>
+    <h1 style="font-size:clamp(30px,8vw,38px)">HEXAPONG</h1>
+    <div class="sub">Last Survivor</div>
+    <div class="brandrule" aria-hidden="true"><span></span></div>
 
     <div class="crow" id="mModifiersRow">
       <span class="clab">Modifiers</span>
@@ -595,7 +1193,7 @@
 
     <div class="modes">
       <button class="mode Modifier playbig" id="mPlay" type="button">
-        <span class="mi" id="mPlayIcon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.6 20.4 7.3v9.4L12 21.4 3.6 16.7V7.3z"/><text x="12" y="16.4" text-anchor="middle" font-size="11" font-weight="700" fill="currentColor" stroke="none">M</text></svg></span>
+        <span class="mi" id="mPlayIcon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.6 20.4 7.3v9.4L12 21.4 3.6 16.7V7.3z"/><path d="M7.2 7.4h5.2a3.4 3.4 0 0 1 0 6.8H9.7l-2.5 3.1"/><circle cx="17" cy="16.3" r="1.25" fill="currentColor" stroke="none"/></svg></span>
         <span class="mt">ENTER ARENA</span>
       </button>
     </div>
@@ -621,7 +1219,7 @@
 
     <div class="minilb" id="miniLb">
       <div class="minilb-head">
-        <span class="mlabel">Leaderboard<span class="difftag" id="miniLbDiffTag"></span></span>
+        <span class="mlabel">Leaderboard <span class="difftag" id="miniLbDiffTag" aria-label="Selected difficulty">MEDIUM</span></span>
         <span class="mview">Tap for top 25</span>
       </div>
       <div id="miniLbBody" class="minilb-body lbstatus">Loading…</div>
@@ -638,12 +1236,12 @@
     <div class="minigrid">
       <button class="go alt" id="bHow">How To Play</button>
       <button class="go alt" id="bScoreHelp">Scoring</button>
-      <button class="go alt" id="bAch">Achievements</button>
+      <button class="go alt" id="bAch" style="display:none">Achievements</button>
       <button class="go alt" id="bCodexMenu">Modifier Index</button>
       <button class="go alt" id="bSettings">Settings</button>
-      <button class="go alt" id="bChangelog">Changelog</button>
+      <button class="go alt" id="bChangelog" style="display:none">Changelog</button>
     </div>
-    <div class="keys">Created by Ryan Schaefer<br><span id="verTag" class="ver"></span></div>
+    <div class="keys" style="display:none">Created by Ryan Schaefer<br><span id="verTag" class="ver"></span></div>
   </div>
 </div>
 
@@ -775,57 +1373,58 @@
              autocomplete="off" autocorrect="off" autocapitalize="characters"
              spellcheck="false">
     </div>
+    <div class="note identityNote" style="margin-top:8px;margin-bottom:0">DEVICE TAG <b id="playerTagValue"></b> · STAYS WITH THIS DEVICE</div>
 
-    <div class="grouplabel">Sound <span class="vnum" id="sfxVal">80%</span></div>
-    <div class="row"><input class="vol" id="sfxVol" type="range" min="0" max="100" step="5" value="80"
+    <div class="grouplabel" style="display:none">Sound <span class="vnum" id="sfxVal">80%</span></div>
+    <div class="row" style="display:none"><input class="vol" id="sfxVol" type="range" min="0" max="100" step="5" value="80"
            aria-label="Sound effect volume"></div>
 
-    <div class="grouplabel" style="margin-top:16px">Paddle color</div>
-    <div class="swatches" id="colorSwatches"></div>
+    <div class="grouplabel" style="display:none;margin-top:16px">Paddle color</div>
+    <div class="swatches" id="colorSwatches" style="display:none"></div>
 
-    <div class="grouplabel" style="margin-top:16px">Colorblind shapes</div>
-    <div class="note">Adds a shape code to Modifier tokens (circle/triangle/diamond) alongside their color.</div>
-    <div class="row" id="cbOpts">
+    <div class="grouplabel" style="display:none;margin-top:16px">Colorblind shapes</div>
+    <div class="note" style="display:none">Adds a shape code to Modifier tokens (circle/triangle/diamond) alongside their color.</div>
+    <div class="row" id="cbOpts" style="display:none">
       <button class="opt" data-cb="1">On</button>
       <button class="opt on" data-cb="0">Off</button>
     </div>
 
-    <div class="grouplabel" style="margin-top:16px">Visual effects</div>
-    <div class="row" id="fxOpts">
+    <div class="grouplabel" style="display:none;margin-top:16px">Visual effects</div>
+    <div class="row" id="fxOpts" style="display:none">
       <button class="opt" data-fx="0">Off</button>
       <button class="opt" data-fx="1">Low</button>
       <button class="opt on" data-fx="2">High</button>
     </div>
 
-    <div class="grouplabel" style="margin-top:16px">CRT effects</div>
-    <div class="row" id="crtOpts">
+    <div class="grouplabel" style="display:none;margin-top:16px">CRT effects</div>
+    <div class="row" id="crtOpts" style="display:none">
       <button class="opt" data-c="0">Off</button>
       <button class="opt on" data-c="1">On</button>
     </div>
 
-    <div class="grouplabel" style="margin-top:16px">Screen shake</div>
-    <div class="row" id="shakeOpts">
+    <div class="grouplabel" style="display:none;margin-top:16px">Screen shake</div>
+    <div class="row" id="shakeOpts" style="display:none">
       <button class="opt" data-sh="0">Off</button>
       <button class="opt" data-sh="1">Low</button>
       <button class="opt on" data-sh="2">Full</button>
     </div>
 
-    <div class="grouplabel" style="margin-top:16px">Haptics</div>
-    <div class="row" id="hapticsOpts">
+    <div class="grouplabel" style="display:none;margin-top:16px">Haptics</div>
+    <div class="row" id="hapticsOpts" style="display:none">
       <button class="opt" data-hp="0">Off</button>
       <button class="opt" data-hp="1">Light</button>
       <button class="opt on" data-hp="2">Full</button>
     </div>
 
-    <div class="grouplabel" style="margin-top:16px">Battery saver (30 fps)</div>
-    <div class="row" id="fpsOpts">
+    <div class="grouplabel" style="display:none;margin-top:16px">Battery saver (30 fps)</div>
+    <div class="row" id="fpsOpts" style="display:none">
       <button class="opt" data-f="1">On</button>
       <button class="opt on" data-f="0">Off</button>
     </div>
 
-    <div class="grouplabel" style="margin-top:16px">Reset</div>
-    <div class="note">Clears all progress, scores, and settings. Cannot be undone.</div>
-    <div class="btnrow" style="margin-top:6px">
+    <div class="grouplabel" style="display:none;margin-top:16px">Reset</div>
+    <div class="note" style="display:none">Clears all progress, scores, and settings. Cannot be undone.</div>
+    <div class="btnrow" style="display:none;margin-top:6px">
       <button class="go alt" id="bResetCareer">Reset Career</button>
     </div>
   </div>
@@ -836,7 +1435,7 @@
     <div class="pbar"><button class="backlink" id="bScoreHelpBack">&#10094; Back</button></div>
     <h1 style="font-size:22px">SCORING</h1>
     <div class="sub">How your score is calculated</div>
-    <div class="note">Only Modified and Vanilla runs are scored. Custom is practice only.</div>
+    
     <div class="brief" id="scoreHelpBody"></div>
   </div>
 </div>
@@ -930,26 +1529,14 @@ function pickBotNames() {
 
 // Neon set the player can pick from. Opponents each receive a unique random colour
 // from the same palette (never the player's choice) so six rails stay distinct.
-const PALETTE = ['#d8e05a', '#5fd0ff', '#c887f0', '#7fd8d0', '#79dd7f',
-                 '#e0a06a', '#ff6b9d', '#7b7bff'];
-let playerCol = PALETTE[0];
+const PALETTE = ['#f2df36', '#18d8ff', '#a855f7', '#33dfd0', '#50e85d',
+                 '#ff8b2d', '#ff4768', '#5d6dff'];
+let playerCol = '#a855f7';
 
 function paletteFor() {
-  // Player keeps their chosen colour; every other wall gets a unique random colour
-  // from the same neon palette so nothing clashes and the set stays coherent.
-  const cols = new Array(SIDES.length);
-  cols[PLAYER] = playerCol;
-  const spare = PALETTE.filter(c => c !== playerCol);
-  // Fisher–Yates shuffle so opponents look different each match
-  for (let i = spare.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [spare[i], spare[j]] = [spare[j], spare[i]];
-  }
-  let si = 0;
-  for (let i = 0; i < cols.length; i++) {
-    if (i === PLAYER) continue;
-    cols[i] = spare[si++ % spare.length];
-  }
+  // Fixed prototype composition after the human is rotated to the bottom seat:
+  // purple, cyan, green, red, orange, yellow around the six-sided arena.
+  const cols = ['#f2d932', playerCol, '#18d8ff', '#50e85d', '#ff3f59', '#ff8b2d'];
   return cols;
 }
 
@@ -971,12 +1558,15 @@ const DIFF = [
 let diffIdx = 1;
 let startLives = 3;
 let displayName = 'RHYNOCK';
-const VERSION = '0.8.13';
+const VERSION = '0.8.22';
 /* Online leaderboard (Cloudflare Worker + D1).
    Leave empty to keep the game fully offline.
    After you deploy the Worker, set this to your workers.dev URL, e.g.:
    'https://hexapong-leaderboard.YOUR_SUBDOMAIN.workers.dev' */
 const LEADERBOARD_URL = 'https://hexapong-leaderboard.hexapong.workers.dev';
+let currentMatchToken = null;
+let currentMatchTokenPromise = null;
+let matchTokenGeneration = 0;
 
 /* ── project context (AI agents / maintainers) ────────────────────────────
    Shown in #ctxPanel after triple-clicking #verTag on the main menu.
@@ -984,7 +1574,7 @@ const LEADERBOARD_URL = 'https://hexapong-leaderboard.hexapong.workers.dev';
 const PROJECT_CONTEXT = `PROJECT: HEXAPONG
 Single self-contained file: index.html (no build step, no external assets beyond embedded SVG data-URIs).
 Open in a browser; fully offline-capable.
-Optional online leaderboard (Cloudflare Worker + D1) via LEADERBOARD_URL — leave empty or unreachable for offline-only play. Scores submit automatically on match end when online. Recent matches load from /api/recent. LB_CUTOFF hides any row older than a fixed instant from BOTH boards (client-side display filter only; rows remain in D1). Loaders over-fetch and then filter, so raise the fetch limits if the hidden backlog ever grows large.
+Optional online leaderboard (Cloudflare Worker + D1) via LEADERBOARD_URL — leave empty or unreachable for offline-only play. Scores submit automatically on match end when online. Scored runs request a short-lived signed match token at match start and include it with the final score. iOS uses a Keychain-backed anonymous player ID and sends it with scores; the leaderboard displays a short player tag beside the chosen name. Recent matches load from /api/recent. LB_CUTOFF hides any row older than a fixed instant from BOTH boards (client-side display filter only; rows remain in D1). Loaders over-fetch and then filter, so raise the fetch limits if the hidden backlog ever grows large.
 
 === VERSION & CHANGELOG (MANDATORY ON EVERY CHANGE SET) ===
 - Constant: const VERSION = 'x.y.z';
@@ -1016,7 +1606,7 @@ Optional online leaderboard (Cloudflare Worker + D1) via LEADERBOARD_URL — lea
 - Main menu has a Modifiers On/Off toggle and Easy/Medium/Hard difficulty selector (both remembered). Play button (#mPlay / startSimplePlay()) uses the selected difficulty, 3 lives, ModifierRate locked to difficulty (0/1/2), endless off; mode is modifier or vanilla based on the Modifiers toggle.
 - Custom mode and its panel (#customPanel, #modePanel, ModifierToggles, showMode/showCustom/applyMode/buildModifierGrid/syncCustomUI) were fully removed in 0.8.10 — they'd been unreachable dead code since the simplified main menu shipped (nothing ever called showMode/showCustom), confirmed by a full audit. Endless mode's only two toggles (modeEndless/cEndless) lived inside those same panels and were removed with them; the endlessMode variable and all its gameplay logic (concede(), XP, achievements) are untouched and still work, but there is currently no UI path to ever set it true. If Endless is wanted back, it needs a new toggle somewhere reachable (e.g. Settings) — ask before assuming where.
 - Scoring only for vanilla + modifier (scoredMode()). Custom is deliberately unscored.
-- Score formula (0.8.9): survival = seconds × 100 × (1 + √(seconds/150)); paddle hits escalate 500, 600, 700… via escalatingFlatTotal(); modifiers (buff/nerf/wild, base 5000/5000/2500) now ALSO escalate per type via the same escalatingFlatTotal() helper, +SCORE_MODIFIER_STEP (1000) per consecutive hit of that type; nerfed (base −5000) escalates the same way but worse (−5000, −6000, −7000…). Rally kills (opponent concedes a life off your last hit, not eliminated) and eliminations (opponent's wall shatters off your last hit) are new bounties credited via creditKill()/concede()'s b.hitter, tallied in run.rallyKills/run.eliminationKills, and summed via killTotal()/killValue() — a TRIANGULAR step (the gap between consecutive kills grows by one more step each time: 25k/50k base, jumps of 1k/5k that themselves grow), not a flat step like paddle/modifiers. All five (survival, paddle, modifier, rallyBounty, eliminationBounty) sum into subtotal; then × SCORE_PLACE_MUL[place]; then × SCORE_DIFF_MUL[diffIdx] (Easy 0.65 / Medium 1.0 / Hard 1.55, widened 0.8.8 — the scoreHelpPanel text had gone stale after that change until 0.8.9 fixed it). Difficulty multiplier is applied AFTER placement. worker.js's serializeBreakdown() keys allowlist was updated to include rallyBounty/eliminationBounty/rallyKills/eliminationKills — requires redeploy for submitted breakdowns to retain them.
+- Score formula (0.8.9): survival = seconds × 100 × (1 + √(seconds/150)); paddle hits escalate 500, 600, 700… via escalatingFlatTotal(); modifier pickups (buff/nerf/wild, base 5000/5000/2500) escalate per type via the same helper, +SCORE_MODIFIER_STEP (1000) per consecutive hit of that type. Nerfs still apply their gameplay effect to the next return, but never subtract points from the player they affect. Rally kills (opponent concedes a life off your last hit, not eliminated) and eliminations (opponent's wall shatters off your last hit) are new bounties credited via creditKill()/concede()'s b.hitter, tallied in run.rallyKills/run.eliminationKills, and summed via killTotal()/killValue() — a TRIANGULAR step (the gap between consecutive kills grows by one more step each time: 25k/50k base, jumps of 1k/5k that themselves grow), not a flat step like paddle/modifiers. All five (survival, paddle, modifier, rallyBounty, eliminationBounty) sum into subtotal; then × SCORE_PLACE_MUL[place]; then × SCORE_DIFF_MUL[diffIdx] (Easy 0.65 / Medium 1.0 / Hard 1.55, widened 0.8.8 — the scoreHelpPanel text had gone stale after that change until 0.8.9 fixed it). Difficulty multiplier is applied AFTER placement. worker.js's serializeBreakdown() keys allowlist was updated to include rallyBounty/eliminationBounty/rallyKills/eliminationKills — requires redeploy for submitted breakdowns to retain them.
 - Bounty modifier removed as of 0.7.1 (was a wildcard, arena-wide, doubled the next concede cost).
 - Eclipse Drift (0.7.1): outbound spin 2-5s random (CW/CCW), ball frozen only while actively spinning, no countdown on resume. After a 15s hold, spins back to the original orientation mirroring the outbound duration/rate exactly (reversed), ball frozen again for that return leg. State: eclipseT/eclipseRate/eclipseSpin (active spin), eclipseHoldT (post-spin hold countdown), eclipseReturning (true during the return leg), eclipseOutSecs (outbound duration, reused for the return).
 - Pulse Contract (0.7.1): squeeze-and-release duration now randomized 1.5-3.5s per activation (PULSE_MIN/PULSE_MAX, stored per-activation in pulseDur) instead of a fixed 1.6s.
@@ -1027,7 +1617,7 @@ Optional online leaderboard (Cloudflare Worker + D1) via LEADERBOARD_URL — lea
 - Persistence: localStorage keys (career, scores, settings, modifier toggles, progress, name, etc.). Never remove keys without a migration.
 - Progression systems (level/XP, prestige, achievements) exist in code; Level/XP band on main menu is currently hidden (#lvlBand display:none). Daily Missions were removed in 0.7.3.
 - Ball visuals (0.8.11): ball.hitCol (set on every paddle hit, cleared fresh in newBall()) drives the glow/trail/core color — falls back to BALL_DEFAULT_COL before the first hit. Bloom sprite is cached per-color in bloomCache (Map), not the old single shared bloomCv, since Split can have multiple balls with different hitters on screen at once. ball.spawnT (1→0 over BALL_SPAWN_DUR) drives the spawn wrap-in scale/ring; it decays even while serveTimer holds the ball still at center, so it's finished before launch. spawnImpactBurst()/sparks is a separate particle system from debris (which is only the full wall-shatter on elimination) — it fires on every concede() via the conceding player's own color.
-- VFX pass (0.8.12): bursts[] (originally token-pickup-only) is now tier-aware ('small'/'big'/'huge' via b.tier, default 'small' for backward compat with the untagged token-pickup push) — 'small' is the per-hit shockwave (fires for every player's paddle return now, not just human), 'big'/'huge' are spawnImpactBurst()'s wall-impact/elimination rings, drawn by the same drawBursts(). popups[] + spawnPopup()/drawPopups() is a new floating-text system for every discrete point event (paddle hit, buff/nerf/wild pickup, nerfed penalty, rally/elim kill) — deliberately excludes survival (continuous) and the placement/difficulty multipliers (end-of-match only). flatValue(base,step,n) gives the value of the n-th occurrence alone (not the running sum escalatingFlatTotal() gives) — that's what a popup should show. creditKill() now takes (hitter,receiver,type,x,y) to know where to place its popup. dust[] is ambient background particles (normalized [0,1] coords × current W/H, so resize-proof), drifting left, drawn via drawDust() early in draw() before the shake/lighter-blend section, skipped when fxLevel===0. Continuous spawn-wrap-in screen vibration (SPAWN_VIBE_MAG) is separate from the decaying shakeT/shakeMag system — added directly in draw()'s shake-offset calc, active whenever any live ball has spawnT>0.
+- VFX pass (0.8.12): bursts[] (originally token-pickup-only) is now tier-aware ('small'/'big'/'huge' via b.tier, default 'small' for backward compat with the untagged token-pickup push) — 'small' is the per-hit shockwave (fires for every player's paddle return now, not just human), 'big'/'huge' are spawnImpactBurst()'s wall-impact/elimination rings, drawn by the same drawBursts(). popups[] + spawnPopup()/drawPopups() is a new floating-text system for every discrete point event (paddle hit, buff/nerf/wild pickup, rally/elim kill) — deliberately excludes survival (continuous) and the placement/difficulty multipliers (end-of-match only). flatValue(base,step,n) gives the value of the n-th occurrence alone (not the running sum escalatingFlatTotal() gives) — that's what a popup should show. creditKill() now takes (hitter,receiver,type,x,y) to know where to place its popup. dust[] is ambient background particles (normalized [0,1] coords × current W/H, so resize-proof), drifting left, drawn via drawDust() early in draw() before the shake/lighter-blend section, skipped when fxLevel===0. Continuous spawn-wrap-in screen vibration (SPAWN_VIBE_MAG) is separate from the decaying shakeT/shakeMag system — added directly in draw()'s shake-offset calc, active whenever any live ball has spawnT>0.
 
 === UI / PANELS ===
 - Panels: nameGate, start, brief, pausePanel, codex, achPanel, over, setPanel, statsPanel, scoreHelpPanel, logPanel, lbPanel, recentPanel, ctxPanel, brPanel. This list lives in ONE place now: the ALL_PANELS array, consumed by hideAllPanels(). Adding a new panel? Add its id to ALL_PANELS — every show*() function already calls hideAllPanels() before unhiding its own target, so nothing else needs touching. (Prior to 0.8.10 this was 13 separately hand-maintained array literals, which had drifted — several newer panels were missing from older lists, and 3 call sites used an unguarded getElementById that would throw outright once modePanel/customPanel were removed. Don't reintroduce inline panel-id arrays; extend ALL_PANELS instead.)
@@ -1055,13 +1645,28 @@ ${VERSION} — Triple-click main-menu version opens this project context panel f
    Append a new entry and bump the patch digit of VERSION on every change set.
    The in-game Changelog panel reads this array directly. */
 const CHANGELOG = [
-  { v: '0.8.13', date: '2026-08-17', notes: [
-    'Fixed: the ball\u2019s trail ballooned in length as speed increased (pressure ramp, Hard difficulty) because it was capped by frame count, not distance \u2014 the same ~26 frames simply covered more screen space at higher speed. Now capped by actual travel distance (BALL_TRAIL_MAX_FRAC \u00d7 arena radius), so it reads as roughly the same visual length at any speed.',
+  { v: '0.8.22', date: '2026-08-18', notes: [
+    'Added signed, short-lived match tokens to online scored runs so the Worker can reject direct and replayed score submissions.',
+  ]},
+  { v: '0.8.21', date: '2026-08-18', notes: [
+    'Redesigned the main menu with a premium command-deck layout while preserving existing controls and data.',
+  ]},
+  { v: '0.8.20', date: '2026-08-18', notes: [
+    'The main-menu Leaderboard heading now shows the currently selected difficulty beside it.',
+  ]},
+  { v: '0.8.19', date: '2026-08-18', notes: [
+    'Simplified Settings to the player name field while preserving the underlying options for a future rebuild.',
+    'Added a left-edge swipe gesture to navigate back from menus and panels.',
+    'Modifier Index descriptions now include their active durations, with the separate duration column removed.',
+    'Default player paddle color is now purple.',
+    'Swipe-back navigation now moves the current and previous panels together under your finger.',
+    'Shortened the How To Play, Modifier Index, and Scoring explanations for faster reading.',
+    'Added a secure anonymous player identity and a unique device tag for online leaderboard entries.',
   ]},
   { v: '0.8.12', date: '2026-08-17', notes: [
     'New: ambient background particles drift slowly left across the arena, purely decorative (skipped when Visual effects is Off).',
     'The hit shockwave ring now fires for every player\u2019s paddle return, not just yours \u2014 the whole board reads as alive.',
-    'New: floating +points popups for every discrete scoring event \u2014 paddle hits, buff/nerf/wildcard pickups, the nerfed penalty (shown as a negative), and rally-kill/elimination bounties. Survival (continuous) and the placement/difficulty multipliers (applied once at match end) stay silent since they aren\u2019t per-event.',
+    'New: floating +points popups for every discrete scoring event \u2014 paddle hits, buff/nerf/wildcard pickups, and rally-kill/elimination bounties. Nerfs still show their gameplay effect, but do not subtract points. Survival (continuous) and the placement/difficulty multipliers (applied once at match end) stay silent since they aren\u2019t per-event.',
     'Wall-impact explosions upgraded: misses now get a big expanding ring (the same visual language a match win used to get exclusively), and eliminations layer an even bigger ring on top for a distinctly escalated moment.',
     'Ball spawn wrap-in lengthened (0.45s \u2192 0.85s) and the ring grows further; the whole screen now vibrates continuously for the duration, distinct from the punchier one-off shake used on hits and misses.',
   ]},
@@ -1181,7 +1786,7 @@ const CHANGELOG = [
     'Cleanup: stripped dead code left over from earlier UI trims, including unused music-system stubs, the orphaned fxTag()/#hud element, the disconnected Paddle Spin slider (setSpinPct/setSpinSlider/spinPct), the no-longer-reachable achievement-band and daily-missions refresh functions, an unused first-time quick-tips sequence, and a few CSS rules from a scrapped color-swatch-shop feature. No gameplay or scoring behavior changed from this cleanup.',
   ]},
   { v: '0.7.1', date: '2026-08-16', notes: [
-    'Modifier scoring rebalanced: buff +5000, nerf (collecting it) +5000, wildcard -2500, and a new -5000 penalty for whoever gets hit by a nerf effect.',
+    'Modifier scoring rebalanced: buffs and nerfs start at +5000, wildcards start at +2500, and repeated pickups add +1000. Nerfs change gameplay but never subtract points from the player they affect.',
     'Eclipse Drift reworked: 2-5s random rotation (CW or CCW), ball frozen only while actively turning, no countdown on resume, then after a 15s hold it spins back to the original orientation (mirroring the outbound duration and speed), ball frozen again during the return.',
     'Bounty removed from the wildcard pool.',
     'Pulse Contract duration randomized to 1.5-3.5s per activation (was a fixed 1.6s).',
@@ -1189,7 +1794,7 @@ const CHANGELOG = [
   ]},
   { v: '0.7.0', date: '2026-08-16', notes: [
     'Modifier targeting: gold buffs the last hitter, red nerfs the next return, violet stays arena-wide.',
-    'Scoring overhaul: survival = seconds × 100 × (1 + √(time/150)); paddle returns escalate (+500, +600, …); buff +5000 / nerf −5000 / wild +2500; placement multiplies the subtotal (6th ×1 → 1st ×3). No difficulty/mode score multiplier.',
+    'Scoring overhaul: survival = seconds × 100 × (1 + √(time/150)); paddle returns escalate (+500, +600, …); buffs and nerfs start at +5000, wildcards at +2500; placement multiplies the subtotal (6th ×1 → 1st ×3). No difficulty/mode score multiplier.',
     'Results: score breakdown under the final total; Modified / Vanilla labels; leaderboard rows show place (e.g. 5th of 6).',
     'Main menu: Scoring help panel; High Score band opens Stats; Recent Matches (online /api/recent); compact leaderboard + full top 25.',
     'AI: blunder/aim soft-scale with pressure²; Pulse/Gravity raise blunder +25%; post-Eclipse shock +20% for 2.5s.',
@@ -1255,6 +1860,37 @@ const CAREER_KEY = 'hexapong_career_v1';
 const LASTRUN_KEY = 'hexapong_lastrun_v1';
 const NAME_KEY = 'hexapong_name_v1';
 const SETTINGS_KEY = 'hexapong_settings_v1';
+const PLAYER_ID_KEY = 'hexapong_player_id_v1';
+function fallbackPlayerId() {
+  try {
+    if (window.crypto && typeof window.crypto.randomUUID === 'function') return window.crypto.randomUUID();
+  } catch (e) {}
+  return 'WEB-' + Date.now().toString(36).toUpperCase() + '-' +
+    Math.random().toString(36).slice(2, 12).toUpperCase();
+}
+function loadPlayerId() {
+  const nativeId = typeof window.__HEX_PLAYER_ID === 'string' ? window.__HEX_PLAYER_ID.trim() : '';
+  try {
+    if (nativeId.length >= 8) {
+      localStorage.setItem(PLAYER_ID_KEY, nativeId);
+      return nativeId;
+    }
+    const saved = String(localStorage.getItem(PLAYER_ID_KEY) || '').trim();
+    if (saved.length >= 8) return saved;
+    const fresh = fallbackPlayerId();
+    localStorage.setItem(PLAYER_ID_KEY, fresh);
+    return fresh;
+  } catch (e) {
+    return nativeId.length >= 8 ? nativeId : fallbackPlayerId();
+  }
+}
+function playerTagFor(id) {
+  const compact = String(id || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+  return '#' + (compact.slice(0, 8) || 'PLAYER');
+}
+const PLAYER_ID = loadPlayerId();
+const PLAYER_TAG = playerTagFor(PLAYER_ID);
+
 const defaultCareer = () => ({
   games: 0, wins: 0, playTime: 0, returns: 0, kos: 0,
   bestRally: 0, bestTime: 0, bestPlace: 7, topSpeed: 0,
@@ -1357,9 +1993,17 @@ function applyLbCutoff(rows, limit) {
   return out.map((r, i) => Object.assign({}, r, { rank: i + 1 }));
 }
 
+
+function lbPlayerLabel(r) {
+  const nm = String(r && r.name || 'PLAYER')
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const rawTag = String(r && (r.playerTag || r.player_tag || r.tag) || '').trim();
+  const tag = rawTag.replace(/[^A-Za-z0-9#_-]/g, '').slice(0, 12);
+  return nm + (tag ? '<span class="lbtag"> · ' + tag + '</span>' : '');
+}
 /* Recent matches: online feed from GET /api/recent (newest first). */
 function recentRowHtml(r) {
-  const nm = String(r.name || 'PLAYER').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const nm = lbPlayerLabel(r);
   const bits = [];
   const dateStr = formatLbDate(r);
   if (dateStr) bits.push(dateStr);
@@ -1450,6 +2094,147 @@ function hideAllPanels() {
     const el = document.getElementById(id); if (el) el.classList.add('hidden');
   });
 }
+
+
+/* ── left-edge swipe navigation ───────────────────────────────────────────
+   The previous panel is placed just off the left edge. During the gesture the
+   current panel and previous panel translate by the same amount, staying
+   attached side by side like the native iPhone navigation transition. */
+const SWIPE_BACK_EDGE = 32;
+const SWIPE_BACK_MIN = 72;
+const SWIPE_BACK_ANIM_MS = 240;
+let navSwipe = null;
+function visibleSwipePanel() {
+  const ids = ['setPanel','codex','brief','statsPanel','scoreHelpPanel','logPanel',
+    'lbPanel','recentPanel','brPanel','ctxPanel','achPanel'];
+  for (const id of ids) {
+    const el = document.getElementById(id);
+    if (el && !el.classList.contains('hidden')) return id;
+  }
+  return null;
+}
+function swipeParentFor(id) {
+  switch (id) {
+    case 'setPanel': return setFrom || 'start';
+    case 'codex': return codexFrom || 'start';
+    case 'brief':
+    case 'statsPanel':
+    case 'scoreHelpPanel':
+    case 'logPanel':
+    case 'lbPanel':
+    case 'recentPanel':
+    case 'ctxPanel':
+    case 'achPanel': return 'start';
+    case 'brPanel': return brFrom || 'lbPanel';
+    default: return null;
+  }
+}
+function navigateBackFromSwipe(id) {
+  switch (id) {
+    case 'setPanel': hideSettings(); return true;
+    case 'codex': hideCodex(); return true;
+    case 'brief': showSetup(); return true;
+    case 'statsPanel': showSetup(); return true;
+    case 'scoreHelpPanel': hideScoreHelp(); return true;
+    case 'logPanel': hideChangelog(); return true;
+    case 'lbPanel': hideLeaderboard(); return true;
+    case 'recentPanel': hideRecentMatches(); return true;
+    case 'brPanel': hideBreakdown(); return true;
+    case 'ctxPanel': hideProjectContext(); return true;
+    case 'achPanel': hideAchievements(); return true;
+    default: return false;
+  }
+}
+function clearSwipeLayers(s) {
+  if (!s) return;
+  const cur = document.getElementById(s.panel), prev = document.getElementById(s.parent);
+  [cur, prev].forEach(el => {
+    if (!el) return;
+    el.classList.remove('swipe-layer');
+    el.style.transform = '';
+    el.style.transition = '';
+    el.style.zIndex = '';
+  });
+}
+function prepareSwipeLayers(s) {
+  const cur = document.getElementById(s.panel), prev = document.getElementById(s.parent);
+  if (!cur || !prev || cur === prev) return false;
+  prev.classList.remove('hidden');
+  cur.classList.add('swipe-layer');
+  prev.classList.add('swipe-layer');
+  cur.style.zIndex = '20';
+  prev.style.zIndex = '19';
+  cur.style.transition = 'none';
+  prev.style.transition = 'none';
+  cur.style.transform = 'translate3d(0,0,0)';
+  prev.style.transform = 'translate3d(-100%,0,0)';
+  s.active = true;
+  return true;
+}
+function setSwipeOffset(s, dx) {
+  const cur = document.getElementById(s.panel), prev = document.getElementById(s.parent);
+  if (!cur || !prev) return;
+  const amount = Math.max(0, dx);
+  cur.style.transform = 'translate3d(' + amount + 'px,0,0)';
+  prev.style.transform = 'translate3d(calc(-100% + ' + amount + 'px),0,0)';
+}
+function finishSwipe(s, goBack) {
+  if (!s || !s.active || s.finishing) return;
+  const cur = document.getElementById(s.panel), prev = document.getElementById(s.parent);
+  if (!cur || !prev) { clearSwipeLayers(s); return; }
+  s.finishing = true;
+  cur.style.transition = 'transform ' + SWIPE_BACK_ANIM_MS + 'ms cubic-bezier(.22,.8,.25,1)';
+  prev.style.transition = cur.style.transition;
+  const width = window.innerWidth || document.documentElement.clientWidth || 1;
+  if (goBack) {
+    cur.style.transform = 'translate3d(' + width + 'px,0,0)';
+    prev.style.transform = 'translate3d(0,0,0)';
+  } else {
+    cur.style.transform = 'translate3d(0,0,0)';
+    prev.style.transform = 'translate3d(-100%,0,0)';
+  }
+  setTimeout(() => {
+    if (goBack) navigateBackFromSwipe(s.panel);
+    else prev.classList.add('hidden');
+    clearSwipeLayers(s);
+  }, SWIPE_BACK_ANIM_MS + 20);
+}
+document.addEventListener('touchstart', e => {
+  if (e.touches.length !== 1) { navSwipe = null; return; }
+  const panel = visibleSwipePanel();
+  if (!panel) { navSwipe = null; return; }
+  const parent = swipeParentFor(panel);
+  const t = e.touches[0];
+  if (!parent || t.clientX > SWIPE_BACK_EDGE ||
+      (e.target && e.target.closest && e.target.closest('input,button,textarea,select'))) {
+    navSwipe = null; return;
+  }
+  navSwipe = { panel, parent, x: t.clientX, y: t.clientY, active: false, finishing: false };
+}, { passive: true });
+document.addEventListener('touchmove', e => {
+  if (!navSwipe || navSwipe.finishing) return;
+  const t = e.touches[0];
+  const dx = t.clientX - navSwipe.x, dy = t.clientY - navSwipe.y;
+  if (!navSwipe.active) {
+    if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
+    if (dx <= 0 || Math.abs(dx) < Math.abs(dy) * 1.05) { navSwipe = null; return; }
+    if (!prepareSwipeLayers(navSwipe)) { navSwipe = null; return; }
+  }
+  setSwipeOffset(navSwipe, dx);
+  if (e.cancelable) e.preventDefault();
+}, { passive: false });
+function endSwipeGesture(e, cancelled) {
+  if (!navSwipe) return;
+  const s = navSwipe;
+  navSwipe = null;
+  if (!s.active) return;
+  const t = e && e.changedTouches && e.changedTouches[0];
+  const dx = t ? t.clientX - s.x : 0;
+  finishSwipe(s, !cancelled && dx >= SWIPE_BACK_MIN);
+}
+document.addEventListener('touchend', e => endSwipeGesture(e, false), { passive: true });
+document.addEventListener('touchcancel', e => endSwipeGesture(e, true), { passive: true });
+
 function showRecentMatches() {
   hideAllPanels();
   document.getElementById('recentPanel').classList.remove('hidden');
@@ -1514,16 +2299,16 @@ function saveCareer() {
    Both escalate per occurrence THIS MATCH, and the escalation itself grows
    (triangular, not flat): kill #1 = base, #2 = base+step, #3 = base+3×step,
    #4 = base+6×step … (the gap between kills grows by one more `step` each
-   time). Modifier hits (buff/nerf/wild, and the negative nerfed penalty)
-   also now escalate, but with a flat step per hit — same shape as paddle
-   hits already use. */
+   time). Modifier pickups (buff/nerf/wild) also escalate, but with a flat
+   step per hit — same shape as paddle hits already use. Nerfs are gameplay
+   effects only: the player who returns a nerf-affected ball is not charged
+   points. */
 const SCORE_PER_SEC = 100;
 const SCORE_PADDLE_BASE = 500;                               // first human return
 const SCORE_PADDLE_STEP = 100;                               // each later return adds this much more
 const SCORE_BUFF    = 5000;    // hitting a Buff token (1st hit; escalates, see SCORE_MODIFIER_STEP)
 const SCORE_NERF    = 5000;    // hitting a Nerf token (1st hit; escalates)
 const SCORE_WILD    = 2500;    // hitting a Wildcard token (1st hit; escalates)
-const SCORE_NERFED  = -5000;   // being the one who gets nerfed after someone else hits it (1st time; escalates worse)
 const SCORE_MODIFIER_STEP = 1000; // flat increase per consecutive hit of the SAME modifier type this match
 const SCORE_RALLY_KILL_BASE = 25000;  // 1st opponent life-loss credited to your last hit
 const SCORE_RALLY_KILL_STEP = 1000;   // triangular step — see header note above
@@ -1556,7 +2341,6 @@ function flatValue(base, step, n) {
   n = Math.max(1, n | 0);
   return base + step * (n - 1);
 }
-const NERFED_POPUP_COL = '#ff6a6a'; // distinct from the nerf token's own pickup color
 /** Value of the k-th kill in a triangular-step series (k is 1-indexed): base, base+step,
  *  base+3*step, base+6*step … the gap between consecutive kills grows by one more step. */
 function killValue(k, base, step) {
@@ -1581,8 +2365,7 @@ function scoreParts(place, survivedS, dIdx, paddleHits = 0, buffHits = 0, nerfHi
   const paddle = paddlePoints(paddleHits);
   const modifier = escalatingFlatTotal(buffHits | 0, SCORE_BUFF, SCORE_MODIFIER_STEP)
     + escalatingFlatTotal(nerfHits | 0, SCORE_NERF, SCORE_MODIFIER_STEP)
-    + escalatingFlatTotal(wildHits | 0, SCORE_WILD, SCORE_MODIFIER_STEP)
-    - escalatingFlatTotal(nerfedHits | 0, -SCORE_NERFED, SCORE_MODIFIER_STEP);
+    + escalatingFlatTotal(wildHits | 0, SCORE_WILD, SCORE_MODIFIER_STEP);
   const rallyBounty = killTotal(rallyKills | 0, SCORE_RALLY_KILL_BASE, SCORE_RALLY_KILL_STEP);
   const eliminationBounty = killTotal(eliminationKills | 0, SCORE_ELIM_KILL_BASE, SCORE_ELIM_KILL_STEP);
 
@@ -1621,7 +2404,7 @@ function breakdownHtml(parts) {
   if (parts.buffHits) modBits.push(parts.buffHits + ' buff');
   if (parts.nerfHits) modBits.push(parts.nerfHits + ' nerf');
   if (parts.wildHits) modBits.push(parts.wildHits + ' wild');
-  if (parts.nerfedHits) modBits.push(parts.nerfedHits + ' nerfed');
+  if (parts.nerfedHits) modBits.push(parts.nerfedHits + ' nerfed · no penalty');
   const modNote = modBits.length ? ' (' + modBits.join(', ') + ')' : '';
   const rallyNote = parts.rallyKills ? ' (' + parts.rallyKills + ')' : '';
   const elimNote = parts.eliminationKills ? ' (' + parts.eliminationKills + ')' : '';
@@ -1940,7 +2723,7 @@ function checkAchievements() {
 }
 
 /* ── online leaderboard (optional; requires LEADERBOARD_URL) ───────────── */
-function submitOnlineScore(payload) {
+async function submitOnlineScore(payload) {
   if (!LEADERBOARD_URL) return;
   if (typeof navigator !== 'undefined' && navigator.onLine === false) return;
   try {
@@ -1951,12 +2734,17 @@ function submitOnlineScore(payload) {
     const body = Object.assign({}, payload);
     if (body.difficulty) body.difficulty = titleCase(String(body.difficulty));
     if (body.mode) body.mode = String(body.mode).toLowerCase();
+    if (!body.matchToken && currentMatchTokenPromise) {
+      body.matchToken = await currentMatchTokenPromise;
+    }
     fetch(LEADERBOARD_URL.replace(/\/+$/, '') + '/api/score', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
       keepalive: true,
     }).catch(() => {});
+        setTimeout(loadMiniLeaderboard, 800);
+            setTimeout(loadMiniRecent, 800);
   } catch (e) {}
 }
 function formatLbDuration(s) {
@@ -2025,7 +2813,7 @@ function lbRowHtml(r, opts) {
   if (r.place != null) bits.push(ordinal(r.place));
   const dur = formatLbDuration(r.duration);
   if (dur) bits.push(dur);
-  const nm = String(r.name || 'PLAYER').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const nm = lbPlayerLabel(r);
   const hasBr = r.breakdown && typeof r.breakdown === 'object';
   let br = r.breakdown;
   if (hasBr && br && br.dIdx == null) {
@@ -2211,6 +2999,12 @@ let seating = [];      // per side index: player object or null (inert bumper)
 const PAD  = { thick: 10, len: 100, gap: 4 };
 const BALL = { r: 8 };
 
+// Keep paddle capsules clear of the shared corner hardware. These are CSS-pixel
+// measurements because the canvas transform handles device-pixel scaling.
+const CORNER_HARDWARE_RATIO = 0.045;
+const PADDLE_END_CLEARANCE = 11;
+const PADDLE_EASE_ZONE = 20;
+
 function sidesFor(n) { return n <= 2 ? 4 : n; }
 function shrinkFor(n) {
   // the polygon loses area on its own as sides drop; this just adds a little squeeze
@@ -2260,19 +3054,20 @@ function buildWalls() {
                  owner: seating[i] || null, flash: 0 });
   }
   const wl = walls.length ? walls[0].len : R;
-  PAD.thick = Math.max(8, R * 0.034);
-  // A fingertip is ~10px of real precision, so phones get a slightly wider paddle
-  // to offset the loss of pointer accuracy against a physically smaller arena.
-  PAD.len   = Math.max(33, wl * (compact ? 0.2448 : 0.216));   // ~28% smaller than original
-  PAD.gap   = Math.max(3, R * 0.014);           // breathing room off the slim rail
-  BALL.r    = Math.max(5, R * 0.019);
+  PAD.thick = Math.max(10, R * 0.062);
+  // Target composition: compact armored capsules at roughly 27% of one wall.
+  PAD.len   = Math.max(33, wl * (compact ? 0.27 : 0.25));
+  // The reference visibly floats the paddles inside the rail; collision and artwork share
+  // this inset so the ball always bounces exactly where the capsule appears.
+  PAD.gap   = Math.max(2, R * 0.090);
+  BALL.r    = Math.max(5, R * 0.0165);
 }
 
 // Worst case across every shape the arena collapses through: the hexagon is the widest
 // (vertices at 2R across) and the pentagon is the tallest (1.81R). The vertical figure
 // also has to carry the labels that sit outside the flat top and bottom walls, which is
 // why it is padded to ~1.95R plus a constant for the text itself.
-const SHAPE_W = 2.00, SHAPE_H = 1.95, LABEL_H = 15, EDGE_PAD = 10;
+const SHAPE_W = 2.00, SHAPE_H = 1.95, LABEL_H = 15, EDGE_PAD = 1;
 
 function resize() {
   readInsets();
@@ -2287,7 +3082,8 @@ function resize() {
     // bottom black band shrinks and the top gains room for HUD / score / effects.
     const topRoom = inset.t + 52;                 // more headroom for HUD + score
     const botRoom = inset.b + Math.max(28, H * 0.055);  // cut empty bottom roughly in half
-    const availW = Math.max(120, W - EDGE_PAD * 2);
+    const visualSidePad = Math.max(EDGE_PAD, W * 0.042);
+    const availW = Math.max(120, W - visualSidePad * 2);
     const availH = Math.max(120, H - topRoom - botRoom);
     baseR = Math.min(availW / SHAPE_W, (availH - LABEL_H * 2) / SHAPE_H);
     CX = W / 2;
@@ -2485,6 +3281,31 @@ function serve(fromWall) {
   if (run) run.ModifiersThisRally = 0;
 }
 
+function requestMatchToken() {
+  currentMatchToken = null;
+  const generation = ++matchTokenGeneration;
+  currentMatchTokenPromise = null;
+  if (!LEADERBOARD_URL || !scoredMode()) return;
+  if (typeof navigator !== 'undefined' && navigator.onLine === false) return;
+  const body = {
+    difficulty: DIFF[diffIdx].label,
+    mode: gameMode === 'Modifier' ? 'token' : (gameMode === 'vanilla' ? 'vanilla' : gameMode),
+    playerId: PLAYER_ID,
+  };
+  const promise = fetch(LEADERBOARD_URL.replace(/\/+$/, '') + '/api/match-token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  }).then(async (res) => {
+    if (!res.ok) return null;
+    const data = await res.json();
+    const token = typeof data.token === 'string' ? data.token : null;
+    if (generation === matchTokenGeneration) currentMatchToken = token;
+    return token;
+  }).catch(() => null);
+  currentMatchTokenPromise = promise;
+}
+
 function startGame() {
   commitName();
   newPlayers();
@@ -2494,6 +3315,7 @@ function startGame() {
   lastPlayerHitAt = 0; consecutiveAiHits = 0;
   debris = []; sparks = []; collapseFlash = 0; ending = false;
   clearFx();
+  requestMatchToken();
   layout(); R = Rtarget; buildWalls();
   balls = [];                         // hold the ball until countdown finishes
   serveTimer = 0;
@@ -2710,7 +3532,7 @@ addEventListener('touchstart', () => { unlockAudio(); }, { once: true, passive: 
 /* Music system removed — SFX only */
 let sfxVol = 0.8;
 let shakeLevel = 2;          // 0=off, 1=low, 2=full
-let crtFx = true;            // flicker + scanlines independent of quality preset
+let crtFx = false;            // flicker + scanlines independent of quality preset
 let colorBlind = false;      // shape codes on Modifiers
 let hapticsLevel = 2;        // 0=off, 1=light, 2=full
 let fpsCap = false;          // 30fps battery saver
@@ -2751,9 +3573,12 @@ function beep(freq, dur, type, gain) {
 function haptic(pattern) {
   if (hapticsLevel <= 0) return;
   try {
+    const strongest = Array.isArray(pattern) ? Math.max.apply(null, pattern) : Number(pattern) || 0;
+    const strength = strongest >= 30 ? 'heavy' : 'light';
+    const bridge = window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.haptic;
+    if (bridge) bridge.postMessage({ strength });
     if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') {
       if (hapticsLevel === 1) {
-        // light: shorten patterns
         if (Array.isArray(pattern)) pattern = pattern.map(v => Math.max(8, Math.round(v * 0.45)));
         else pattern = Math.max(8, Math.round(pattern * 0.45));
       }
@@ -2834,7 +3659,7 @@ function dragMove(x, y) {
   const [lo, hi] = posLimits(w);
   const flip = fxHas(p, 'invert') ? -1 : 1;
   const want = drag.pos + (projOnWall(x, y, w) - drag.proj) * TOUCH_SENS * flip;
-  p.pos = clamp(want, lo, hi);
+  p.pos = easedPaddleTarget(w, want, lo, hi);
   // pinned at an end: re-anchor here so the return stroke responds immediately
   if (want < lo || want > hi) { drag.proj = projOnWall(x, y, w); drag.pos = p.pos; }
 }
@@ -2896,11 +3721,30 @@ function padScale() { return 1 - 0.38 * pressure; }
 // per-player now: Overdrive / Choke / Purge scale each paddle independently
 function halfSpan(p) { return (PAD.len * padScale() * sizeMul(p)) / 2; }
 function posLimits(w) {
-  // Overdrive on a tiny late-game wall can make the paddle wider than the rail.
-  // Pin to centre rather than returning lo > hi (which freezes clamp at one end).
-  const h = halfSpan(w.owner) / Math.max(1e-6, w.len);
+  // Reserve the machined corner joint plus an 11px breathing gap. halfSpan() already
+  // includes Growth/Shrink, so even a widened paddle remains safely separated.
+  const edge = halfSpan(w.owner) + R * CORNER_HARDWARE_RATIO + PADDLE_END_CLEARANCE;
+  const h = edge / Math.max(1e-6, w.len);
   if (h >= 0.5) return [0.5, 0.5];
   return [h, 1 - h];
+}
+
+// Decelerate direct pointer input through the final 20px instead of snapping against
+// the exclusion zone. AI/keyboard movement already approaches its target incrementally.
+function easedPaddleTarget(w, value, lo, hi) {
+  const span = hi - lo;
+  const zone = Math.min(PADDLE_EASE_ZONE / Math.max(1, w.len), Math.max(0, span * 0.35));
+  const v = clamp(value, lo, hi);
+  if (zone <= 0) return v;
+  if (v < lo + zone) {
+    const t = (v - lo) / zone;
+    return lo + zone * t * t * (2 - t);
+  }
+  if (v > hi - zone) {
+    const t = (hi - v) / zone;
+    return hi - zone * t * t * (2 - t);
+  }
+  return v;
 }
 function padCenterS() { return PAD.gap + PAD.thick * 0.5; }    // paddle mid-line off the wall
 function padFaceS()   { return PAD.gap + PAD.thick + BALL.r; } // ball-centre distance at contact
@@ -3118,7 +3962,8 @@ function update(dt) {
       if (!moved && mouse.active && mouse.x >= 0) {
         let t = ((mouse.x - w.ax) * w.dx + (mouse.y - w.ay) * w.dy) / w.len;
         if (flip < 0) t = 1 - t;                      // absolute pointer: mirror the wall
-        p.pos += (clamp(t, lo, hi) - p.pos) * Math.min(1, dt * 22);
+        const target = easedPaddleTarget(w, t, lo, hi);
+        p.pos += (target - p.pos) * Math.min(1, dt * 22);
       }
     } else {
       const th = threat(w);
@@ -3459,7 +4304,6 @@ function collide(b) {
           b.pendingNerf = null;
           if (run && p.human) {
             run.nerfedHits++; career.nerfedHits = (career.nerfedHits || 0) + 1;
-            spawnPopup(b.x, b.y - 10, '-' + commas(flatValue(-SCORE_NERFED, SCORE_MODIFIER_STEP, run.nerfedHits)), NERFED_POPUP_COL);
           }
         }
         p.hitFlash = 1; rallyHits++;
@@ -3540,7 +4384,7 @@ function concede(p, b, w) {
   p.hurtFlash = 1;
   spawnImpactBurst(b.x, b.y, p.col);
   if (p.human) run.conceded++;
-  applyShake(9, 0.32);
+  applyShake(p.human ? 16 : 9, p.human ? 0.42 : 0.32);
   beep(110, 0.28, 'sawtooth', 0.07);
   if (p.human) haptic([40, 30, 60]);
 
@@ -3714,6 +4558,7 @@ function endGame(winner, eliminated) {
     // Fire-and-forget global submit when online; never blocks the results screen
     submitOnlineScore({
       name: displayName || 'PLAYER',
+      playerId: PLAYER_ID,
       score: score,
       difficulty: DIFF[diffIdx].label,
       mode: gameMode === 'Modifier' ? 'token' : (gameMode === 'vanilla' ? 'vanilla' : gameMode),
@@ -3889,11 +4734,73 @@ function endGame(winner, eliminated) {
 }
 
 /* ─────────────────────────── render ─────────────────────────── */
+let spaceBackdrop = null;
+function buildSpaceBackdrop() {
+  const bw = Math.max(1, Math.floor(W)), bh = Math.max(1, Math.floor(H));
+  const bgc = document.createElement('canvas');
+  bgc.width = bw; bgc.height = bh;
+  const bg = bgc.getContext('2d');
+
+  const base = bg.createLinearGradient(0, 0, 0, bh);
+  base.addColorStop(0, '#010207');
+  base.addColorStop(0.45, '#02040a');
+  base.addColorStop(1, '#010208');
+  bg.fillStyle = base; bg.fillRect(0, 0, bw, bh);
+
+  const nebula = (x, y, rad, col, alpha) => {
+    const ng = bg.createRadialGradient(x, y, 0, x, y, rad);
+    ng.addColorStop(0, hexA(col, alpha));
+    ng.addColorStop(0.35, hexA(col, alpha * 0.38));
+    ng.addColorStop(1, hexA(col, 0));
+    bg.fillStyle = ng; bg.fillRect(x - rad, y - rad, rad * 2, rad * 2);
+  };
+  nebula(bw * 0.13, bh * 0.43, bw * 0.28, '#274f90', 0.10);
+  nebula(bw * 0.84, bh * 0.50, bw * 0.31, '#6f2ca8', 0.12);
+  nebula(bw * 0.19, bh * 0.78, bw * 0.22, '#5a24a0', 0.14);
+  nebula(bw * 0.79, bh * 0.78, bw * 0.20, '#263e91', 0.09);
+  nebula(CX, CY, Math.max(R * 1.30, bw * 0.48), '#163a58', 0.07);
+
+  // Deterministic star field: sharp, sparse points with a handful of blue/purple accents.
+  let seed = ((bw * 73856093) ^ (bh * 19349663)) >>> 0;
+  const rnd = () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; };
+  const count = Math.max(72, Math.round((bw * bh) / 5600));
+  for (let i = 0; i < count; i++) {
+    const x = rnd() * bw, y = rnd() * bh;
+    const bright = rnd();
+    const rr = bright > 0.93 ? 1.25 : bright > 0.70 ? 0.75 : 0.42;
+    const col = i % 13 === 0 ? '#a775ff' : i % 9 === 0 ? '#4ea8ff' : '#9fc9ee';
+    bg.fillStyle = hexA(col, 0.16 + bright * 0.42);
+    bg.beginPath(); bg.arc(x, y, rr, 0, TAU); bg.fill();
+    if (bright > 0.95) {
+      bg.strokeStyle = hexA(col, 0.20); bg.lineWidth = 0.45;
+      bg.beginPath(); bg.moveTo(x - 3, y); bg.lineTo(x + 3, y); bg.moveTo(x, y - 3); bg.lineTo(x, y + 3); bg.stroke();
+    }
+  }
+  spaceBackdrop = { canvas: bgc, w: bw, h: bh };
+}
+function drawSpaceBackdrop() {
+  const bw = Math.max(1, Math.floor(W)), bh = Math.max(1, Math.floor(H));
+  if (!spaceBackdrop || spaceBackdrop.w !== bw || spaceBackdrop.h !== bh) buildSpaceBackdrop();
+  ctx.save();
+  ctx.globalCompositeOperation = 'source-over';
+  ctx.globalAlpha = 1;
+  ctx.drawImage(spaceBackdrop.canvas, 0, 0, W, H);
+  ctx.restore();
+}
+
 function draw() {
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
   ctx.globalCompositeOperation = 'source-over';
-  ctx.fillStyle = 'rgba(1,2,6,0.34)';
-  ctx.fillRect(0, 0, W, H);
+  drawSpaceBackdrop();
+  // Subtle depth vignette: keeps the arena visually anchored without obscuring play.
+  if (!lite) {
+    const vg = ctx.createRadialGradient(CX, CY, R * 0.18, CX, CY, Math.max(W, H) * 0.76);
+    vg.addColorStop(0, 'rgba(14,30,48,0.07)');
+    vg.addColorStop(0.62, 'rgba(0,0,0,0.03)');
+    vg.addColorStop(1, 'rgba(0,0,0,0.28)');
+    ctx.fillStyle = vg;
+    ctx.fillRect(0, 0, W, H);
+  }
 
   let shakeX = 0, shakeY = 0;
   if (shakeT > 0) {
@@ -3909,6 +4816,8 @@ function draw() {
   if (shakeX || shakeY) ctx.translate(shakeX, shakeY);
 
   if (fxLevel > 0) drawDust();
+  drawArenaFloor();
+  drawArenaChassis();
 
   ctx.globalCompositeOperation = 'lighter';
 
@@ -3932,6 +4841,7 @@ function draw() {
 
   drawDebris();
   for (const w of walls) drawWall(w);
+  drawArenaCorners();
   for (const w of walls) if (w.owner) { drawPaddle(w); drawPaddleFx(w); }
   drawModifiers();
   for (const b of balls) drawBall(b);
@@ -3949,7 +4859,7 @@ function draw() {
   ctx.globalCompositeOperation = 'source-over';
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
 
-  for (const w of walls) if (w.owner) drawLabel(w);
+  for (const w of walls) if (w.owner && w.owner.human) drawLabel(w);
   drawPopups();
 
   if (paused) { ctx.fillStyle = 'rgba(0,4,10,.5)'; ctx.fillRect(0, 0, W, H); }
@@ -4016,53 +4926,136 @@ function drawTouchGuide() {
   if (!TOUCH || !running || over || ending) return;
   const me = players[PLAYER];
   if (!me || me.out) return;
-  // Find the outer-most Y of the arena (player sits on the bottom rail)
   let arenaBottom = CY + R;
-  for (const w of walls) {
-    if (w.ay > arenaBottom) arenaBottom = w.ay;
-    if (w.by > arenaBottom) arenaBottom = w.by;
-  }
-  const screenBottom = H - (inset.b || 0) - 8;
-  if (screenBottom <= arenaBottom + 12) return;
-  const y = (arenaBottom + screenBottom) * 0.5;
-  // 3× the paddle-width guide so the touch target is obvious
-  const len = Math.max(PAD.len || 40, halfSpan(me) * 2) * 3;
+  for (const w of walls) arenaBottom = Math.max(arenaBottom, w.ay, w.by);
+  const screenBottom = H - (inset.b || 0) - 10;
+  if (screenBottom <= arenaBottom + 18) return;
+  const y = arenaBottom + (screenBottom - arenaBottom) * 0.74;
+  const len = W * 0.74;
   const x0 = CX - len * 0.5, x1 = CX + len * 0.5;
-  // Stronger while the text hint is still up; softer after the player has dragged once
-  const a = hintDone ? 0.22 : 0.7;
+  const col = '#18d9f3';
+
   ctx.save();
   ctx.globalCompositeOperation = 'source-over';
-  ctx.strokeStyle = 'rgba(143,188,216,' + a + ')';
-  ctx.lineWidth = 3;
-  ctx.setLineDash([8, 10]);
   ctx.lineCap = 'round';
+  ctx.shadowColor = col;
+  ctx.shadowBlur = glow(8);
+  ctx.strokeStyle = hexA(col, 0.68);
+  ctx.lineWidth = 1.4;
+  ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(x1, y); ctx.stroke();
+
+  ctx.strokeStyle = hexA(col, 0.96);
+  ctx.lineWidth = 3.4;
+  ctx.beginPath(); ctx.moveTo(CX - W * 0.045, y); ctx.lineTo(CX + W * 0.045, y); ctx.stroke();
+
+  ctx.lineWidth = 2.4;
   ctx.beginPath();
-  ctx.moveTo(x0, y);
-  ctx.lineTo(x1, y);
+  ctx.moveTo(x0 + 8, y - 8); ctx.lineTo(x0, y); ctx.lineTo(x0 + 8, y + 8);
+  ctx.moveTo(x1 - 8, y - 8); ctx.lineTo(x1, y); ctx.lineTo(x1 - 8, y + 8);
   ctx.stroke();
-  // end caps so it reads as a target zone, not a random dash
-  ctx.setLineDash([]);
-  ctx.lineWidth = 3;
+
+  // Fine ornamental lines and nodes frame the instruction label.
+  ctx.shadowBlur = glow(3);
+  ctx.strokeStyle = hexA(col, 0.46);
+  ctx.lineWidth = 0.65;
   ctx.beginPath();
-  ctx.moveTo(x0, y - 8); ctx.lineTo(x0, y + 8);
-  ctx.moveTo(x1, y - 8); ctx.lineTo(x1, y + 8);
+  ctx.moveTo(x0 + 28, y - 20); ctx.lineTo(CX - 70, y - 20); ctx.lineTo(CX - 64, y - 16);
+  ctx.moveTo(CX + 64, y - 16); ctx.lineTo(CX + 70, y - 20); ctx.lineTo(x1 - 28, y - 20);
   ctx.stroke();
-  // Label above the guide
-  if (!hintDone) {
-    ctx.font = '700 13px ui-monospace,monospace';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'bottom';
-    ctx.fillStyle = 'rgba(168,207,232,' + a + ')';
-    ctx.shadowColor = 'rgba(90,180,255,0.45)';
-    ctx.shadowBlur = 10;
-    ctx.letterSpacing = '0.18em';
-    ctx.fillText('PLACE FINGER HERE', CX, y - 12);
+  ctx.fillStyle = hexA(col, 0.78);
+  for (const px of [CX - 58, CX - 54, CX + 54, CX + 58]) {
+    ctx.beginPath(); ctx.arc(px, y - 18, 0.75, 0, TAU); ctx.fill();
   }
+
+  ctx.font = '700 11px \"Avenir Next Condensed\", \"DIN Condensed\", ui-monospace, monospace';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'bottom';
+  ctx.fillStyle = hexA(col, 0.94);
+  ctx.letterSpacing = '0.12em';
+  ctx.fillText('DRAG TO MOVE', CX, y - 13);
   ctx.restore();
 }
 
 // Ambient background: faint particles drifting slowly left, wrapping around. Purely
 // decorative depth behind the arena — skipped entirely when fxLevel is Off.
+// Subtle tactical floor from the prototype: clipped honeycomb cells plus a center target.
+function drawArenaFloor() {
+  if (fxLevel === 0 || walls.length < 3) return;
+  const cell = Math.max(14, R * 0.082);
+  const stepX = cell * 1.5, stepY = cell * 1.732;
+  ctx.save();
+  ctx.globalCompositeOperation = 'source-over';
+  ctx.beginPath();
+  ctx.moveTo(walls[0].ax, walls[0].ay);
+  for (const w of walls) ctx.lineTo(w.bx, w.by);
+  ctx.closePath();
+  ctx.clip();
+
+  // Deep blue-black recessed playing surface with a soft center lift.
+  const floor = ctx.createRadialGradient(CX, CY, R * 0.08, CX, CY, R * 1.05);
+  floor.addColorStop(0, 'rgba(6,20,34,0.96)');
+  floor.addColorStop(0.58, 'rgba(2,11,22,0.97)');
+  floor.addColorStop(1, 'rgba(0,5,13,0.99)');
+  ctx.fillStyle = floor;
+  ctx.fillRect(CX - R * 1.1, CY - R * 1.1, R * 2.2, R * 2.2);
+
+  // Fine honeycomb grid: dense and quiet, like etched glass rather than bright wire.
+  ctx.strokeStyle = 'rgba(31,104,139,0.14)';
+  ctx.lineWidth = 0.62;
+  ctx.beginPath();
+  let col = 0;
+  for (let x = CX - R - cell; x <= CX + R + cell; x += stepX, col++) {
+    const yOff = (col & 1) ? stepY * 0.5 : 0;
+    for (let y = CY - R - stepY + yOff; y <= CY + R + stepY; y += stepY) {
+      if (!insideArena(x, y, 3)) continue;
+      for (let k = 0; k < 6; k++) {
+        const a = Math.PI / 3 * k;
+        const px = x + Math.cos(a) * cell * 0.56;
+        const py = y + Math.sin(a) * cell * 0.56;
+        if (k === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+      }
+      ctx.closePath();
+    }
+  }
+  ctx.stroke();
+
+  // Central targeting instrument with concentric rings, six ticks, and cyan core hex.
+  ctx.strokeStyle = 'rgba(54,164,205,0.25)';
+  ctx.lineWidth = 0.85;
+  for (const rr of [R * 0.075, R * 0.145, R * 0.225]) {
+    ctx.beginPath(); ctx.arc(CX, CY, rr, 0, TAU); ctx.stroke();
+  }
+  for (let k = 0; k < 6; k++) {
+    const a = Math.PI / 3 * k - Math.PI / 6;
+    const r0 = R * 0.245, r1 = R * 0.276;
+    const tx = CX + Math.cos(a) * r1, ty = CY + Math.sin(a) * r1;
+    ctx.beginPath();
+    ctx.moveTo(CX + Math.cos(a) * r0, CY + Math.sin(a) * r0);
+    ctx.lineTo(tx, ty);
+    ctx.stroke();
+  }
+  ctx.fillStyle = 'rgba(1,17,29,0.96)';
+  ctx.strokeStyle = 'rgba(0,211,241,0.48)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  for (let k = 0; k < 6; k++) {
+    const a = Math.PI / 3 * k;
+    const px = CX + Math.cos(a) * R * 0.042;
+    const py = CY + Math.sin(a) * R * 0.042;
+    if (k === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+  }
+  ctx.closePath(); ctx.fill(); ctx.stroke();
+
+  // Subtle inner rim helps the floor sit below the wall chassis.
+  ctx.strokeStyle = 'rgba(78,133,165,0.14)';
+  ctx.lineWidth = 1.2;
+  ctx.beginPath();
+  ctx.moveTo(walls[0].ax + walls[0].nx * 3, walls[0].ay + walls[0].ny * 3);
+  for (const w of walls) ctx.lineTo(w.bx + w.nx * 3, w.by + w.ny * 3);
+  ctx.closePath(); ctx.stroke();
+  ctx.restore();
+}
+
 function drawDust() {
   ctx.save();
   for (const d of dust) {
@@ -4120,7 +5113,7 @@ function drawSparks() {
 }
 
 // Floating +points text for every discrete scoring event (paddle hits, modifier pickups,
-// the nerfed penalty, rally-kill/elimination bounties) — everything except survival (which
+// modifier pickups and rally-kill/elimination bounties) — everything except survival (which
 // ticks continuously) and the placement/difficulty multipliers (applied once at match end).
 function spawnPopup(x, y, text, col) {
   popups.push({ x, y, text, col, t: 1, vy: -34 });
@@ -4138,140 +5131,414 @@ function drawPopups() {
   }
 }
 
+/* Continuous faceted armor ring behind every dynamic wall. It joins all six corners into
+   one machined chassis while drawWall() remains responsible for lives and energy color. */
+function drawArenaChassis() {
+  if (walls.length < 3) return;
+  const verts = walls.map(w => ({ x:w.ax, y:w.ay }));
+  // Keep the shared ring narrow at vertices; the deeper per-wall plates carry the armor
+  // so the six extreme corners retain the reference's clipped chamfer instead of ballooning.
+  const out = R * 0.055, inset = R * 0.035;
+  const shifted = (v, d) => {
+    const ux = (v.x - CX) / Math.max(1, R), uy = (v.y - CY) / Math.max(1, R);
+    return { x:v.x + ux * d, y:v.y + uy * d };
+  };
+  const poly = (arr) => {
+    ctx.beginPath();
+    arr.forEach((v, i) => { if (i) ctx.lineTo(v.x, v.y); else ctx.moveTo(v.x, v.y); });
+    ctx.closePath();
+  };
+
+  ctx.save();
+  ctx.globalCompositeOperation = 'source-over';
+  const outer = verts.map(v => shifted(v, out));
+  const inner = verts.map(v => shifted(v, -inset));
+  const metal = ctx.createRadialGradient(CX, CY, R * 0.88, CX, CY, R + out);
+  metal.addColorStop(0, 'rgba(18,29,43,0.99)');
+  metal.addColorStop(0.30, 'rgba(7,13,24,0.995)');
+  metal.addColorStop(0.78, 'rgba(2,6,14,1)');
+  metal.addColorStop(1, 'rgba(0,2,8,1)');
+  ctx.shadowColor = 'rgba(0,0,0,0.92)';
+  ctx.shadowBlur = glow(R * 0.035);
+  ctx.fillStyle = metal;
+  ctx.beginPath();
+  outer.forEach((v, i) => { if (i) ctx.lineTo(v.x, v.y); else ctx.moveTo(v.x, v.y); });
+  ctx.closePath();
+  inner.slice().reverse().forEach((v, i) => { if (i) ctx.lineTo(v.x, v.y); else ctx.moveTo(v.x, v.y); });
+  ctx.closePath();
+  ctx.fill('evenodd');
+
+  // Three restrained facet contours reproduce the stacked machined lip in the reference.
+  ctx.shadowBlur = 0;
+  for (const band of [R * 0.012, R * 0.032, R * 0.055]) {
+    const ring = verts.map(v => shifted(v, band));
+    ctx.strokeStyle = band < R * 0.025 ? 'rgba(94,142,172,0.30)' : 'rgba(48,79,105,0.18)';
+    ctx.lineWidth = band < R * 0.025 ? 1.15 : 0.75;
+    poly(ring); ctx.stroke();
+  }
+
+  // Low-alpha panel scratches break up perfectly smooth polygons without visual noise.
+  ctx.strokeStyle = 'rgba(150,190,215,0.075)';
+  ctx.lineWidth = 0.65;
+  for (const w of walls) {
+    const mid = w.len * 0.5;
+    for (const q of [-0.28, 0.22]) {
+      const s0 = mid + w.len * q - R * 0.035, s1 = mid + w.len * q + R * 0.035;
+      ctx.beginPath();
+      ctx.moveTo(w.ax + w.dx * s0 - w.nx * R * 0.038, w.ay + w.dy * s0 - w.ny * R * 0.038);
+      ctx.lineTo(w.ax + w.dx * s1 - w.nx * R * 0.042, w.ay + w.dy * s1 - w.ny * R * 0.042);
+      ctx.stroke();
+    }
+  }
+  ctx.restore();
+}
+
 /* Slim rail. An owned wall is split into `startLives` segments; segments crumble
    from the outside in as lives are lost, so the wall itself reads as a health bar. */
 function drawWall(w) {
   const p = w.owner;
   ctx.save();
-  ctx.lineCap = 'butt';
+  ctx.lineCap = 'square';
+  ctx.lineJoin = 'bevel';
 
-  if (!p) {                                   // inert bumper
-    const bd = 0.16;   // rails sit dim by default now (previously the Blackout Modifier look)
-    ctx.shadowColor = WALL_COL; ctx.shadowBlur = glow((4 + w.flash * 18) * bd);
-    ctx.strokeStyle = hexA(WALL_COL, (0.09 + w.flash * 0.26) * bd);
-    ctx.lineWidth = 3;
+  if (!p) {
+    const bd = 0.26;
+    ctx.shadowColor = WALL_COL; ctx.shadowBlur = glow((6 + w.flash * 18) * bd);
+    ctx.strokeStyle = hexA(WALL_COL, (0.16 + w.flash * 0.30) * bd);
+    ctx.lineWidth = 7;
     ctx.beginPath(); ctx.moveTo(w.ax, w.ay); ctx.lineTo(w.bx, w.by); ctx.stroke();
-    ctx.shadowBlur = glow(3);
-    ctx.strokeStyle = hexA(WALL_COL, (0.46 + w.flash * 0.45) * bd);
-    ctx.lineWidth = 1.1;
+    ctx.strokeStyle = hexA(WALL_COL, (0.62 + w.flash * 0.32) * bd);
+    ctx.lineWidth = 2.2;
     ctx.beginPath(); ctx.moveTo(w.ax, w.ay); ctx.lineTo(w.bx, w.by); ctx.stroke();
     ctx.restore();
     return;
   }
 
   const hurt = p.hurtFlash;
-  const dim = 0.13;      // rails sit dim by default now (previously the Blackout Modifier look)
+  const humanWall = !!p.human;
+  const dim = humanWall ? 0.98 : 0.88;
+  const midX = (w.ax + w.bx) * 0.5, midY = (w.ay + w.by) * 0.5;
+  const plateIn = R * 0.018, plateOut = R * 0.100, bevel = R * 0.032;
+
+  // Recessed six-sided chassis: the energy rail sits in a dark armored trough instead
+  // of reading as one flat neon stroke. The outer lip creates the prototype's deck profile.
+  ctx.globalCompositeOperation = 'source-over';
+  const deck = ctx.createLinearGradient(midX + w.nx * plateIn, midY + w.ny * plateIn,
+                                        midX - w.nx * plateOut, midY - w.ny * plateOut);
+  deck.addColorStop(0, 'rgba(18,34,49,0.98)');
+  deck.addColorStop(0.22, 'rgba(6,13,25,0.99)');
+  deck.addColorStop(0.72, 'rgba(1,5,13,1)');
+  deck.addColorStop(1, hexA(p.col, 0.24 * dim));
+  ctx.shadowColor = 'rgba(0,0,0,0.95)';
+  ctx.shadowBlur = 9;
+  ctx.fillStyle = deck;
+  ctx.strokeStyle = hexA(p.col, 0.60 * dim);
+  ctx.lineWidth = 1.15;
+  ctx.beginPath();
+  ctx.moveTo(w.ax + w.nx * plateIn, w.ay + w.ny * plateIn);
+  ctx.lineTo(w.bx + w.nx * plateIn, w.by + w.ny * plateIn);
+  ctx.lineTo(w.bx + w.dx * bevel - w.nx * 3.5, w.by + w.dy * bevel - w.ny * 3.5);
+  ctx.lineTo(w.bx + w.dx * 2 - w.nx * plateOut, w.by + w.dy * 2 - w.ny * plateOut);
+  ctx.lineTo(w.ax - w.dx * 2 - w.nx * plateOut, w.ay - w.dy * 2 - w.ny * plateOut);
+  ctx.lineTo(w.ax - w.dx * bevel - w.nx * 3.5, w.ay - w.dy * bevel - w.ny * 3.5);
+  ctx.closePath();
+  ctx.fill(); ctx.stroke();
+
+  // Inner and outer trim lines give the wall the same layered mechanical richness as the mockup.
+  ctx.shadowBlur = 0;
+  ctx.strokeStyle = hexA(p.col, 0.48 * dim);
+  ctx.lineWidth = 1.05;
+  ctx.beginPath();
+  ctx.moveTo(w.ax + w.nx * 1.2, w.ay + w.ny * 1.2);
+  ctx.lineTo(w.bx + w.nx * 1.2, w.by + w.ny * 1.2);
+  ctx.stroke();
+  ctx.strokeStyle = hexA(p.col, 0.28 * dim);
+  ctx.lineWidth = 1.35;
+  ctx.beginPath();
+  ctx.moveTo(w.ax - w.dx * 1.5 - w.nx * 9.4, w.ay - w.dy * 1.5 - w.ny * 9.4);
+  ctx.lineTo(w.bx + w.dx * 1.5 - w.nx * 9.4, w.by + w.dy * 1.5 - w.ny * 9.4);
+  ctx.stroke();
+
+  // Small center armor notch echoes the prototype's reinforced lower wall panel.
+  const notchHalf = Math.min(31, w.len * 0.13);
+  ctx.strokeStyle = hexA(p.col, (humanWall ? 0.46 : 0.24) * dim);
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(midX - w.dx * notchHalf - w.nx * 10.2, midY - w.dy * notchHalf - w.ny * 10.2);
+  ctx.lineTo(midX - w.dx * 5 - w.nx * 10.2, midY - w.dy * 5 - w.ny * 10.2);
+  ctx.lineTo(midX - w.dx * 3 - w.nx * 12.7, midY - w.dy * 3 - w.ny * 12.7);
+  ctx.lineTo(midX + w.dx * 3 - w.nx * 12.7, midY + w.dy * 3 - w.ny * 12.7);
+  ctx.lineTo(midX + w.dx * 5 - w.nx * 10.2, midY + w.dy * 5 - w.ny * 10.2);
+  ctx.lineTo(midX + w.dx * notchHalf - w.nx * 10.2, midY + w.dy * notchHalf - w.ny * 10.2);
+  ctx.stroke();
+
   const L = Math.max(1, startLives);
   const order = removalOrder(L);
   const lost = clamp(L - p.lives, 0, L);
   const dead = new Set(order.slice(0, lost));
-  const gapPx = L > 1 ? Math.min(7, w.len * 0.012) : 0;
+  const gapPx = L > 1 ? Math.min(0.55, w.len * 0.0015) : 0;
 
+  // Keep the tube saturated and seated just inside the chassis lip.
+  ctx.globalCompositeOperation = 'source-over';
+  const railOff = 0.7;
+  const cornerCut = R * CORNER_HARDWARE_RATIO;
   for (let k = 0; k < L; k++) {
     let t0 = (k / L) * w.len, t1 = ((k + 1) / L) * w.len;
     if (L > 1) { if (k > 0) t0 += gapPx * 0.5; if (k < L - 1) t1 -= gapPx * 0.5; }
-    const x1 = w.ax + w.dx * t0, y1 = w.ay + w.dy * t0;
-    const x2 = w.ax + w.dx * t1, y2 = w.ay + w.dy * t1;
+    if (k === 0) t0 += cornerCut;
+    if (k === L - 1) t1 -= cornerCut;
+    const x1 = w.ax + w.dx * t0 + w.nx * railOff, y1 = w.ay + w.dy * t0 + w.ny * railOff;
+    const x2 = w.ax + w.dx * t1 + w.nx * railOff, y2 = w.ay + w.dy * t1 + w.ny * railOff;
 
     if (dead.has(k)) {
-      // burned-out chunk: dark, cracked, faintly flickering embers
-      const fl = 0.22 + 0.09 * Math.abs(Math.sin(elapsed * 3 + k * 2.1));
-      ctx.setLineDash([2, 5]);
-      ctx.shadowColor = p.col; ctx.shadowBlur = glow(3);
-      ctx.strokeStyle = hexA(p.col, fl);
-      ctx.lineWidth = 1.2;
-      ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
-      ctx.setLineDash([]);
-      // scorch ticks hanging off the break
+      const fl = 0.18 + 0.07 * Math.abs(Math.sin(elapsed * 3 + k * 2.1));
+      ctx.setLineDash([3, 5]);
       ctx.shadowBlur = 0;
-      ctx.strokeStyle = hexA(p.col, fl * 0.8);
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      for (let q = 1; q <= 3; q++) {
-        const tt = q / 4;
-        const bx = x1 + (x2 - x1) * tt, by = y1 + (y2 - y1) * tt;
-        const d2 = 2 + ((k * 7 + q * 13) % 5);
-        ctx.moveTo(bx, by); ctx.lineTo(bx + w.nx * d2, by + w.ny * d2);
-      }
-      ctx.stroke();
-    } else {
+      ctx.strokeStyle = hexA(p.col, fl);
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
       ctx.setLineDash([]);
-      ctx.shadowColor = p.col;
-      ctx.shadowBlur = glow((10 + hurt * 22) * dim);
-      ctx.strokeStyle = hexA(p.col, (0.28 + hurt * 0.32) * dim);
-      ctx.lineWidth = 4.2;                                  // stronger coloured halo
+      continue;
+    }
+
+    // Three deliberate layers: restrained bloom, saturated tube, polished hairline.
+    ctx.shadowColor = p.col;
+    ctx.shadowBlur = glow((10 + hurt * 14) * dim);
+    ctx.strokeStyle = hexA(p.col, (0.28 + hurt * 0.14) * dim);
+    ctx.lineWidth = R * (humanWall ? 0.052 : 0.048);
+    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+
+    ctx.shadowBlur = glow(5 + hurt * 8);
+    ctx.strokeStyle = hexA(p.col, 0.98 * dim);
+    ctx.lineWidth = R * (humanWall ? 0.031 : 0.029);
+    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+
+    ctx.shadowBlur = glow(2.5);
+    ctx.strokeStyle = mixWhite(p.col, 0.20);
+    ctx.lineWidth = Math.max(0.6, R * 0.0035);
+    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+
+    if (hurt > 0.01) {
+      ctx.strokeStyle = 'rgba(255,255,255,' + (hurt * 0.74) + ')';
+      ctx.lineWidth = 1.5; ctx.shadowBlur = glow(18);
       ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
-      ctx.shadowBlur = glow(6);
-      ctx.strokeStyle = hexA(p.col, 0.98 * dim);
-      ctx.lineWidth = 1.6;
-      ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
-      if (hurt > 0.01) {
-        ctx.strokeStyle = 'rgba(255,255,255,' + (hurt * 0.6) + ')';
-        ctx.lineWidth = 1; ctx.shadowBlur = glow(14);
-        ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
-      }
     }
   }
+
   ctx.restore();
+}
+
+/* One shared joint owns each arena vertex. Adjacent rails taper into this faceted
+   machined bridge instead of painting two end caps over one another. */
+function drawArenaCorners() {
+  const n = walls.length;
+  if (n < 3) return;
+  const cut = R * CORNER_HARDWARE_RATIO;
+  const outerDepth = R * 0.070;
+  const innerDepth = R * 0.032;
+  const tubeHalf = R * 0.0155;
+
+  const point = (x, y) => ({ x, y });
+  const line = (a, b) => {
+    ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+  };
+  const taper = (base, tip, nx, ny, half, col, alpha) => {
+    ctx.fillStyle = hexA(col, alpha);
+    ctx.beginPath();
+    ctx.moveTo(base.x + nx * half, base.y + ny * half);
+    ctx.lineTo(base.x - nx * half, base.y - ny * half);
+    ctx.lineTo(tip.x, tip.y);
+    ctx.closePath();
+    ctx.fill();
+  };
+
+  for (let i = 0; i < n; i++) {
+    const prev = walls[(i - 1 + n) % n];
+    const next = walls[i];
+    const vx = next.ax, vy = next.ay;
+    const radialLen = Math.max(1, Math.hypot(vx - CX, vy - CY));
+    const ux = (vx - CX) / radialLen, uy = (vy - CY) / radialLen;
+    const a = point(vx - prev.dx * cut, vy - prev.dy * cut);
+    const b = point(vx + next.dx * cut, vy + next.dy * cut);
+    const ao = point(a.x - prev.nx * outerDepth, a.y - prev.ny * outerDepth);
+    const ai = point(a.x + prev.nx * innerDepth, a.y + prev.ny * innerDepth);
+    const bo = point(b.x - next.nx * outerDepth, b.y - next.ny * outerDepth);
+    const bi = point(b.x + next.nx * innerDepth, b.y + next.ny * innerDepth);
+    const tipOut = point(vx + ux * outerDepth * 0.92, vy + uy * outerDepth * 0.92);
+    const tipIn = point(vx - ux * innerDepth * 0.82, vy - uy * innerDepth * 0.82);
+    const prevTip = point(vx - prev.dx * R * 0.010, vy - prev.dy * R * 0.010);
+    const nextTip = point(vx + next.dx * R * 0.010, vy + next.dy * R * 0.010);
+    const prevCol = prev.owner ? prev.owner.col : WALL_COL;
+    const nextCol = next.owner ? next.owner.col : WALL_COL;
+
+    ctx.save();
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.lineJoin = 'bevel';
+    ctx.lineCap = 'butt';
+
+    const metal = ctx.createLinearGradient(tipIn.x, tipIn.y, tipOut.x, tipOut.y);
+    metal.addColorStop(0, 'rgba(15,27,41,0.99)');
+    metal.addColorStop(0.38, 'rgba(5,11,21,1)');
+    metal.addColorStop(1, 'rgba(1,3,9,1)');
+    ctx.fillStyle = metal;
+    ctx.strokeStyle = 'rgba(84,130,158,0.30)';
+    ctx.lineWidth = 0.9;
+    ctx.shadowColor = 'rgba(0,0,0,0.90)';
+    ctx.shadowBlur = glow(R * 0.025);
+    ctx.beginPath();
+    ctx.moveTo(ai.x, ai.y);
+    ctx.lineTo(ao.x, ao.y);
+    ctx.lineTo(tipOut.x, tipOut.y);
+    ctx.lineTo(bo.x, bo.y);
+    ctx.lineTo(bi.x, bi.y);
+    ctx.lineTo(tipIn.x, tipIn.y);
+    ctx.closePath();
+    ctx.fill(); ctx.stroke();
+
+    // Recessed inner seam and split-color outer bevel keep the joint readable.
+    ctx.shadowBlur = 0;
+    ctx.strokeStyle = 'rgba(132,184,211,0.25)';
+    ctx.lineWidth = 0.75;
+    ctx.beginPath();
+    ctx.moveTo(ai.x, ai.y); ctx.lineTo(tipIn.x, tipIn.y); ctx.lineTo(bi.x, bi.y);
+    ctx.stroke();
+    ctx.strokeStyle = hexA(prevCol, 0.48);
+    ctx.lineWidth = 1;
+    line(ao, tipOut);
+    ctx.strokeStyle = hexA(nextCol, 0.48);
+    line(tipOut, bo);
+
+    // Each colored tube narrows to its own point, leaving a crisp dark miter between them.
+    taper(a, prevTip, prev.nx, prev.ny, tubeHalf * 1.65, prevCol, 0.18);
+    taper(b, nextTip, next.nx, next.ny, tubeHalf * 1.65, nextCol, 0.18);
+    taper(a, prevTip, prev.nx, prev.ny, tubeHalf, prevCol, 0.96);
+    taper(b, nextTip, next.nx, next.ny, tubeHalf, nextCol, 0.96);
+    ctx.strokeStyle = mixWhite(prevCol, 0.20);
+    ctx.lineWidth = Math.max(0.55, R * 0.0032);
+    line(a, prevTip);
+    ctx.strokeStyle = mixWhite(nextCol, 0.20);
+    line(nextTip, b);
+
+    // Small dark diamond is the single fastener shared by both wall segments.
+    ctx.fillStyle = 'rgba(1,5,12,0.96)';
+    ctx.strokeStyle = 'rgba(115,170,198,0.26)';
+    ctx.lineWidth = 0.7;
+    const fast = R * 0.010;
+    ctx.beginPath();
+    ctx.moveTo(vx, vy - fast);
+    ctx.lineTo(vx + fast, vy);
+    ctx.lineTo(vx, vy + fast);
+    ctx.lineTo(vx - fast, vy);
+    ctx.closePath();
+    ctx.fill(); ctx.stroke();
+    ctx.restore();
+  }
 }
 
 function drawPaddle(w) {
   const p = w.owner;
-  const c = p.pos * w.len + p.jit, hs = halfSpan(p);
-  // Trapezoid, flipped from the original: short tapered face toward the arena,
-  // long full-width face against the wall. Reads like a wedge pointed at the ball.
-  // Outer ends are angled so corner hits are readable and steerable.
-  const tip = hs * 0.28;                         // how much the arena-facing end tucks in
-  const backHs = Math.max(hs * 0.45, hs - tip);  // shorter tapered face
-  const outS = padFaceS() - BALL.r * 0.15;       // contact face (toward center)
-  const inS  = PAD.gap + 1;                     // back face (near wall)
-  const dx = w.dx, dy = w.dy, nx = w.nx, ny = w.ny;
-  // Contact face corners (short, tapered)
-  const c1x = w.ax + dx * (c - backHs) + nx * outS, c1y = w.ay + dy * (c - backHs) + ny * outS;
-  const c2x = w.ax + dx * (c + backHs) + nx * outS, c2y = w.ay + dy * (c + backHs) + ny * outS;
-  // Back face corners (long, full width)
-  const b1x = w.ax + dx * (c - hs) + nx * inS, b1y = w.ay + dy * (c - hs) + ny * inS;
-  const b2x = w.ax + dx * (c + hs) + nx * inS, b2y = w.ay + dy * (c + hs) + ny * inS;
+  if (!p) return;
+  const c = p.pos * w.len + p.jit;
+  const hs = halfSpan(p);
+  const h = PAD.thick;
+  const centerS = PAD.gap + h * 0.5;             // outer shell remains exactly 2px off the rail
+  const cx = w.ax + w.dx * c + w.nx * centerS;
+  const cy = w.ay + w.dy * c + w.ny * centerS;
+  const angle = Math.atan2(w.dy, w.dx);
+  const radius = Math.min(h * 0.38, 4.5);
+  const hit = clamp(p.hitFlash || 0, 0, 1);
 
   ctx.save();
+  ctx.globalCompositeOperation = 'source-over';   // prevent the capsule from bleaching under the arena's additive pass
+  ctx.translate(cx, cy);
+  ctx.rotate(angle);
   ctx.lineJoin = 'round';
-  ctx.lineCap = 'butt';
-  if (fxLevel === 0) {
-    ctx.shadowBlur = 0;
-    ctx.fillStyle = p.col;
+  ctx.lineCap = 'round';
+
+  // Compact armored capsule: dark chassis, colored energy core, metallic collars.
+  ctx.shadowColor = p.col;
+  ctx.shadowBlur = fxLevel === 0 ? 0 : glow((lite ? 8 : 13) + hit * 18);
+  ctx.fillStyle = 'rgba(2,6,14,0.98)';
+  ctx.strokeStyle = hexA(p.col, 0.86);
+  ctx.lineWidth = 1.25;
+  ctx.beginPath();
+  ctx.roundRect(-hs, -h * 0.5, hs * 2, h, radius);
+  ctx.fill(); ctx.stroke();
+
+  const shell = ctx.createLinearGradient(0, -h * 0.5, 0, h * 0.5);
+  shell.addColorStop(0, mixWhite(p.col, 0.48));
+  shell.addColorStop(0.16, hexA(p.col, 0.96));
+  shell.addColorStop(0.48, 'rgba(5,9,19,0.88)');
+  shell.addColorStop(0.76, hexA(p.col, 0.82));
+  shell.addColorStop(1, mixWhite(p.col, 0.24));
+  ctx.shadowBlur = fxLevel === 0 ? 0 : glow((lite ? 4 : 8) + hit * 14);
+  ctx.fillStyle = shell;
+  ctx.strokeStyle = mixWhite(p.col, 0.30);
+  ctx.lineWidth = 0.9;
+  ctx.beginPath();
+  ctx.roundRect(-hs + 2.2, -h * 0.5 + 1.3, hs * 2 - 4.4, h - 2.6, Math.max(1.5, radius - 1));
+  ctx.fill(); ctx.stroke();
+
+  // Bright inner tube stays colored instead of becoming a white rectangle.
+  const core = ctx.createLinearGradient(0, -h * 0.25, 0, h * 0.25);
+  core.addColorStop(0, mixWhite(p.col, 0.34));
+  core.addColorStop(0.34, hexA(p.col, 0.94));
+  core.addColorStop(1, hexA(p.col, 0.48));
+  ctx.fillStyle = core;
+  ctx.shadowColor = p.col;
+  ctx.shadowBlur = fxLevel === 0 ? 0 : glow(5 + hit * 15);
+  ctx.beginPath();
+  ctx.roundRect(-hs + 6.2, -h * 0.22, hs * 2 - 12.4, h * 0.44, h * 0.18);
+  ctx.fill();
+
+  // Reinforced end collars and seams sell the mechanical frame from the prototype.
+  ctx.shadowBlur = 0;
+  for (const side of [-1, 1]) {
+    const x = side < 0 ? -hs + 1.1 : hs - 6.1;
+    const collar = ctx.createLinearGradient(0, -h * 0.5, 0, h * 0.5);
+    collar.addColorStop(0, mixWhite(p.col, 0.24));
+    collar.addColorStop(0.30, 'rgba(12,18,31,0.98)');
+    collar.addColorStop(0.72, 'rgba(2,6,14,0.98)');
+    collar.addColorStop(1, hexA(p.col, 0.54));
+    ctx.fillStyle = collar;
+    ctx.strokeStyle = hexA(p.col, 0.72);
+    ctx.lineWidth = 0.8;
     ctx.beginPath();
-    ctx.moveTo(c1x, c1y); ctx.lineTo(c2x, c2y); ctx.lineTo(b2x, b2y); ctx.lineTo(b1x, b1y);
-    ctx.closePath(); ctx.fill();
-  } else {
-    ctx.shadowColor = p.col;
-    ctx.shadowBlur = lite ? 9 + p.hitFlash * 12 : 22 + p.hitFlash * 36;
-    ctx.fillStyle = hexA(p.col, 0.92);
-    ctx.strokeStyle = hexA(p.col, 0.98);
-    ctx.lineWidth = Math.max(1.5, PAD.thick * 0.18);
+    ctx.roundRect(x, -h * 0.5 + 0.8, 5, h - 1.6, 1.4);
+    ctx.fill(); ctx.stroke();
+    ctx.strokeStyle = 'rgba(220,242,255,0.32)';
     ctx.beginPath();
-    ctx.moveTo(c1x, c1y); ctx.lineTo(c2x, c2y); ctx.lineTo(b2x, b2y); ctx.lineTo(b1x, b1y);
-    ctx.closePath(); ctx.fill(); ctx.stroke();
-    // lighter core strip along the contact face
-    ctx.shadowBlur = lite ? 4 + p.hitFlash * 8 : 10 + p.hitFlash * 28;
-    ctx.strokeStyle = 'rgba(255,255,255,' + (0.40 + p.hitFlash * 0.35) + ')';
-    ctx.lineWidth = Math.max(1.4, PAD.thick * 0.2);
-    ctx.beginPath(); ctx.moveTo(c1x, c1y); ctx.lineTo(c2x, c2y); ctx.stroke();
-    // Sweet-spot / tip flash, positioned at the real contact point along the paddle
-    // (sweetOff, from -1 to 1) rather than always the drawn face's midpoint — the
-    // contact face is short after the flip, so a tip hit's flash still needs to land
-    // out at the actual tip rather than being pulled back toward the shape's own center.
-    if (p.sweetFlash > 0) {
-      const ftc = c + (p.sweetOff || 0) * hs;
-      const mx = w.ax + dx * ftc + nx * outS, my = w.ay + dy * ftc + ny * outS;
-      const k = p.sweetFlash;
-      ctx.shadowColor = '#ffd97a';
-      ctx.shadowBlur = glow(18 * k);
-      ctx.strokeStyle = 'rgba(255,217,122,' + (0.75 * k) + ')';
-      ctx.lineWidth = 2.2;
-      ctx.beginPath();
-      ctx.arc(mx, my, PAD.thick * (0.9 + (1 - k) * 1.8), 0, TAU);
-      ctx.stroke();
-    }
+    const seamX = side < 0 ? x + 4.1 : x + 0.9;
+    ctx.moveTo(seamX, -h * 0.28); ctx.lineTo(seamX, h * 0.28); ctx.stroke();
+  }
+
+  // Small central double-chevron detail, matching the prototype capsule.
+  ctx.strokeStyle = mixWhite(p.col, 0.48);
+  ctx.lineWidth = 0.75;
+  ctx.globalAlpha = 0.82;
+  for (const off of [-1.8, 1.4]) {
+    ctx.beginPath();
+    ctx.moveTo(off - 1.2, -1.5); ctx.lineTo(off + 0.7, 0); ctx.lineTo(off - 1.2, 1.5);
+    ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+
+  // A single restrained highlight reads as polished metal without bleaching the color.
+  ctx.strokeStyle = 'rgba(255,255,255,' + (0.24 + hit * 0.34) + ')';
+  ctx.lineWidth = 0.75;
+  ctx.beginPath();
+  ctx.moveTo(-hs + 7, -h * 0.31); ctx.lineTo(hs - 7, -h * 0.31); ctx.stroke();
+
+  if (p.sweetFlash > 0) {
+    const sx = (p.sweetOff || 0) * hs;
+    const k = p.sweetFlash;
+    ctx.shadowColor = '#ffd97a';
+    ctx.shadowBlur = glow(18 * k);
+    ctx.strokeStyle = 'rgba(255,217,122,' + (0.75 * k) + ')';
+    ctx.lineWidth = 2.2;
+    ctx.beginPath();
+    ctx.arc(sx, h * 0.5, h * (0.9 + (1 - k) * 1.8), 0, TAU);
+    ctx.stroke();
   }
   ctx.restore();
 }
@@ -4310,6 +5577,8 @@ function mixWhite(hex, t) {
 
 function drawBall(ball) {
   const col = ball.hitCol || BALL_DEFAULT_COL;
+  ctx.save();
+  ctx.globalCompositeOperation = 'source-over';
   // Spawn wrap-in: scale up from nothing, with a brief expanding ring as it settles.
   const spawnK = ball.spawnT > 0 ? 1 - ball.spawnT : 1;   // 0 -> 1 as it materializes
   const scale = ball.spawnT > 0 ? (0.15 + 0.85 * (1 - Math.pow(1 - spawnK, 3))) : 1;
@@ -4358,13 +5627,21 @@ function drawBall(ball) {
       ctx.stroke();
       ctx.restore();
     }
-    for (let i = visStart; i < tn; i += step) {
-      const t = ball.trail[(head + i) % tn];
-      const a = (i - visStart + 1) / visN;
-      ctx.beginPath();
-      ctx.fillStyle = hexA(col, a * a * 0.28 * step);
-      ctx.arc(t.x, t.y, BALL.r * (0.35 + a * 0.85), 0, TAU);
-      ctx.fill();
+    if (visN > 1) {
+      ctx.save();
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.shadowColor = col;
+      ctx.shadowBlur = glow(BALL.r * 0.9);
+      for (let i = visStart + 1; i <= tn; i++) {
+        const prev = ball.trail[(head + i - 1) % tn];
+        const cur = i < tn ? ball.trail[(head + i) % tn] : ball;
+        const a = clamp((i - visStart) / visN, 0, 1);
+        ctx.strokeStyle = hexA(col, 0.025 + a * a * 0.36);
+        ctx.lineWidth = BALL.r * (0.16 + a * 1.30);
+        ctx.beginPath(); ctx.moveTo(prev.x, prev.y); ctx.lineTo(cur.x, cur.y); ctx.stroke();
+      }
+      ctx.restore();
     }
     const bloom = getBloom(col);
     ctx.save();
@@ -4374,10 +5651,13 @@ function drawBall(ball) {
   }
   // solid core (always), tinted toward whoever last hit it — 65% white keeps it
   // bright and legible against any wall color while still reading as that color
-  ctx.fillStyle = mixWhite(col, 0.65);
+  ctx.fillStyle = mixWhite(col, 0.72);
+  ctx.shadowColor = col;
+  ctx.shadowBlur = fxLevel === 0 ? 0 : glow(BALL.r * 1.4);
   ctx.beginPath();
   ctx.arc(ball.x, ball.y, BALL.r * (fxLevel === 0 ? 1 : 0.72) * scale, 0, TAU);
   ctx.fill();
+  ctx.restore();
 }
 
 /* ── Modifiers ──────────────────────────────────────────────────────────────
@@ -4402,16 +5682,46 @@ function drawModifiers() {
     halo.addColorStop(1, hexA(f.col, 0));
     ctx.fillStyle = halo;
     ctx.beginPath(); ctx.arc(t.x, t.y, t.r * 1.9, 0, TAU); ctx.fill();
+    // Quiet radar rings give the pickup the layered target medallion treatment.
+    ctx.strokeStyle = hexA(f.col, 0.14 * a * pulse);
+    ctx.lineWidth = 0.7;
+    for (const rr of [t.r * 1.55, t.r * 1.95]) {
+      ctx.beginPath(); ctx.arc(t.x, t.y, rr, 0, TAU); ctx.stroke();
+    }
     ctx.restore();
 
-    // icon, now filling the space the shape used to occupy
+    // Dimensional pickup frame follows the Modifier category colour.
+    ctx.save();
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.globalAlpha = a;
+    const frameCol = f.col;                       // Wildcards, including Pulse Contract, stay purple
+    const hexPath = (rad) => {
+      ctx.beginPath();
+      for (let k = 0; k < 6; k++) {
+        const ang = Math.PI / 3 * k - Math.PI / 6;
+        const px = t.x + Math.cos(ang) * rad, py = t.y + Math.sin(ang) * rad;
+        if (k === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+      }
+      ctx.closePath();
+    };
+    ctx.shadowColor = frameCol; ctx.shadowBlur = glow(11 * pulse);
+    ctx.fillStyle = 'rgba(2,10,18,0.82)';
+    ctx.strokeStyle = hexA(frameCol, 0.92);
+    ctx.lineWidth = 1.8;
+    hexPath(t.r * 1.28); ctx.fill(); ctx.stroke();
+    ctx.strokeStyle = hexA(f.col, 0.72);
+    ctx.lineWidth = 1.2;
+    hexPath(t.r * 0.88); ctx.stroke();
+    ctx.restore();
+
+    // icon centered inside the pickup frame
     const img = Modifier_ICON_IMG[f.id];
     if (img && img.complete && img.naturalWidth > 0) {
       ctx.save();
       ctx.globalCompositeOperation = 'source-over';
       ctx.globalAlpha = a;
       ctx.shadowColor = f.col; ctx.shadowBlur = glow(12 * pulse);
-      const sz = t.r * 2.05;
+      const sz = t.r * 1.18;
       ctx.drawImage(img, t.x - sz / 2, t.y - sz / 2, sz, sz);
       ctx.restore();
     }
@@ -4443,18 +5753,7 @@ function drawModifiers() {
       ctx.restore();
     }
 
-    // name under the token, brightening as the nearest ball closes in
-    let near = 1e9;
-    for (const b of balls) near = Math.min(near, Math.hypot(b.x - t.x, b.y - t.y));
-    const prox = clamp(1 - (near - t.r) / (R * 0.85), 0.22, 1);
-    ctx.save();
-    ctx.globalCompositeOperation = 'source-over';
-    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.font = '700 ' + (compact ? 8.5 : 9.5) + 'px ui-monospace,monospace';
-    ctx.letterSpacing = '1.5px';
-    ctx.fillStyle = hexA(f.col, a * prox * 0.95);
-    ctx.fillText(f.name.toUpperCase(), t.x, t.y + t.r + (compact ? 13 : 16));
-    ctx.restore();
+    // The icon is the arena label; omitting a second text caption keeps the floor readable.
   }
 }
 
@@ -4573,7 +5872,7 @@ function drawLabel(w) {
   ctx.letterSpacing = ls + 'px';
   ctx.fillStyle = p.col;
   ctx.shadowColor = p.col;
-  ctx.shadowBlur = glow(12);
+  ctx.shadowBlur = glow(p.human ? 8 : 5);
   ctx.fillText(txt, 0, 0);
   ctx.restore();
 }
@@ -4625,9 +5924,12 @@ function renderScoreBar() {
       gap = '<span class="sd">' + commas(diff) + ' to beat</span>';
     }
   }
+  const bestMarkup = best
+    ? '<span class="sbl">BEST</span><span class="sbv">' + commas(best) + '</span>'
+    : '<span class="sbl">FIRST RUN</span>';
   bar.innerHTML =
     '<span class="sc">' + commas(live) + '</span>' +
-    '<span class="sb">' + (best ? 'Best ' + commas(best) : 'First run') + '</span>' +
+    '<span class="sb">' + bestMarkup + '</span>' +
     gap;
 }
 
@@ -4638,29 +5940,39 @@ function renderFxBar() {
   if (!running || over) { if (bar.childElementCount || bar.innerHTML) bar.innerHTML = ''; return; }
   const me = players[PLAYER];
   const out = [];
-  const pill = (col, name, right) =>
-    '<span class="fxpill" style="color:' + col + '">' + name +
-    (right ? '<b>' + right + '</b>' : '') + '</span>';
+  const pill = (f, name, right, frac) => {
+    const icon = Modifier_ICON_DATA[f.id] || '';
+    return '<span class="fxpill" style="color:' + f.col + '">' +
+      '<span class="fxcopy">' +
+        '<span class="fxname">' + name + '</span>' +
+        (right ? '<b>' + right + '</b>' : '') +
+      '</span>' +
+      '<span class="fxhudicon">' + (icon ? '<img src="' + icon + '" alt="">' : '') + '</span>' +
+      (frac == null ? '' : '<span class="fxmeter"><i style="width:' + Math.round(clamp(frac, 0, 1) * 100) + '%"></i></span>') +
+      '</span>';
+  };
 
   if (me && !me.out) {
     for (const id of Object.keys(me.fx)) {
       const f = FX[id];
       if (!f) continue;
       const t = me.fx[id];
-      out.push(pill(f.col, f.name, t > 1e8 ? 'ARMED' : t.toFixed(1) + 's'));
+      const armed = t > 1e8;
+      const frac = armed ? null : clamp(t / Math.max(0.001, fxDur(f)), 0, 1);
+      out.push(pill(f, f.name, armed ? 'ARMED' : t.toFixed(1) + 's', frac));
     }
-    if (me.heavy > 0) out.push(pill(FX.heavy.col, FX.heavy.name, '×' + me.heavy));
+    if (me.heavy > 0) out.push(pill(FX.heavy, FX.heavy.name, '×' + me.heavy));
   }
   for (const id of Object.keys(gfx)) {
     const f = FX[id]; if (!f) continue;
-    out.push(pill(f.col, f.name, gfx[id].toFixed(1) + 's'));
+    const t = gfx[id];
+    out.push(pill(f, f.name, t.toFixed(1) + 's', clamp(t / Math.max(0.001, fxDur(f)), 0, 1)));
   }
-  if (balls.length > 1) out.push(pill(FX.split.col, 'Multiball', '×' + balls.length));
+  if (balls.length > 1) out.push(pill(FX.split, 'Multiball', '×' + balls.length));
 
   const html = out.join('');
   if (bar.innerHTML !== html) bar.innerHTML = html;
 }
-
 
 /* ─────────────────────────── loop ─────────────────────────── */
 let chromeOn = null;
@@ -4674,7 +5986,7 @@ function frame(now) {
   const panelUp = !!document.querySelector('.panel:not(.hidden)');
   if (panelUp !== chromeOn) {
     chromeOn = panelUp;
-    document.getElementById('corner').style.display = panelUp ? 'none' : 'flex';
+    document.getElementById('corner').style.display = panelUp ? 'none' : 'grid';
   }
   let dt = (now - lastT) / 1000;
   lastT = now;
@@ -4690,22 +6002,16 @@ function frame(now) {
 // One source of truth: the same rules block is shown before the match and on pause.
 const BRIEF_ROWS = [
   ['Move', TOUCH
-    ? 'Control your paddle by using your finger to drag side to side'
-    : 'Move the mouse, or use <span class="k">&larr;</span><span class="k">&rarr;</span> / ' +
-      '<span class="k">A</span><span class="k">D</span>. Your paddle is on the bottom wall.'],
-  ['Your wall', 'Your wall has one glowing block per life. Miss the ball and a block burns away.'],
-  ['Aim', 'Where the ball hits your paddle decides where it goes. Centre sends it straight out; ' +
-    'further toward a tip angles it further that way. Swiping <b>through</b> the ball as you make ' +
-    'contact bends it a little further still. Use it to line up Modifiers or pick a rival\u2019s wall.'],
-  ['Collapse', 'When a wall runs out of lives it is removed and the arena shrinks. Last one alive wins.'],
-  ['Decay', 'The longer you last, the faster the ball and the smaller every paddle.'],
-  ['Modifiers', 'Hit a Modifier and the effect depends on colour. ' +
-    '<b style="color:#ffd97a">Gold</b> buffs help the <b>last player</b> who hit the ball. ' +
-    '<b style="color:#ff9a8f">Red</b> nerfs punish the <b>next player</b> to return it. ' +
-    '<b style="color:#dcaaff">Violet</b> wildcards change the whole arena. ' +
-    'Full list in the <b>Modifier Index</b>.'],
-  ['Score', 'Survival time, paddle returns, and Modifiers add points. Placement multiplies your total ' +
-    '(higher finish = bigger multiplier), then difficulty. The running total sits under the HUD.'],
+    ? 'Drag anywhere to move your paddle along your wall.'
+    : 'Move with the mouse or A/D keys.'],
+  ['Your wall', 'You have 3 lives. Miss the ball and lose one. Lose all 3 and you are out.'],
+  ['Collapse', 'When a wall is eliminated, the arena shrinks. Be the last player alive.'],
+  ['Decay', 'The longer you survive, the faster the ball moves and the shorter paddles become.'],
+  ['Modifiers', '<b style="color:#ffd97a">Gold</b> helps the last hitter. ' +
+    '<b style="color:#ff9a8f">Red</b> hinders the next hitter. ' +
+    '<b style="color:#dcaaff">Violet</b> changes the arena. ' +
+    'See the <b>Modifier Index</b> for the full list.'],
+  ['Score', 'Survival, paddle hits, and Modifiers earn points. Higher placement increases your score.'],
 ];
 const BRIEF_HTML = BRIEF_ROWS.map(r =>
   '<div class="bl"><div class="bt">' + r[0] + '</div><div>' + r[1] + '</div></div>').join('');
@@ -4737,31 +6043,32 @@ const EFFECTS = [
     blurb:'',
     list:[
       { id:'overdrive', name:'Growth', dur:10, durTxt:'10s',
-        desc:'Your paddle grows 60% wider (last hitter only).' },
+        desc:'Your paddle grows 60% wider for 10 seconds (last hitter only).' },
       { id:'repair',    name:'Repair',    dur:0,  durTxt:'Instant',
-        desc:'Last hitter gains one life (up to the starting max).' },
+        desc:'Last hitter instantly regains one life, up to the starting maximum.' },
     ]},
   { key:'n', title:'Nerfs', col:'#ff9a8f',
     blurb:'',
     list:[
-      { id:'choke',  name:'Shrink',      dur:10, durTxt:'10s',
-        desc:'Next player to hit the ball has their paddle shrink 40%.' },
+      { id:'choke',  name:'Shrink',      dur:10,  durTxt:'10s',
+        desc:'The next player\'s paddle shrinks 40% for 10 seconds.' },
       { id:'invert', name:'Invert',      dur:5,  durTxt:'5s',
-        desc:'Next player to hit the ball has their controls reversed: swipe right, the paddle goes left.' },
+        desc:'The next player\'s controls reverse for 5 seconds: right moves left.' },
     ]},
   { key:'w', title:'Wildcards', col:'#dcaaff',
     blurb:'',
     list:[
       { id:'split',    name:'Split',     dur:0,  durTxt:'Until lost',
-        desc:'A second ball enters play. Either one can score on anybody.' },
+        desc:'Adds a second ball until one is lost.' },
       { id:'gravity',  name:'Gravity Well', dur:8, durTxt:'8s', global:true,
-        desc:'Balls are pulled toward the centre of the arena for a few seconds.' },
+        desc:'Pulls all balls toward the arena center for 8 seconds.' },
       { id:'pulse',    name:'Pulse Contract', dur:0, durTxt:'1.5–3.5s',
-        desc:'The whole arena squeezes inward and snaps back over a random 1.5–3.5 seconds.' },
+        desc:'The arena squeezes inward, then snaps back over 1.5–3.5 seconds.' },
       { id:'eclipse',  name:'Eclipse Drift', dur:0,  durTxt:'2–5s', global:true,
-        desc:'The ball freezes while the arena spins for a random 2–5 seconds, then play resumes at once. 15 seconds later it spins back to the original angle the same way.' },
+        desc:'Freezes the ball while the arena spins for 2–5 seconds, then returns to its original angle after a 15-second hold.' },
     ]},
 ];
+
 
 
 const FX = {};                         // id -> effect definition (+ its category)
@@ -4773,8 +6080,7 @@ function buildCodex() {
     g.list.map(f =>
       '<div class="fx"><div class="tok ' + g.key + '"><img src="' + (Modifier_ICON_DATA[f.id] || '') +
       '" alt=""></div>' +
-      '<div class="fxb"><div class="fxn">' + f.name + '</div><div class="fxd">' + f.desc + '</div></div>' +
-      '<div class="fxt">' + f.durTxt + '</div></div>').join('') +
+      '<div class="fxb"><div class="fxn">' + f.name + '</div><div class="fxd">' + f.desc + '</div></div></div>').join('') +
     '</div>').join('');
 }
 buildCodex();
@@ -5147,10 +6453,10 @@ function hideCodex() {
    those toggles came out of the Modifier Index. */
 const MODES = {
   vanilla: { title:'VANILLA MODE', cls:'vanilla', lives:3, Modifiers:false, rate:1,
-             icon:'<svg viewBox="0 0 24 24"><path d="M12 2.6 20.4 7.3v9.4L12 21.4 3.6 16.7V7.3z"/><text x="12" y="16.4" text-anchor="middle" font-size="11" font-weight="700" fill="currentColor" stroke="none">V</text></svg>',
+             icon:'<svg viewBox="0 0 24 24"><path d="M12 2.6 20.4 7.3v9.4L12 21.4 3.6 16.7V7.3z"/><path d="M7.2 7.4h5.2a3.4 3.4 0 0 1 0 6.8H9.7l-2.5 3.1"/><circle cx="17" cy="16.3" r="1.25" fill="currentColor" stroke="none"/></svg>',
              chips:['&#9825; 3 Lives', '&#8856; Modifiers Off'] },
   Modifier:   { title:'Modifier MODE', cls:'Modifier', lives:3, Modifiers:true, rate:1,
-             icon:'<svg viewBox="0 0 24 24"><path d="M12 2.6 20.4 7.3v9.4L12 21.4 3.6 16.7V7.3z"/><text x="12" y="16.4" text-anchor="middle" font-size="11" font-weight="700" fill="currentColor" stroke="none">M</text></svg>',
+             icon:'<svg viewBox="0 0 24 24"><path d="M12 2.6 20.4 7.3v9.4L12 21.4 3.6 16.7V7.3z"/><path d="M7.2 7.4h5.2a3.4 3.4 0 0 1 0 6.8H9.7l-2.5 3.1"/><circle cx="17" cy="16.3" r="1.25" fill="currentColor" stroke="none"/></svg>',
              chips:['&#9825; 3 Lives', '&#9417; Modifiers On', '&#9776; Mid Rate'] },
 };
 let gameMode = 'Modifier';
@@ -5169,7 +6475,20 @@ function startSimplePlay() {
   startGame();
 }
 const mPlayBtn = document.getElementById('mPlay');
-if (mPlayBtn) mPlayBtn.addEventListener('click', startSimplePlay);
+function launchSimplePlay() {
+  const startPanel = document.getElementById('start');
+  if (startPanel && startPanel.classList.contains('arena-launching')) return;
+  haptic(12);
+  let reducedMotion = false;
+  try { reducedMotion = !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches); } catch (e) {}
+  if (!startPanel || reducedMotion) { startSimplePlay(); return; }
+  startPanel.classList.add('arena-launching');
+  setTimeout(() => {
+    startPanel.classList.remove('arena-launching');
+    startSimplePlay();
+  }, 220);
+}
+if (mPlayBtn) mPlayBtn.addEventListener('click', launchSimplePlay);
 
 // Modifiers on/off toggle: default on, remembered via saveSettings/applySavedSettings
 // (ModifiersOn already round-trips through both). This just adds the menu control and
@@ -5187,6 +6506,7 @@ function syncDiffToggle() {
 const mDiffSeg = document.getElementById('mDiff');
 if (mDiffSeg) mDiffSeg.addEventListener('click', e => {
   const b = e.target.closest('button'); if (!b) return;
+  haptic(8);
   diffIdx = clamp(+b.dataset.d, 0, DIFF.length - 1);
   syncDiffToggle();
   // Keep ModifierRate in sync with the selected difficulty for the simple play path
@@ -5212,6 +6532,7 @@ function syncModifiersToggle() {
 const mModifiersSeg = document.getElementById('mModifiers');
 if (mModifiersSeg) mModifiersSeg.addEventListener('click', e => {
   const b = e.target.closest('button'); if (!b) return;
+  haptic(8);
   ModifiersOn = b.dataset.t === '1';
   syncModifiersToggle();
   saveSettings();
@@ -5233,32 +6554,16 @@ if (hsTabsEl) hsTabsEl.addEventListener('click', e => {
 
 
 const SCORE_HELP_ROWS = [
-  ['Earn', 'Points come from five sources while you play.'],
-  ['Survival', '100 points per second alive, scaled up the longer the match lasts ' +
-    '(multiplier = 1 + √(time / 150s)). Longer runs earn more per second.'],
-  ['Paddle', 'Returns escalate: first hit <b>+500</b>, then <b>+600</b>, <b>+700</b>, and so on ' +
-    '(+100 more each time). Any part of the paddle counts.'],
-  ['Modifiers', 'Each type escalates on its own the same way paddle hits do — value goes up ' +
-    '<b>+1,000</b> per consecutive hit of that type this match:<br>' +
-    '<b style="color:#ffd97a">Buff</b> you collect: <b>+5,000</b>, then +6,000, +7,000…<br>' +
-    '<b style="color:#ff9a8f">Nerf</b> you collect: <b>+5,000</b>, then +6,000, +7,000…<br>' +
-    '<b style="color:#dcaaff">Wildcard</b> you collect: <b>+2,500</b>, then +3,500, +4,500…<br>' +
-    'Getting hit by a nerf someone else collected: <b>−5,000</b>, then −6,000, −7,000… (this one escalates worse, not better).'],
-  ['Rally kills', 'When the next player to touch the ball after your return concedes a life ' +
-    '(but isn\u2019t eliminated), you\u2019re credited the kill: <b>+25,000</b> for the 1st this match. ' +
-    'Each further one jumps by a growing gap \u2014 +1,000 more than the last jump \u2014 so it\u2019s ' +
-    '<b>25,000 → 26,000 → 28,000 → 31,000…</b> Getting on a roll is worth chasing.'],
-  ['Eliminations', 'Same idea, but for a kill that removes an opponent\u2019s wall entirely: ' +
-    '<b>+50,000</b> for the 1st this match, then <b>50,000 → 55,000 → 65,000 → 80,000…</b> ' +
-    '(each jump +5,000 bigger than the last).'],
-  ['Subtotal', 'Survival + paddle + modifiers + rally kills + eliminations. This is your earned total before placement.'],
-  ['Placement', 'Your finish multiplies the subtotal:<br>' +
-    '6th ×1 · 5th ×1.25 · 4th ×1.5 · 3rd ×2 · 2nd ×2.5 · <b>1st ×3</b>.'],
-  ['Difficulty', 'Difficulty multiplies the post-placement total:<br>' +
-    '<b>Easy ×0.65</b> · <b>Medium ×1.0</b> · <b>Hard ×1.55</b>.'],
-  ['Final', 'Subtotal × placement × difficulty. The live score bar uses your <b>current</b> place ' +
-    'and the selected difficulty, so it jumps when rivals fall.'],
-  ['Stats', 'Tap the High Score band on the main menu to open career stats and local top scores.'],
+  ['Earn', 'Score by surviving, returning the ball, collecting Modifiers, and eliminating rivals.'],
+  ['Survival', 'Stay alive to earn points every second. Longer runs earn more per second.'],
+  ['Paddle', 'Each return is worth more than the last: <b>+500, +600, +700…</b>'],
+  ['Modifiers', '<b style="color:#ffd97a">Buffs</b> and <b style="color:#ff9a8f">Nerfs</b> start at <b>+5,000</b>; ' +
+    '<b style="color:#dcaaff">Wildcards</b> start at <b>+2,500</b>. Repeated pickups of the same type add <b>+1,000</b>. ' +
+    'Nerfs change gameplay but never subtract points from the player they affect.'],
+  ['Rally kills', 'Making an opponent lose a life earns a growing <b>+25,000</b> bounty.'],
+  ['Eliminations', 'Eliminating an opponent earns a growing <b>+50,000</b> bounty.'],
+  ['Multipliers', 'Better placement and higher difficulty have multipliers.'],
+  ['Stats', 'Tap the High Score band on the main menu for detailed stats.'],
 ];
 function showScoreHelp() {
   const body = document.getElementById('scoreHelpBody');
@@ -5315,6 +6620,8 @@ function hideSettings() {
 function syncSettingsUI() {
   setSlider('sfxVol', 'sfxVal', Math.round(sfxVol * 100));
   if (setNameEl) setNameEl.value = displayName || '';
+  const tagEl = document.getElementById('playerTagValue');
+  if (tagEl) tagEl.textContent = PLAYER_TAG;
   const mark = (id, attr, val) => {
     const el = document.getElementById(id); if (!el) return;
     [...el.children].forEach(b => b.classList.toggle('on', +b.dataset[attr] === val));
@@ -5473,6 +6780,13 @@ newRun();
 
 // restore menu + quality prefs (after ModifiersOn / sound exist)
 applySavedSettings();
+// Keep unfinished controls hidden while the polished defaults remain active.
+playerCol = '#a855f7';
+crtFx = false;
+colorBlind = false;
+shakeLevel = 2;
+hapticsLevel = 2;
+applyCrtVisibility();
 syncModifiersToggle();
 syncDiffToggle();
 // accessibility: respect reduced-motion unless the player already saved an FX choice
@@ -5586,6 +6900,51 @@ if (bRecentBack) bRecentBack.addEventListener('click', hideRecentMatches);
 // sync option button highlights to restored values
 
 resize();
+(function setupMainMenuAccessibility() {
+  const labels = {
+    mPlay: 'Enter Arena', hiBand: 'View high score statistics',
+    bHow: 'How to Play', bScoreHelp: 'Scoring',
+    bCodexMenu: 'Modifier Index', bSettings: 'Settings'
+  };
+  Object.keys(labels).forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.setAttribute('aria-label', labels[id]);
+  });
+
+  const diffButtons = document.querySelectorAll('#mDiff button');
+  const modifierButtons = document.querySelectorAll('#mModifiers button');
+  const syncPressed = () => {
+    diffButtons.forEach(b => {
+      b.setAttribute('aria-label', 'Select ' + b.textContent.trim() + ' difficulty');
+      b.setAttribute('aria-pressed', b.classList.contains('on') ? 'true' : 'false');
+    });
+    modifierButtons.forEach(b => {
+      b.setAttribute('aria-label', b.dataset.t === '1' ? 'Enable modifiers' : 'Disable modifiers');
+      b.setAttribute('aria-pressed', b.classList.contains('on') ? 'true' : 'false');
+    });
+  };
+  [...diffButtons, ...modifierButtons].forEach(b => {
+    new MutationObserver(syncPressed).observe(b, { attributes:true, attributeFilter:['class'] });
+  });
+  syncPressed();
+
+  [['miniLb','Open top 25 leaderboard'],['miniRecent','Open latest 25 matches']].forEach(([id,label]) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.setAttribute('role','button'); el.setAttribute('tabindex','0'); el.setAttribute('aria-label',label);
+    el.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); el.click(); }
+    });
+  });
+
+  try {
+    if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      shakeLevel = 0; fxLevel = 0; setFxLevel(0);
+      document.documentElement.classList.add('reduce-motion');
+    }
+  } catch (e) {}
+})();
+
 // First launch: show name gate if no saved name; otherwise go straight to main menu
 try {
   const hasName = !!localStorage.getItem(NAME_KEY);
